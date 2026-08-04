@@ -3,9 +3,11 @@ const router = express.Router();
 const Franchise = require('../models/FranchiseModel');
 const nodemailer = require('nodemailer');
 
-// Configure Nodemailer transporter using Gmail
+// Configure Nodemailer transporter using explicit SMTP settings
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: false, // true for 465, false for port 587
   auth: {
     user: process.env.EMAIL_USER, 
     pass: process.env.EMAIL_PASS  
@@ -45,7 +47,9 @@ router.post('/enquire', async (req, res) => {
       `
     };
 
-    transporter.sendMail(mailOptions).catch(err => console.error('Email dispatch error:', err));
+    // Await email dispatch to catch and log any SMTP errors precisely
+    await transporter.sendMail(mailOptions);
+    console.log('Franchise notification email sent successfully!');
 
     res.status(201).json({ success: true, message: 'Franchise application submitted successfully!' });
   } catch (error) {
