@@ -13,9 +13,11 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors({
   origin: [
-    'http://localhost:3000', 
-    'https://topiqtalenttest.com', 
-    'https://topiq-talent-test.vercel.app'
+    'http://localhost:3000',
+    'http://localhost:5173', // Added Vite local dev port just in case
+    'https://topiqtalent.com',
+    'https://www.topiqtalent.com',
+    'https://topiq-talent-test.vercel.app' // Make sure to replace or add your exact Vercel URL if different
   ],
   credentials: true
 }));
@@ -30,7 +32,7 @@ app.get('/', (req, res) => {
   res.status(200).json({ 
     success: true, 
     message: 'TOPIQ Talent Test (TTT) API Server is live and running (2026)',
-    activeEnvironment: 'Production / Brevo SMTP Enabled'
+    activeEnvironment: 'Production / Brevo REST API Enabled'
   });
 });
 
