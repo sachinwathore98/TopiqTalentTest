@@ -13,7 +13,11 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://topiqtalenttest.com'],
+  origin: [
+    'http://localhost:3000', 
+    'https://topiqtalenttest.com', 
+    'https://topiq-talent-test.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());
