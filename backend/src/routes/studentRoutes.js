@@ -2,11 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Student = require('../models/StudentModel');
 
-// Helper function to send emails via Brevo REST API (HTTPS port 443 - never blocked on Render)
-async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
+async function sendBrevoEmail(toEmail, toName, subject, htmlContent) {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
-    console.warn('BREVO_API_KEY is not set in environment variables.');
+    console.error('❌ BREVO_API_KEY is missing in environment variables.');
     return;
   }
 
@@ -19,19 +18,18 @@ async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
         'api-key': apiKey
       },
       body: JSON.stringify({
-        sender: { email: "contact@send.brevo.com", name: "TOPIQ Talent Test (TTT)" },
+        sender: { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" },
         to: [{ email: toEmail, name: toName || 'User' }],
         subject: subject,
         htmlContent: htmlContent
       })
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('Brevo API Error Response:', errText);
-    }
+    const data = await response.text();
+    console.log(`🔍 Brevo Student Email Response Status (${toEmail}):`, response.status);
+    console.log(`🔍 Brevo Student Email Response Body:`, data);
   } catch (err) {
-    console.error('Brevo API Network Exception:', err.message);
+    console.error('❌ Brevo Student API Network Exception:', err.message);
   }
 }
 
@@ -60,7 +58,7 @@ router.post('/register', async (req, res) => {
       token: 'sample_student_token_2026'
     });
 
-    // 3. Fire background Brevo API calls (Admin + Student Welcome)
+    // 3. Fire background Brevo API calls
     const adminEmailHtml = `
       <h2>New Student Enrollment Received</h2>
       <p><strong>Student Name:</strong> ${name}</p>
@@ -80,21 +78,21 @@ router.post('/register', async (req, res) => {
     `;
 
     // Send admin notification
-    sendBrevoEmail({
-      toEmail: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-      toName: 'Admin',
-      subject: `New TTT Student Registration: ${name} (${studentClass})`,
-      htmlContent: adminEmailHtml
-    });
+    sendBrevoEmail(
+      process.env.ADMIN_EMAIL || process.env.EMAIL_USER, 
+      'Admin', 
+      `New TTT Student Registration: ${name} (${studentClass})`, 
+      adminEmailHtml
+    );
 
     // Send student welcome email if provided
     if (email) {
-      sendBrevoEmail({
-        toEmail: email,
-        toName: name,
-        subject: `Welcome to TTT 2026 – Registration Successful!`,
-        htmlContent: studentEmailHtml
-      });
+      sendBrevoEmail(
+        email, 
+        name, 
+        `Welcome to TTT 2026 – Registration Successful!`, 
+        studentEmailHtml
+      );
     }
 
   } catch (error) {
