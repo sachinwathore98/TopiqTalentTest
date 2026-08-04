@@ -3,9 +3,9 @@ const router = express.Router();
 const Student = require('../models/StudentModel');
 const nodemailer = require('nodemailer');
 
-// Configure Nodemailer transporter using explicit SMTP settings
+// Configure Nodemailer transporter using Brevo SMTP
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
   port: Number(process.env.SMTP_PORT) || 587,
   secure: false, 
   auth: {
@@ -25,28 +25,21 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required student details.' });
     }
 
-    // 1. Save Student to MongoDB Atlas Database immediately
+    // 1. Save Student to MongoDB Atlas Database instantly
     const newStudent = new Student({
-      name,
-      phone,
-      email,
-      studentClass,
-      pincode,
-      city,
-      district,
-      state,
-      password
+      name, phone, email, studentClass, 
+      pincode, city, district, state, password
     });
     await newStudent.save();
 
-    // 2. Send instant response to frontend so it redirects immediately without waiting for emails
+    // 2. Instant response back to frontend so redirection is instant
     res.status(201).json({ 
       success: true, 
       message: 'Student registered successfully!',
       token: 'sample_student_token_2026'
     });
 
-    // 3. Fire-and-forget background email notifications (Admin + Student Welcome Email)
+    // 3. Background dispatch via Brevo (Admin Notification + Student Welcome Mail)
     const adminMailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
@@ -61,27 +54,24 @@ router.post('/register', async (req, res) => {
       `
     };
 
-    const studentMailOptions = {
+    const studentWelcomeOptions = {
       from: process.env.EMAIL_USER,
-      to: email, // Sends confirmation directly to the student's email address
+      to: email,
       subject: `Welcome to TTT 2026 – Registration Successful!`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #01295A; padding: 20px;">
           <h2 style="color: #FE7C02;">Welcome to TOPIQ Talent Test (TTT) 2026!</h2>
           <p>Hi <strong>${name}</strong>,</p>
           <p>Your student account for <strong>${studentClass}</strong> has been created successfully.</p>
-          <p>You can now log in to your dashboard, track your progress, and prepare for India's 100-Day MCQ Talent & Scholarship Challenge across Maharashtra.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">If you did not register for this account, please ignore this email.</p>
+          <p>You can now log in to your dashboard, track your progress, and prepare for India's 100-Day MCQ Talent & Scholarship Challenge.</p>
         </div>
       `
     };
 
-    // Dispatch emails asynchronously in the background so it doesn't delay the user
     if (email) {
-      transporter.sendMail(studentMailOptions).catch(err => console.error('Student welcome email error:', err));
+      transporter.sendMail(studentWelcomeOptions).catch(err => console.error('Brevo student email error:', err));
     }
-    transporter.sendMail(adminMailOptions).catch(err => console.error('Admin notification email error:', err));
+    transporter.sendMail(adminMailOptions).catch(err => console.error('Brevo admin email error:', err));
 
   } catch (error) {
     console.error('Student registration server error:', error);
