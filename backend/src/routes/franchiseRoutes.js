@@ -1,18 +1,39 @@
 const express = require('express');
 const router = express.Router();
 const Franchise = require('../models/FranchiseModel');
-const nodemailer = require('nodemailer');
 
-// Configure Nodemailer transporter using Brevo SMTP
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, 
-  auth: {
-    user: process.env.EMAIL_USER, 
-    pass: process.env.EMAIL_PASS  
+// Helper function to send emails via Brevo REST API (HTTPS port 443 - never blocked on Render)
+async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.warn('BREVO_API_KEY is not set in environment variables.');
+    return;
   }
-});
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': apiKey
+      },
+      body: JSON.stringify({
+        sender: { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" },
+        to: [{ email: toEmail, name: toName || 'User' }],
+        subject: subject,
+        htmlContent: htmlContent
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Brevo Franchise API Error Response:', errText);
+    }
+  } catch (err) {
+    console.error('Brevo Franchise API Network Exception:', err.message);
+  }
+}
 
 router.post('/enquire', async (req, res) => {
   try {
@@ -40,50 +61,52 @@ router.post('/enquire', async (req, res) => {
       message: 'Franchise application submitted successfully!' 
     });
 
-    // 3. Background dispatch via Brevo (Admin Notification + Owner Welcome Mail) with full diagnostic logging
-    const adminMailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+    // 3. Fire background Brevo API calls (Admin Lead Notification + Owner Welcome)
+    const adminEmailHtml = `
+      <h2>New Franchise Enquiry Received</h2>
+      <p><strong>Owner Name:</strong> ${owner_name}</p>
+      <p><strong>Phone:</strong> ${phone}</p>
+      <p><strong>Email:</strong> ${email || 'N/A'}</p>
+      <p><strong>Preferred Location:</strong> ${preferred_location || 'N/A'}</p>
+      <p><strong>City / District / State:</strong> ${city || ''}, ${district}, ${state || ''} - ${pincode || ''}</p>
+      <p><strong>Current Business:</strong> ${current_business || 'N/A'}</p>
+      <p><strong>Investment Capacity:</strong> ${investment_capacity || 'N/A'}</p>
+      <p><strong>Requirements:</strong> ${requirements || 'N/A'}</p>
+    `;
+
+    const ownerEmailHtml = `
+      <div style="font-family: Arial, sans-serif; color: #01295A; padding: 20px;">
+        <h2 style="color: #FE7C02;">Thank You for Your Franchise Interest!</h2>
+        <p>Dear <strong>${owner_name}</strong>,</p>
+        <p>We have successfully received your franchise application for <strong>${city || district}</strong>.</p>
+        <p>Our business development team is reviewing your profile and will get in touch with you shortly.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #666;">TOPIQ Talent Test (TTT) Team</p>
+      </div>
+    `;
+
+    // Send admin notification
+    sendBrevoEmail({
+      toEmail: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+      toName: 'Admin',
       subject: `New Franchise Application from ${owner_name} (${city || district})`,
-      html: `
-        <h2>New Franchise Enquiry Received</h2>
-        <p><strong>Owner Name:</strong> ${owner_name}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Email:</strong> ${email || 'N/A'}</p>
-        <p><strong>Preferred Location:</strong> ${preferred_location || 'N/A'}</p>
-        <p><strong>City / District / State:</strong> ${city || ''}, ${district}, ${state || ''} - ${pincode || ''}</p>
-        <p><strong>Current Business:</strong> ${current_business || 'N/A'}</p>
-        <p><strong>Investment Capacity:</strong> ${investment_capacity || 'N/A'}</p>
-        <p><strong>Requirements/Queries:</strong> ${requirements || 'N/A'}</p>
-      `
-    };
-
-    const ownerWelcomeOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: `Franchise Enquiry Received – TTT 2026`,
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #01295A; padding: 20px;">
-          <h2 style="color: #FE7C02;">Thank You for Your Franchise Interest!</h2>
-          <p>Dear <strong>${owner_name}</strong>,</p>
-          <p>We have successfully received your franchise application for <strong>${city || district}</strong>.</p>
-          <p>Our business development team is reviewing your profile and will get in touch with you shortly.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #666;">TOPIQ Talent Test (TTT) 2026 Team</p>
-        </div>
-      `
-    };
-
-    if (email) {
-      transporter.sendMail(ownerWelcomeOptions).catch(err => {
-        console.error('BREVO FRANCHISE OWNER EMAIL FULL ERROR:', JSON.stringify(err, null, 2));
-      });
-    }
-    transporter.sendMail(adminMailOptions).catch(err => {
-      console.error('BREVO FRANCHISE ADMIN EMAIL FULL ERROR:', JSON.stringify(err, null, 2));
+      htmlContent: adminEmailHtml
     });
 
+    // Send franchise owner welcome email if provided
+    if (email) {
+      sendBrevoEmail({
+        toEmail: email,
+        toName: owner_name,
+        subject: `Franchise Enquiry Received – TTT 2026`,
+        htmlContent: ownerEmailHtml
+      });
+    }
+
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: 'This email is already registered for an enquiry.' });
+    }
     console.error('Franchise submission server error:', error);
     if (!res.headersSent) {
       res.status(500).json({ success: false, message: 'Server error while processing application.' });

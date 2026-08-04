@@ -1,12 +1,39 @@
 const express = require('express');
 const router = express.Router();
 const Student = require('../models/StudentModel');
-const SibApiV3Sdk = require('@getbrevo/brevo');
 
-// Initialize Brevo Transactional Email API via HTTPS (Bypasses Render port blocks)
-let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-let apiKey = apiInstance.authentications['apiKey'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
+// Helper function to send emails via Brevo REST API (HTTPS port 443 - never blocked on Render)
+async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.warn('BREVO_API_KEY is not set in environment variables.');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': apiKey
+      },
+      body: JSON.stringify({
+        sender: { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" },
+        to: [{ email: toEmail, name: toName || 'User' }],
+        subject: subject,
+        htmlContent: htmlContent
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Brevo API Error Response:', errText);
+    }
+  } catch (err) {
+    console.error('Brevo API Network Exception:', err.message);
+  }
+}
 
 router.post('/register', async (req, res) => {
   try {
@@ -26,61 +53,53 @@ router.post('/register', async (req, res) => {
     });
     await newStudent.save();
 
-    // 2. Instant response back to frontend for immediate dashboard redirection
+    // 2. Instant response back to frontend for immediate redirection
     res.status(201).json({ 
       success: true, 
       message: 'Student registered successfully!',
       token: 'sample_student_token_2026'
     });
 
-    // 3. Send emails via Brevo HTTPS API in the background
-    const senderInfo = { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" };
+    // 3. Fire background Brevo API calls (Admin + Student Welcome)
+    const adminEmailHtml = `
+      <h2>New Student Enrollment Received</h2>
+      <p><strong>Student Name:</strong> ${name}</p>
+      <p><strong>Class/Standard:</strong> ${studentClass}</p>
+      <p><strong>Phone:</strong> ${phone}</p>
+      <p><strong>Email:</strong> ${email || 'N/A'}</p>
+      <p><strong>Location:</strong> ${city || ''}, ${district}, ${state || ''} - ${pincode || ''}</p>
+    `;
 
-    // Admin Notification Email
-    const adminEmailData = {
-      sender: senderInfo,
-      to: [{ email: process.env.ADMIN_EMAIL || process.env.EMAIL_USER, name: "Admin" }],
+    const studentEmailHtml = `
+      <div style="font-family: Arial, sans-serif; color: #01295A; padding: 20px;">
+        <h2 style="color: #FE7C02;">Welcome to TOPIQ Talent Test (TTT) 2026!</h2>
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>Your student account for <strong>${studentClass}</strong> has been created successfully.</p>
+        <p>You can now log in to your dashboard, track your progress, and prepare for India's 100-Day MCQ Talent & Scholarship Challenge.</p>
+      </div>
+    `;
+
+    // Send admin notification
+    sendBrevoEmail({
+      toEmail: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+      toName: 'Admin',
       subject: `New TTT Student Registration: ${name} (${studentClass})`,
-      htmlContent: `
-        <h2>New Student Enrollment Received</h2>
-        <p><strong>Student Name:</strong> ${name}</p>
-        <p><strong>Class/Standard:</strong> ${studentClass}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Email:</strong> ${email || 'N/A'}</p>
-        <p><strong>Location:</strong> ${city || ''}, ${district}, ${state || ''} - ${pincode || ''}</p>
-      `
-    };
-
-    // Student Welcome Email
-    const studentEmailData = email ? {
-      sender: senderInfo,
-      to: [{ email: email, name: name }],
-      subject: `Welcome to TTT 2026 – Registration Successful!`,
-      htmlContent: `
-        <div style="font-family: Arial, sans-serif; color: #01295A; padding: 20px;">
-          <h2 style="color: #FE7C02;">Welcome to TOPIQ Talent Test (TTT) 2026!</h2>
-          <p>Hi <strong>${name}</strong>,</p>
-          <p>Your student account for <strong>${studentClass}</strong> has been created successfully.</p>
-          <p>You can now log in to your dashboard, track your progress, and prepare for India's 100-Day MCQ Talent & Scholarship Challenge.</p>
-        </div>
-      `
-    } : null;
-
-    // Dispatch background API calls
-    apiInstance.sendTransacEmail(adminEmailData).catch(err => {
-      console.error('BREVO API ADMIN ERROR:', err.response?.text || err.message);
+      htmlContent: adminEmailHtml
     });
 
-    if (studentEmailData) {
-      apiInstance.sendTransacEmail(studentEmailData).catch(err => {
-        console.error('BREVO API STUDENT ERROR:', err.response?.text || err.message);
+    // Send student welcome email if provided
+    if (email) {
+      sendBrevoEmail({
+        toEmail: email,
+        toName: name,
+        subject: `Welcome to TTT 2026 – Registration Successful!`,
+        htmlContent: studentEmailHtml
       });
     }
 
   } catch (error) {
-    // Gracefully handle duplicate email signups
     if (error.code === 11000) {
-      return res.status(400).json({ success: false, message: 'This email is already registered.' });
+      return res.status(400).json({ success: false, message: 'This email is already registered. Please log in.' });
     }
     console.error('Student registration server error:', error);
     if (!res.headersSent) {
