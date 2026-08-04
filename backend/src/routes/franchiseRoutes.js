@@ -2,39 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Franchise = require('../models/FranchiseModel');
 
-// Helper function to send emails via Brevo REST API (HTTPS port 443 - never blocked on Render)
-async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    console.warn('BREVO_API_KEY is not set in environment variables.');
-    return;
-  }
-
-  try {
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': apiKey
-      },
-      body: JSON.stringify({
-        sender: { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" },
-        to: [{ email: toEmail, name: toName || 'User' }],
-        subject: subject,
-        htmlContent: htmlContent
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('Brevo Franchise API Error Response:', errText);
-    }
-  } catch (err) {
-    console.error('Brevo Franchise API Network Exception:', err.message);
-  }
-}
-
 router.post('/enquire', async (req, res) => {
   try {
     const { 
@@ -61,7 +28,10 @@ router.post('/enquire', async (req, res) => {
       message: 'Franchise application submitted successfully!' 
     });
 
-    // 3. Fire background Brevo API calls (Admin Lead Notification + Owner Welcome)
+    // 3. Fire background Brevo HTTPS API calls (No SMTP ports used, completely timeout-proof)
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) return;
+
     const adminEmailHtml = `
       <h2>New Franchise Enquiry Received</h2>
       <p><strong>Owner Name:</strong> ${owner_name}</p>
@@ -85,22 +55,33 @@ router.post('/enquire', async (req, res) => {
       </div>
     `;
 
-    // Send admin notification
-    sendBrevoEmail({
-      toEmail: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-      toName: 'Admin',
-      subject: `New Franchise Application from ${owner_name} (${city || district})`,
-      htmlContent: adminEmailHtml
-    });
+    const sendEmail = async (toEmail, toName, subject, htmlContent) => {
+      try {
+        await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'api-key': apiKey
+          },
+          body: JSON.stringify({
+            sender: { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" },
+            to: [{ email: toEmail, name: toName || 'User' }],
+            subject: subject,
+            htmlContent: htmlContent
+          })
+        });
+      } catch (err) {
+        console.error('Brevo REST API Exception:', err.message);
+      }
+    };
 
-    // Send franchise owner welcome email if provided
+    // Send admin notification
+    sendEmail(process.env.ADMIN_EMAIL || process.env.EMAIL_USER, 'Admin', `New Franchise Application from ${owner_name} (${city || district})`, adminEmailHtml);
+
+    // Send owner welcome email
     if (email) {
-      sendBrevoEmail({
-        toEmail: email,
-        toName: owner_name,
-        subject: `Franchise Enquiry Received – TTT 2026`,
-        htmlContent: ownerEmailHtml
-      });
+      sendEmail(email, owner_name, `Franchise Enquiry Received – TTT 2026`, ownerEmailHtml);
     }
 
   } catch (error) {
