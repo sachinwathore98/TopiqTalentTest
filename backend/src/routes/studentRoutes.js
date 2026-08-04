@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
       token: 'sample_student_token_2026'
     });
 
-    // 3. Background dispatch via Brevo (Admin Notification + Student Welcome Mail)
+    // 3. Background dispatch via Brevo (Admin Notification + Student Welcome Mail) with full diagnostic logging
     const adminMailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
@@ -69,9 +69,13 @@ router.post('/register', async (req, res) => {
     };
 
     if (email) {
-      transporter.sendMail(studentWelcomeOptions).catch(err => console.error('Brevo student email error:', err));
+      transporter.sendMail(studentWelcomeOptions).catch(err => {
+        console.error('BREVO STUDENT EMAIL FULL ERROR:', JSON.stringify(err, null, 2));
+      });
     }
-    transporter.sendMail(adminMailOptions).catch(err => console.error('Brevo admin email error:', err));
+    transporter.sendMail(adminMailOptions).catch(err => {
+      console.error('BREVO ADMIN EMAIL FULL ERROR:', JSON.stringify(err, null, 2));
+    });
 
   } catch (error) {
     console.error('Student registration server error:', error);
