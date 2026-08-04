@@ -17,18 +17,26 @@ const transporter = nodemailer.createTransport({
 router.post('/register', async (req, res) => {
   try {
     const { 
-      student_name, email, phone, class_standard, 
-      city, district, school_name 
+      name, phone, email, studentClass, 
+      pincode, city, district, state, password 
     } = req.body;
 
-    if (!student_name || !phone || !class_standard || !district) {
+    // Validate required fields matching the frontend form state
+    if (!name || !phone || !studentClass || !district) {
       return res.status(400).json({ success: false, message: 'Missing required student details.' });
     }
 
     // 1. Save Student to MongoDB Atlas Database
     const newStudent = new Student({
-      student_name, email, phone, class_standard, 
-      city, district, school_name
+      name,
+      phone,
+      email,
+      studentClass,
+      pincode,
+      city,
+      district,
+      state,
+      password // Note: In production, hash this password with bcrypt if using login authentications
     });
     await newStudent.save();
 
@@ -36,22 +44,25 @@ router.post('/register', async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-      subject: `New TTT Student Registration: ${student_name} (Class ${class_standard})`,
+      subject: `New TTT Student Registration: ${name} (${studentClass})`,
       html: `
         <h2>New Student Enrollment Received</h2>
-        <p><strong>Student Name:</strong> ${student_name}</p>
-        <p><strong>Class/Standard:</strong> ${class_standard}</p>
+        <p><strong>Student Name:</strong> ${name}</p>
+        <p><strong>Class/Standard:</strong> ${studentClass}</p>
         <p><strong>Phone:</strong> ${phone}</p>
         <p><strong>Email:</strong> ${email || 'N/A'}</p>
-        <p><strong>Location:</strong> ${city}, ${district}</p>
-        <p><strong>School Name:</strong> ${school_name || 'N/A'}</p>
+        <p><strong>Location:</strong> ${city}, ${district}, ${state} - ${pincode}</p>
       `
     };
 
     await transporter.sendMail(mailOptions);
     console.log('Student registration notification email sent successfully!');
 
-    res.status(201).json({ success: true, message: 'Student registered successfully!' });
+    res.status(201).json({ 
+      success: true, 
+      message: 'Student registered successfully!',
+      token: 'sample_student_token_2026' // Matches frontend localStorage expectation
+    });
   } catch (error) {
     console.error('Student registration server error:', error);
     res.status(500).json({ success: false, message: 'Server error while processing student registration.' });
