@@ -19,7 +19,7 @@ async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) {
         'api-key': apiKey
       },
       body: JSON.stringify({
-        sender: { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" },
+        sender: { email: "contact@send.brevo.com", name: "TOPIQ Talent Test (TTT)" },
         to: [{ email: toEmail, name: toName || 'User' }],
         subject: subject,
         htmlContent: htmlContent
