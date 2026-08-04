@@ -3,10 +3,11 @@ const router = express.Router();
 const Franchise = require('../models/FranchiseModel');
 const nodemailer = require('nodemailer');
 
+// Configure Nodemailer transporter using Brevo SMTP
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
   port: Number(process.env.SMTP_PORT) || 587,
-  secure: false,
+  secure: false, 
   auth: {
     user: process.env.EMAIL_USER, 
     pass: process.env.EMAIL_PASS  
@@ -21,6 +22,11 @@ router.post('/enquire', async (req, res) => {
       investment_capacity, preferred_location, requirements 
     } = req.body;
 
+    if (!owner_name || !phone || !district) {
+      return res.status(400).json({ success: false, message: 'Missing required franchise details.' });
+    }
+
+    // 1. Save Franchise Enquiry to MongoDB Atlas Database instantly
     const newFranchise = new Franchise({
       owner_name, phone, email, pincode, 
       city, district, state, current_business, 
@@ -28,39 +34,54 @@ router.post('/enquire', async (req, res) => {
     });
     await newFranchise.save();
 
-    res.status(201).json({ success: true, message: 'Franchise application submitted successfully!' });
+    // 2. Instant response back to frontend so submission succeeds immediately
+    res.status(201).json({ 
+      success: true, 
+      message: 'Franchise application submitted successfully!' 
+    });
 
-    const adminMail = {
+    // 3. Background dispatch via Brevo (Admin Notification + Owner Welcome Mail) with full diagnostic logging
+    const adminMailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-      subject: `New Franchise Application from ${owner_name} (${city})`,
+      subject: `New Franchise Application from ${owner_name} (${city || district})`,
       html: `
         <h2>New Franchise Enquiry Received</h2>
         <p><strong>Owner Name:</strong> ${owner_name}</p>
         <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Location:</strong> ${preferred_location}, ${city}, ${district}, ${state} - ${pincode}</p>
-        <p><strong>Investment Capacity:</strong> ${investment_capacity}</p>
+        <p><strong>Email:</strong> ${email || 'N/A'}</p>
+        <p><strong>Preferred Location:</strong> ${preferred_location || 'N/A'}</p>
+        <p><strong>City / District / State:</strong> ${city || ''}, ${district}, ${state || ''} - ${pincode || ''}</p>
+        <p><strong>Current Business:</strong> ${current_business || 'N/A'}</p>
+        <p><strong>Investment Capacity:</strong> ${investment_capacity || 'N/A'}</p>
+        <p><strong>Requirements/Queries:</strong> ${requirements || 'N/A'}</p>
       `
     };
 
-    const ownerWelcome = {
+    const ownerWelcomeOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: `Franchise Enquiry Received - TTT 2026`,
+      subject: `Franchise Enquiry Received – TTT 2026`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #01295A; padding: 20px;">
           <h2 style="color: #FE7C02;">Thank You for Your Franchise Interest!</h2>
           <p>Dear <strong>${owner_name}</strong>,</p>
-          <p>We have received your franchise application for <strong>${city}, ${district}</strong>. Our business development team will review your application and get in touch with you shortly.</p>
+          <p>We have successfully received your franchise application for <strong>${city || district}</strong>.</p>
+          <p>Our business development team is reviewing your profile and will get in touch with you shortly.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #666;">TOPIQ Talent Test (TTT) 2026 Team</p>
         </div>
       `
     };
 
     if (email) {
-      transporter.sendMail(ownerWelcome).catch(err => console.error('Brevo franchise owner email error:', err));
+      transporter.sendMail(ownerWelcomeOptions).catch(err => {
+        console.error('BREVO FRANCHISE OWNER EMAIL FULL ERROR:', JSON.stringify(err, null, 2));
+      });
     }
-    transporter.sendMail(adminMail).catch(err => console.error('Brevo franchise admin email error:', err));
+    transporter.sendMail(adminMailOptions).catch(err => {
+      console.error('BREVO FRANCHISE ADMIN EMAIL FULL ERROR:', JSON.stringify(err, null, 2));
+    });
 
   } catch (error) {
     console.error('Franchise submission server error:', error);

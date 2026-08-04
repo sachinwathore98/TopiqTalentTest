@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-// Import Route Handlers from src/routes
-const authRoutes = require('./routes/authRoutes');
+// Import Route Handlers
 const studentRoutes = require('./routes/studentRoutes');
 const franchiseRoutes = require('./routes/franchiseRoutes');
 
@@ -23,7 +22,6 @@ app.use(cors({
 app.use(express.json());
 
 // API Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/franchise', franchiseRoutes);
 
@@ -32,12 +30,12 @@ app.get('/', (req, res) => {
   res.status(200).json({ 
     success: true, 
     message: 'TOPIQ Talent Test (TTT) API Server is live and running (2026)',
-    activeEnvironment: 'Production / Development'
+    activeEnvironment: 'Production / Brevo SMTP Enabled'
   });
 });
 
 // MongoDB Database Connection & Server Initialization
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://admin_user:Topiq%40123@cluster0.xxxxx.mongodb.net/topiq_ttt?retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI)
   .then(() => {
