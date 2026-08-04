@@ -55,6 +55,14 @@ export default function HeroSection({ onOpenStudentModal }) {
             >
               <span>Franchise Enquiry</span>
             </Link>
+
+            {/* DEMO EXAM BUTTON - NAVIGATES TO /format LANDING PAGE */}
+            <Link
+              href="/format"
+              className="bg-white hover:bg-slate-100 active:scale-95 text-[#01295A] border-2 border-[#01295A] px-7 py-4 rounded-2xl font-black text-base hover:scale-[1.02] transition-all duration-300 shadow-md flex items-center gap-2"
+            >
+              <span>Demo Exam</span>
+            </Link>
           </div>
 
         </div>
