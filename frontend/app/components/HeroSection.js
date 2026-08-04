@@ -37,12 +37,12 @@ export default function HeroSection({ onOpenStudentModal }) {
           </p>
 
           {/* ACTION BUTTONS */}
-          <div className="flex flex-wrap items-center gap-4 pt-3 animate-zoom-in delay-200">
+          <div className="flex flex-wrap items-center gap-3 pt-3 animate-zoom-in delay-200">
             {/* ENROLL BUTTON - OPENS REGISTRATION MODAL */}
             <button
               type="button"
               onClick={onOpenStudentModal}
-              className="bg-[#FE7C02] hover:bg-[#E06B00] active:scale-95 text-white px-8 py-4 rounded-2xl font-black text-base hover:scale-[1.03] transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-[#FE7C02]/25 flex items-center gap-2.5 cursor-pointer"
+              className="bg-[#FE7C02] hover:bg-[#E06B00] active:scale-95 text-white px-6 py-4 rounded-2xl font-black text-sm sm:text-base hover:scale-[1.03] transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-[#FE7C02]/25 flex items-center gap-2 cursor-pointer"
             >
               <span>Enroll for TTT 2026</span>
               <ArrowRight className="w-5 h-5 text-white" />
@@ -51,7 +51,7 @@ export default function HeroSection({ onOpenStudentModal }) {
             {/* FRANCHISE BUTTON - NAVIGATES TO /franchise LANDING PAGE */}
             <Link
               href="/franchise"
-              className="bg-[#01295A] hover:bg-[#001736] active:scale-95 text-white px-8 py-4 rounded-2xl font-black text-base hover:scale-[1.02] transition-all duration-300 shadow-md flex items-center gap-2"
+              className="bg-[#01295A] hover:bg-[#001736] active:scale-95 text-white px-6 py-4 rounded-2xl font-black text-sm sm:text-base hover:scale-[1.02] transition-all duration-300 shadow-md flex items-center gap-2"
             >
               <span>Franchise Enquiry</span>
             </Link>
@@ -59,7 +59,7 @@ export default function HeroSection({ onOpenStudentModal }) {
             {/* DEMO EXAM BUTTON - NAVIGATES TO /format LANDING PAGE */}
             <Link
               href="/format"
-              className="bg-white hover:bg-slate-100 active:scale-95 text-[#01295A] border-2 border-[#01295A] px-7 py-4 rounded-2xl font-black text-base hover:scale-[1.02] transition-all duration-300 shadow-md flex items-center gap-2"
+              className="bg-white hover:bg-slate-100 active:scale-95 text-[#01295A] border-2 border-[#01295A] px-6 py-4 rounded-2xl font-black text-sm sm:text-base hover:scale-[1.02] transition-all duration-300 shadow-md flex items-center gap-2"
             >
               <span>Demo Exam</span>
             </Link>
