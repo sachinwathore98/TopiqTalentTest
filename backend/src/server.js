@@ -4,9 +4,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 // Import Route Handlers from src/routes
-const authRoutes = require('./src/routes/authRoutes');
-const studentRoutes = require('./src/routes/studentRoutes');
-const franchiseRoutes = require('./src/routes/franchiseRoutes');
+const authRoutes = require('./routes/authRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const franchiseRoutes = require('./routes/franchiseRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
