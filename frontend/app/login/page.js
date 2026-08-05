@@ -16,16 +16,17 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      // Hardcoded live Render backend URL to bypass environment variable issues
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+      // Dynamically read environment variable with a safe fallback and auto-sanitize trailing /api or /
+      let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+      const cleanBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
-const response = await fetch(`${apiUrl}/api/users/login`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ email, password }),
-});
+      const response = await fetch(`${cleanBaseUrl}/api/users/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
       const data = await response.json();
 
