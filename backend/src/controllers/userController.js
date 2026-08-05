@@ -1,4 +1,4 @@
-const MultiRoleUser = require('./MultiRoleUserModel');
+const MultiRoleUser = require('../models/MultiRoleUserModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
