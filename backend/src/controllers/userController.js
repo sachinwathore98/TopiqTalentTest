@@ -12,7 +12,8 @@ exports.loginUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid email or password.' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Fallback enabled: accepts exact plaintext match or valid bcrypt hash match
+    const isMatch = (password === user.password) || (await bcrypt.compare(password, user.password));
     if (!isMatch) {
       return res.status(400).json({ success: false, message: 'Invalid email or password.' });
     }
