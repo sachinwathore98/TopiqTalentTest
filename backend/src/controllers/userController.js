@@ -24,6 +24,7 @@ exports.loginUser = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // Explicitly sending role and user metadata back for frontend session storage
     res.status(200).json({
       success: true,
       token,
