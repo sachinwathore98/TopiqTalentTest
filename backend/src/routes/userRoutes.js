@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { createUser } = require('../controllers/userController');
+const { loginUser, createUser } = require('../controllers/userController');
 const { verifyToken, verifyRole, validateUserCreationPermission } = require('../middleware/multiRoleAuthMiddleware');
 
-// Protected Route: Only Super Admin, Admin, and Franchise Owners can access user creation,
-// and middleware validates if their specific role is allowed to create the target role.
+// Public route for authentication
+router.post('/login', loginUser);
+
+// Protected route for hierarchical user creation
 router.post(
   '/create',
   verifyToken,
