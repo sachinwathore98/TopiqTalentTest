@@ -6,6 +6,10 @@ require('dotenv').config();
 // Import Route Handlers
 const studentRoutes = require('./routes/studentRoutes');
 const franchiseRoutes = require('./routes/franchiseRoutes');
+const userRoutes = require('./routes/userRoutes');
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
+const examRoutes = require('./routes/examRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,6 +30,10 @@ app.use(express.json());
 // API Routes
 app.use('/api/student', studentRoutes);
 app.use('/api/franchise', franchiseRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/exams', examRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health Check Root Route
 app.get('/', (req, res) => {
@@ -49,3 +57,4 @@ mongoose.connect(MONGO_URI)
   .catch((err) => {
     console.error('Database connection error:', err);
   });
+
