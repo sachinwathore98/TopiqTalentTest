@@ -1,154 +1,222 @@
 'use client';
-import React, { useState } from 'react';
-import { Users, Building, Wallet, Award, Download, Copy, CheckCircle2, TrendingUp, Sparkles, Phone, Mail } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function FranchiseDashboard() {
-  const [copied, setCopied] = useState(false);
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('leaderboard');
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [scope, setScope] = useState('franchise');
+  const [loading, setLoading] = useState(false);
+  const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '' });
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // Mock franchise branch data
-  const branchInfo = {
-    branchName: 'Ch. Sambhajinagar Main Branch',
-    branchCode: 'CSN-01',
-    ownerName: 'SW Digital Hub / Partner',
-    territory: 'Ulkanagri, Chhatrapati Sambhajinagar',
-    totalRegistrations: 1420,
-    targetRegistrations: 3000,
-    revenueSharePercentage: '40%',
-    totalEarnings: '₹2,84,000',
-    referralLink: 'https://topiqtalenttest.com/register?ref=CSN-01'
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (!token || !['super_admin', 'admin', 'franchise_owner'].includes(role)) {
+      router.push('/login');
+      return;
+    }
+    fetchLeaderboard(scope);
+  }, [scope, router]);
+
+  const fetchLeaderboard = async (selectedScope) => {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/leaderboard?scope=${selectedScope}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setLeaderboard(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching leaderboard:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const branchStudents = [
-    { id: 1, name: 'Atharva Joshi', phone: '9855667788', class: 'Class 10', date: 'August 2, 2026', status: 'Paid & Confirmed' },
-    { id: 2, name: 'Tanvi Kulkarni', phone: '9123456789', class: 'Class 8', date: 'August 1, 2026', status: 'Paid & Confirmed' },
-    { id: 3, name: 'Rohan Patil', phone: '9988776655', class: 'Class 12', date: 'July 30, 2026', status: 'Free Explorer' }
-  ];
+  const handleCreateStudent = async (e) => {
+    e.preventDefault();
+    setSuccessMsg('');
+    setErrorMsg('');
+    const token = localStorage.getItem('token');
+    const franchiseId = localStorage.getItem('franchiseId');
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(branchInfo.referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/users/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...studentForm,
+          targetRole: 'student',
+          franchiseId: franchiseId || null
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to enroll student.');
+
+      setSuccessMsg(`Student ${studentForm.name} enrolled successfully!`);
+      setStudentForm({ name: '', email: '', password: '' });
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-[#01295A] py-10 px-4 md:px-6">
-      <div className="max-w-7xl mx-auto space-y-10">
-        
-        {/* HEADER & BRANCH CARD */}
-        <div className="bg-[#01295A] text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 border border-[#FE7C02]/30">
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#FE7C02]/10 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div className="space-y-3 relative z-10">
-            <div className="inline-flex items-center gap-2 bg-[#FE7C02]/20 border border-[#FE7C02]/40 px-4 py-1.5 rounded-full text-[#FE7C02] text-xs font-black uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Franchise Partner Portal • Code: {branchInfo.branchCode}</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-black">{branchInfo.branchName}</h1>
-            <p className="text-xs md:text-sm text-slate-300 font-medium">
-              Territory: <span className="text-white font-bold">{branchInfo.territory}</span>
-            </p>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-[#01295A]">Franchise Owner Dashboard</h1>
+            <p className="text-xs text-gray-500">Manage local student enrollments, regional performance, and leaderboards</p>
           </div>
+          <button
+            onClick={() => { localStorage.clear(); router.push('/login'); }}
+            className="text-xs px-3 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition"
+          >
+            Logout
+          </button>
+        </div>
 
-          {/* REFERRAL LINK BOX */}
-          <div className="bg-white/10 border border-white/20 p-5 rounded-2xl backdrop-blur-md relative z-10 w-full md:w-auto space-y-2">
-            <div className="text-xs text-slate-300 font-bold uppercase">Your Branch Referral Link</div>
-            <div className="flex items-center gap-2 bg-black/30 p-2 rounded-xl border border-white/10 font-mono text-xs">
-              <span className="text-[#FE7C02] truncate max-w-[220px]">{branchInfo.referralLink}</span>
-              <button 
-                onClick={handleCopyLink}
-                className="bg-[#FE7C02] hover:bg-[#E06B00] text-white px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer shrink-0 flex items-center gap-1"
+        {/* Navigation Tabs */}
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={() => setActiveTab('leaderboard')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+              activeTab === 'leaderboard' ? 'bg-[#01295A] text-white shadow' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Rankings & Leaderboard
+          </button>
+          <button
+            onClick={() => setActiveTab('admissions')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+              activeTab === 'admissions' ? 'bg-[#01295A] text-white shadow' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Offline Student Admissions
+          </button>
+        </div>
+
+        {/* Tab Content: Leaderboard */}
+        {activeTab === 'leaderboard' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+              <h2 className="text-base font-bold text-[#01295A]">Performance Leaderboard</h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase">Scope:</span>
+                <select
+                  value={scope}
+                  onChange={(e) => setScope(e.target.value)}
+                  className="px-3 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#01295A]"
+                >
+                  <option value="franchise">Franchise-wise</option>
+                  <option value="city">City-wise</option>
+                  <option value="district">District-wise</option>
+                  <option value="state">Maharashtra-wide</option>
+                </select>
+              </div>
+            </div>
+
+            {loading ? (
+              <p className="text-sm text-gray-500 text-center py-6">Loading leaderboard...</p>
+            ) : leaderboard.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-6">No ranking records found for this scope yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-gray-700">
+                  <thead className="bg-gray-50 text-xs uppercase text-gray-500 border-b">
+                    <tr>
+                      <th className="py-3 px-4">Rank</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">Score</th>
+                      <th className="py-3 px-4">Accuracy</th>
+                      <th className="py-3 px-4">Correct / Wrong</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.map((item, idx) => (
+                      <tr key={idx} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 font-bold text-[#01295A]">#{item.rank || idx + 1}</td>
+                        <td className="py-3 px-4 font-medium">{item.student?.name || item.name}</td>
+                        <td className="py-3 px-4 font-bold text-green-600">{item.score} Marks</td>
+                        <td className="py-3 px-4">{item.accuracy ? `${item.accuracy}%` : 'N/A'}</td>
+                        <td className="py-3 px-4 text-gray-500">{item.correctCount !== undefined ? `${item.correctCount} / ${item.wrongCount}` : 'Detailed view'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab Content: Offline Admissions */}
+        {activeTab === 'admissions' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8 max-w-xl">
+            <h2 className="text-base font-bold text-[#01295A] mb-4">Enroll Local Student</h2>
+            <p className="text-xs text-gray-500 mb-6">Create secure portal credentials for offline student enrollments under your franchise.</p>
+
+            {successMsg && <div className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">{successMsg}</div>}
+            {errorMsg && <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">{errorMsg}</div>}
+
+            <form onSubmit={handleCreateStudent} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Student Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={studentForm.name}
+                  onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
+                  placeholder="Enter student name"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-[#01295A] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={studentForm.email}
+                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                  placeholder="Enter student email"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-[#01295A] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Temporary Password</label>
+                <input
+                  type="password"
+                  required
+                  value={studentForm.password}
+                  onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })}
+                  placeholder="Set initial password"
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-[#01295A] focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-[#01295A] text-white text-sm font-medium rounded-lg hover:bg-blue-900 transition shadow-md mt-4"
               >
-                {copied ? <CheckCircle2 className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
+                Enroll Student Account
               </button>
-            </div>
+            </form>
           </div>
-        </div>
-
-        {/* METRICS & REVENUE SHARE CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-            <div className="w-12 h-12 bg-orange-50 text-[#FE7C02] rounded-2xl flex items-center justify-center">
-              <Users className="w-6 h-6" />
-            </div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Branch Registrations</div>
-            <div className="text-3xl font-black text-[#01295A]">{branchInfo.totalRegistrations} <span className="text-sm font-semibold text-slate-500">/ {branchInfo.targetRegistrations} target</span></div>
-            {/* PROGRESS BAR */}
-            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-              <div className="bg-[#FE7C02] h-full rounded-full" style={{ width: `${(branchInfo.totalRegistrations / branchInfo.targetRegistrations) * 100}%` }}></div>
-            </div>
-            <div className="text-[11px] text-slate-500 font-bold">Territory allotment threshold in progress</div>
-          </div>
-
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
-              <Wallet className="w-6 h-6" />
-            </div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Revenue Share Earned ({branchInfo.revenueSharePercentage})</div>
-            <div className="text-3xl font-black text-emerald-600">{branchInfo.totalEarnings}</div>
-            <div className="text-xs text-slate-500 font-bold">Disbursed directly to branch account</div>
-          </div>
-
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Company HR Sponsorship</div>
-            <div className="text-xl font-black text-[#01295A] mt-1">4 Salaries Sponsored</div>
-            <div className="text-xs text-indigo-600 font-bold">1 Manager + 2 Telesales + 1 Receptionist</div>
-          </div>
-
-        </div>
-
-        {/* BRANCH STUDENT ADMISSIONS TABLE */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 md:p-8 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <span className="text-xs font-black text-[#FE7C02] uppercase tracking-widest">📋 RECENT ENROLLMENTS</span>
-              <h2 className="text-xl font-black text-[#01295A] mt-0.5">Branch Student Admissions</h2>
-            </div>
-            <button 
-              onClick={() => alert('Exporting branch student roster to CSV...')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold bg-slate-100 text-slate-700 px-4 py-2 rounded-xl hover:bg-slate-200 transition cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-[#FE7C02]" />
-              <span>Export Roster</span>
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-black uppercase text-slate-400">
-                  <th className="py-3 px-4">Student Name</th>
-                  <th className="py-3 px-4">Mobile Number</th>
-                  <th className="py-3 px-4">Class</th>
-                  <th className="py-3 px-4">Registration Date</th>
-                  <th className="py-3 px-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                {branchStudents.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50 transition">
-                    <td className="py-4 px-4 font-black text-[#01295A]">{s.name}</td>
-                    <td className="py-4 px-4 font-mono">{s.phone}</td>
-                    <td className="py-4 px-4">{s.class}</td>
-                    <td className="py-4 px-4 text-slate-500">{s.date}</td>
-                    <td className="py-4 px-4">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase inline-flex items-center gap-1 ${
-                        s.status.includes('Paid') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {s.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+        )}
       </div>
     </div>
   );
