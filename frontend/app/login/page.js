@@ -16,7 +16,10 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/users/login`, {
+      // Hardcoded live Render backend URL to bypass environment variable issues
+      const backendUrl = 'https://topiq-backend.onrender.com';
+      
+      const response = await fetch(`${backendUrl}/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
