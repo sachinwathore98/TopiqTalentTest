@@ -17,7 +17,7 @@ export default function LoginPage() {
 
     try {
       // Hardcoded live Render backend URL to bypass environment variable issues
-      const backendUrl = 'https://topiq-backend.onrender.com';
+      const backendUrl = 'https://topiq-talent-test.onrender.com';
       
       const response = await fetch(`${backendUrl}/api/users/login`, {
         method: 'POST',
