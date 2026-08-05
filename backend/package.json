@@ -22,10 +22,5 @@
     "mongoose": "^9.9.1",
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0"
-  },
-  "dependencies": {
-    "next": "latest",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
   }
 }
