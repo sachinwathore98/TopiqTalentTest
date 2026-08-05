@@ -22,4 +22,5 @@ const multiRoleUserSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('MultiRoleUser', multiRoleUserSchema);
+// Explicitly forcing the third argument ('multiroleusers') ensures your model maps to the correct database collection
+module.exports = mongoose.model('MultiRoleUser', multiRoleUserSchema, 'multiroleusers');
