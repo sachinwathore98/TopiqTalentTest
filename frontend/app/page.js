@@ -14,8 +14,14 @@ import StudentRegisterModal from './components/StudentRegisterModal';
 export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  // Correct paths for assets inside the public folder
-  const banners = ['/1.jpg', '/2.jpg', '/3.jpg', '/4.jpg'];
+  // Correct path pointing to your banners folder inside public
+  const banners = [
+    '/banners/1.png',
+    '/banners/2.png',
+    '/banners/3.png',
+    '/banners/4.png'
+  ];
+  
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   // Auto-slide effect every 4 seconds
@@ -33,7 +39,7 @@ export default function HomePage() {
   return (
     <div className="space-y-0 animate-fade-in overflow-hidden pb-0 bg-white text-[#01295A]">
       
-      {/* 1. DYNAMIC 4-PHOTO BANNER SLIDER (Zero gap, natural image proportions) */}
+      {/* 1. DYNAMIC 4-PHOTO BANNER SLIDER (Zero gap, exact image sizing) */}
       <section className="w-full bg-black m-0 p-0 leading-none">
         <div className="w-full relative m-0 p-0 overflow-hidden">
           {banners.map((banner, index) => (
