@@ -14,11 +14,11 @@ import StudentRegisterModal from './components/StudentRegisterModal';
 export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  // Banner slider state for your 4 photos
-  const banners = ['public/1.jpg', 'public/2.jpg', 'public/3.jpg', 'public/4.jpg'];
+  // Correct paths for assets inside the public folder
+  const banners = ['/1.jpg', '/2.jpg', '/3.jpg', '/4.jpg'];
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
-  // Auto-slide effect every 4 seconds for your 4 photos
+  // Auto-slide effect every 4 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBannerIndex((prevIndex) => (prevIndex + 1) % banners.length);
@@ -33,42 +33,43 @@ export default function HomePage() {
   return (
     <div className="space-y-0 animate-fade-in overflow-hidden pb-0 bg-white text-[#01295A]">
       
-      {/* 1. HERO BANNER & DAILY EXAM TIMER */}
-      <section id="hero" className="scroll-mt-20 my-0 py-0">
-        <HeroSection onOpenStudentModal={handleOpenRegister} />
-      </section>
-
-      {/* 2. DYNAMIC 4-PHOTO BANNER SLIDER */}
-      <section className="w-full bg-gray-900 py-4 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto relative h-[250px] sm:h-[400px] lg:h-[450px] rounded-2xl overflow-hidden shadow-xl border border-gray-100">
+      {/* 1. DYNAMIC 4-PHOTO BANNER SLIDER (Zero gap, natural image proportions) */}
+      <section className="w-full bg-black m-0 p-0 leading-none">
+        <div className="w-full relative m-0 p-0 overflow-hidden">
           {banners.map((banner, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              className={`w-full transition-opacity duration-1000 ease-in-out ${
+                index === currentBannerIndex ? 'opacity-100 relative z-10 block' : 'opacity-0 absolute inset-0 z-0 hidden'
               }`}
             >
               <img
                 src={banner}
                 alt={`TOPIQ Banner ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-auto object-contain block m-0 p-0"
               />
             </div>
           ))}
-          {/* Indicator Dots */}
-          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
+          
+          {/* Indicator Dots Overlay */}
+          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2 pointer-events-auto">
             {banners.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentBannerIndex(index)}
-                className={`h-2.5 rounded-full transition-all ${
-                  index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50 w-2.5'
+                className={`h-2 rounded-full transition-all shadow-md ${
+                  index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50 w-2'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
         </div>
+      </section>
+
+      {/* 2. HERO BANNER & DAILY EXAM TIMER */}
+      <section id="hero" className="scroll-mt-20 my-0 py-0">
+        <HeroSection onOpenStudentModal={handleOpenRegister} />
       </section>
 
       {/* 3. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
