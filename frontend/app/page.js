@@ -15,7 +15,7 @@ export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   // Banner slider state for your 4 photos
-  const banners = ['/1.jpg', '/2.jpg', '/3.jpg', '/4.jpg'];
+  const banners = ['public/1.jpg', 'public/2.jpg', 'public/3.jpg', 'public/4.jpg'];
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   // Auto-slide effect every 4 seconds for your 4 photos
