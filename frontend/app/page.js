@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import HeroSection from './components/HeroSection';
 import BrandingMarqueeBanner from './components/BrandingMarqueeBanner';
 import AboutSection from './components/AboutSection';
@@ -14,6 +14,18 @@ import StudentRegisterModal from './components/StudentRegisterModal';
 export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
+  // Banner slider state for your 4 photos
+  const banners = ['/1.jpg', '/2.jpg', '/3.jpg', '/4.jpg'];
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  // Auto-slide effect every 4 seconds for your 4 photos
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBannerIndex((prevIndex) => (prevIndex + 1) % banners.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
+
   const handleOpenRegister = () => {
     setIsRegisterOpen(true);
   };
@@ -26,14 +38,46 @@ export default function HomePage() {
         <HeroSection onOpenStudentModal={handleOpenRegister} />
       </section>
 
-      {/* 2. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
+      {/* 2. DYNAMIC 4-PHOTO BANNER SLIDER */}
+      <section className="w-full bg-gray-900 py-4 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto relative h-[250px] sm:h-[400px] lg:h-[450px] rounded-2xl overflow-hidden shadow-xl border border-gray-100">
+          {banners.map((banner, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                index === currentBannerIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+            >
+              <img
+                src={banner}
+                alt={`TOPIQ Banner ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+          {/* Indicator Dots */}
+          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2">
+            {banners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentBannerIndex(index)}
+                className={`h-2.5 rounded-full transition-all ${
+                  index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50 w-2.5'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
       <BrandingMarqueeBanner onOpenStudentModal={handleOpenRegister} />
 
-      {/* 3. ABOUT TOPIQ TALENT TEST */}
+      {/* 4. ABOUT TOPIQ TALENT TEST */}
       <section id="about" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AboutSection />
       </section>
-
 
       {/* 5. LEARNING GROUPS */}
       <section id="groups" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
