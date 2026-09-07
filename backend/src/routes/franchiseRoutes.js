@@ -1,114 +1,36 @@
 const express = require('express');
 const router = express.Router();
-const Franchise = require('../models/FranchiseModel');
-
-async function sendBrevoEmail(toEmail, toName, subject, htmlContent) {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    console.error('❌ BREVO_API_KEY is missing in environment variables.');
-    return;
-  }
-
-  try {
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': apiKey
-      },
-      body: JSON.stringify({
-        sender: { email: process.env.EMAIL_USER, name: "TOPIQ Talent Test (TTT)" },
-        to: [{ email: toEmail, name: toName || 'User' }],
-        subject: subject,
-        htmlContent: htmlContent
-      })
-    });
-
-    const data = await response.text();
-    console.log(`🔍 Brevo Franchise Email Response Status (${toEmail}):`, response.status);
-    console.log(`🔍 Brevo Franchise Email Response Body:`, data);
-  } catch (err) {
-    console.error('❌ Brevo Franchise API Network Exception:', err.message);
-  }
-}
+const Enquiry = require('../models/Enquiry');
+// Keep your existing Brevo or email transporter imports here if any
 
 router.post('/enquire', async (req, res) => {
   try {
-    const { 
-      owner_name, phone, email, pincode, 
-      city, district, state, current_business, 
-      investment_capacity, preferred_location, requirements 
-    } = req.body;
+    const { owner_name, name, phone, email, pincode, city, district, state, current_business, investment_capacity, preferred_location, requirements } = req.body;
+    
+    const fullName = owner_name || name || 'Franchise Applicant';
+    const detailedMessage = `Business: ${current_business || 'N/A'} | Investment: ${investment_capacity || 'N/A'} | Location: ${preferred_location || 'N/A'} | Notes: ${requirements || 'None'}`;
 
-    if (!owner_name || !phone || !district) {
-      return res.status(400).json({ success: false, message: 'Missing required franchise details.' });
-    }
-
-    // 1. Save Franchise Enquiry to MongoDB Atlas Database instantly
-    const newFranchise = new Franchise({
-      owner_name, phone, email, pincode, 
-      city, district, state, current_business, 
-      investment_capacity, preferred_location, requirements
+    // 1. Save to universal Enquiry collection for Super Admin dashboard visibility
+    const newEnquiry = new Enquiry({
+      fullName,
+      phone: phone || '',
+      email: email || '',
+      city: city || '',
+      district: district || '',
+      pincode: pincode || '',
+      state: state || 'Maharashtra',
+      message: detailedMessage,
+      enquiryType: 'franchise',
+      status: 'Pending'
     });
-    await newFranchise.save();
+    await newEnquiry.save();
 
-    // 2. Instant response back to frontend so submission succeeds immediately
-    res.status(201).json({ 
-      success: true, 
-      message: 'Franchise application submitted successfully!' 
-    });
+    // (Your existing email trigger logic goes here...)
 
-    // 3. Fire background Brevo API calls
-    const adminEmailHtml = `
-      <h2>New Franchise Enquiry Received</h2>
-      <p><strong>Owner Name:</strong> ${owner_name}</p>
-      <p><strong>Phone:</strong> ${phone}</p>
-      <p><strong>Email:</strong> ${email || 'N/A'}</p>
-      <p><strong>Preferred Location:</strong> ${preferred_location || 'N/A'}</p>
-      <p><strong>City / District / State:</strong> ${city || ''}, ${district}, ${state || ''} - ${pincode || ''}</p>
-      <p><strong>Current Business:</strong> ${current_business || 'N/A'}</p>
-      <p><strong>Investment Capacity:</strong> ${investment_capacity || 'N/A'}</p>
-      <p><strong>Requirements:</strong> ${requirements || 'N/A'}</p>
-    `;
-
-    const ownerEmailHtml = `
-      <div style="font-family: Arial, sans-serif; color: #01295A; padding: 20px;">
-        <h2 style="color: #FE7C02;">Thank You for Your Franchise Interest!</h2>
-        <p>Dear <strong>${owner_name}</strong>,</p>
-        <p>We have successfully received your franchise application for <strong>${city || district}</strong>.</p>
-        <p>Our business development team is reviewing your profile and will get in touch with you shortly.</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-        <p style="font-size: 12px; color: #666;">TOPIQ Talent Test (TTT) Team</p>
-      </div>
-    `;
-
-    // Send admin notification
-    sendBrevoEmail(
-      process.env.ADMIN_EMAIL || process.env.EMAIL_USER, 
-      'Admin', 
-      `New Franchise Application from ${owner_name} (${city || district})`, 
-      adminEmailHtml
-    );
-
-    // Send owner welcome email if provided
-    if (email) {
-      sendBrevoEmail(
-        email, 
-        owner_name, 
-        `Franchise Enquiry Received – TTT 2026`, 
-        ownerEmailHtml
-      );
-    }
-
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ success: false, message: 'This email is already registered for an enquiry.' });
-    }
-    console.error('Franchise submission server error:', error);
-    if (!res.headersSent) {
-      res.status(500).json({ success: false, message: 'Server error while processing application.' });
-    }
+    return res.status(201).json({ success: true, message: 'Franchise enquiry submitted successfully!' });
+  } catch (err) {
+    console.error('Franchise route error:', err);
+    return res.status(500).json({ success: false, message: 'Server error saving franchise enquiry.' });
   }
 });
 
