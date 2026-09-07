@@ -18,7 +18,6 @@ import {
   ArrowRight,
   UserCheck,
   Check,
-  Download,
   TrendingUp,
   ShieldCheck,
   BarChart3
@@ -176,11 +175,6 @@ export default function FormatPage() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Dedicated Print / Download Certificate Handler
-  const handleDownloadCertificate = () => {
-    window.print();
   };
 
   return (
@@ -555,7 +549,7 @@ export default function FormatPage() {
                 </button>
               </div>
 
-              {/* 1. VERIFIED CERTIFICATE OF COMPLETION (PROFESSIONAL & PRINTABLE) */}
+              {/* 1. VERIFIED CERTIFICATE OF COMPLETION (PROFESSIONAL DISPLAY WITHOUT BUTTON) */}
               <div className="bg-gradient-to-br from-slate-900 via-[#01295A] to-blue-950 text-white p-8 md:p-14 rounded-3xl shadow-2xl text-center relative overflow-hidden border-4 border-amber-400/40">
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
                 
@@ -580,20 +574,10 @@ export default function FormatPage() {
                   For outstanding performance and successfully completing the TOPIQ Talent Test (TTT) Sample Assessment in <strong className="text-amber-300 uppercase">{examLanguage}</strong> mode under rigorous AI proctoring standards.
                 </p>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-xl mx-auto text-xs text-slate-300 border-t border-white/20 pt-6 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-xl mx-auto text-xs text-slate-300 border-t border-white/20 pt-6">
                   <div>Issued by: <strong className="text-white block mt-0.5">TOPIQ Academic Board</strong></div>
                   <div>Accuracy Rate: <strong className="text-amber-400 block mt-0.5">{Math.round((calculateScore() / currentQuestions.length) * 100)}%</strong></div>
                   <div>Status: <strong className="text-emerald-400 block mt-0.5">Verified & Authenticated 🛡️</strong></div>
-                </div>
-
-                <div>
-                  <button
-                    onClick={handleDownloadCertificate}
-                    className="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-[#FE7C02] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-2xl hover:brightness-110 transition flex items-center justify-center gap-2 mx-auto cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Download / Print Verified Certificate</span>
-                  </button>
                 </div>
               </div>
 
