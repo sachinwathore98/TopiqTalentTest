@@ -11,6 +11,7 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const examRoutes = require('./routes/examRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const agentRoutes = require('./routes/agentRoutes'); // Added agent routes
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -38,6 +39,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/agents', agentRoutes); // Mounted agent routes
+app.use('/api/payments', paymentRoutes); // Mounted payment routes
 
 // Health Check Root Route
 app.get('/', (req, res) => {
