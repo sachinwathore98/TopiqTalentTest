@@ -493,14 +493,14 @@ export default function SuperAdminCommandCenter() {
                       <td className="py-3.5 px-3 text-right space-x-2">
                         <button 
                           onClick={() => handleOpenEditUser(u)}
-                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-[#01295A] rounded-xl text-[10px] font-black cursor-pointer inline-flex items-center gap-1"
+                          className="px-3 py-1.5 bg-[#01295A] hover:bg-blue-900 text-white rounded-xl text-[10px] font-black cursor-pointer inline-flex items-center gap-1 shadow-xs"
                         >
                           <Edit3 className="w-3 h-3" />
                           <span>Edit</span>
                         </button>
                         <button 
                           onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
-                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black cursor-pointer ${u.status === 'deactivated' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}
+                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black cursor-pointer shadow-xs ${u.status === 'deactivated' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
                         >
                           {u.status === 'deactivated' ? 'Activate' : 'Deactivate'}
                         </button>
