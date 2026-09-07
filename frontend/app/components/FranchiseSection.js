@@ -55,7 +55,6 @@ export default function FranchiseSection() {
     setStatusMsg(null);
 
     try {
-      // Robust Base URL handling to guarantee the /api prefix is always present
       const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com/api';
       const apiBaseUrl = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
       
@@ -66,6 +65,7 @@ export default function FranchiseSection() {
       const payload = {
         ...formData,
         enrollmentType,
+        enquiryType: enrollmentType, // Ensures compatibility with backend unified enquiry model mapping
         incentiveStructure: enrollmentType === 'agent' ? '20% Commission Incentive' : 'Standard Franchise Model (40/60)'
       };
 
@@ -80,8 +80,8 @@ export default function FranchiseSection() {
         setStatusMsg({ 
           type: 'success', 
           text: enrollmentType === 'franchise' 
-            ? 'Franchise application submitted successfully! Branch code assigned.' 
-            : 'Agent partnership enrollment received! Welcome aboard for your 20% commission incentives.' 
+            ? 'Franchise application submitted successfully! Logged to Super Admin dashboard.' 
+            : 'Agent partnership enrollment received! Logged to Super Admin dashboard.' 
         });
         setFormData({
           owner_name: '', phone: '', email: '', pincode: '', city: '', district: '', state: 'Maharashtra',
@@ -127,7 +127,7 @@ export default function FranchiseSection() {
             </h1>
 
             <p className="text-[#C0C0C0] text-base md:text-lg leading-relaxed font-semibold max-w-2xl">
-              Partner with Balmitra Kids Pvt. Ltd. Choose between a regional franchise branch or an agency partnership offering a guaranteed <strong className="text-[#FE7C02]">20% incentive commission</strong>.
+              Partner with TOPIQ Talent Ecosystem. Choose between a regional franchise branch or an agency partnership offering a guaranteed <strong className="text-[#FE7C02]">20% incentive commission</strong>.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -175,7 +175,7 @@ export default function FranchiseSection() {
                 {enrollmentType === 'franchise' ? 'Apply for Franchise Branch' : 'Enroll as Agent / Partner'}
               </h2>
               <p className="text-[11px] text-slate-500 font-semibold">
-                {enrollmentType === 'franchise' ? 'Territory allotted after target of 3,000 registrations' : 'Earn 20% direct commission incentives on registrations'}
+                {enrollmentType === 'franchise' ? 'Territory allotted after target registrations' : 'Earn 20% direct commission incentives on registrations'}
               </p>
             </div>
 
