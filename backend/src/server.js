@@ -39,7 +39,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/agents', agentRoutes); // Mounted agent routes
-app.use('/api/payments', paymentRoutes); // Mounted payment routes
+app.use('/api/payment', paymentRoutes); // Mounted payment routes
 
 // Health Check Root Route
 app.get('/', (req, res) => {
