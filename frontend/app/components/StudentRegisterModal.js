@@ -21,7 +21,6 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  // Load Razorpay Checkout Script Dynamically
   const loadScript = (src) => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
@@ -73,7 +72,6 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
     try {
-      // 1. Create Order on Backend (Registration Fee = ₹1,100)
       const orderRes = await fetch(`${apiBaseUrl}/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,16 +83,18 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
         throw new Error(orderData.message || 'Could not initiate payment order.');
       }
 
-      // 2. Open Razorpay Checkout Modal Window
+      const razorpayOrderId = orderData.order?.id || orderData.order_id || orderData.id;
+      const razorpayAmount = orderData.order?.amount || orderData.amount || 110000;
+      const razorpayCurrency = orderData.order?.currency || orderData.currency || 'INR';
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
+        amount: razorpayAmount,
+        currency: razorpayCurrency,
         name: "TOPIQ Talent Test (TTT)",
         description: "Student Registration Fee Payment (₹1,100)",
-        order_id: orderData.order.id,
+        order_id: razorpayOrderId,
         handler: async function (response) {
-          // 3. Verify Payment & Register User on Backend
           try {
             const verifyRes = await fetch(`${apiBaseUrl}/payment/verify-and-register`, {
               method: 'POST',
@@ -116,10 +116,12 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
               window.location.href = '/student/dashboard';
             } else {
               setStatusMsg({ type: 'error', text: verifyData.message || 'Payment verification failed.' });
+              setLoading(false);
             }
           } catch (err) {
             console.error('Verification error:', err);
             setStatusMsg({ type: 'error', text: 'Server error during payment verification.' });
+            setLoading(false);
           }
         },
         prefill: {

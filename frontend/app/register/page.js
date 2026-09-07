@@ -8,7 +8,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Load Razorpay Script Dynamically
   const loadScript = (src) => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
@@ -34,7 +33,6 @@ export default function RegisterPage() {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
     try {
-      // 1. Create Order on Backend with Registration Fee = ₹1,100
       const orderRes = await fetch(`${apiBaseUrl}/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,16 +42,18 @@ export default function RegisterPage() {
 
       if (!orderData.success) throw new Error('Could not initiate payment order.');
 
-      // 2. Open Razorpay Checkout Window
+      const razorpayOrderId = orderData.order?.id || orderData.order_id || orderData.id;
+      const razorpayAmount = orderData.order?.amount || orderData.amount || 110000;
+      const razorpayCurrency = orderData.order?.currency || orderData.currency || 'INR';
+
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Your public Razorpay Key
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: razorpayAmount,
+        currency: razorpayCurrency,
         name: "TOPIQ Talent Test (TTT)",
         description: "Registration Fee Payment (₹1,100)",
-        order_id: orderData.order.id,
+        order_id: razorpayOrderId,
         handler: async function (response) {
-          // 3. Verify Payment & Register User on Backend
           const verifyRes = await fetch(`${apiBaseUrl}/payment/verify-and-register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -67,15 +67,14 @@ export default function RegisterPage() {
 
           const verifyData = await verifyRes.json();
           if (verifyData.success) {
-            // Automatically log the user in by saving the token
             localStorage.setItem('token', verifyData.token);
             localStorage.setItem('role', verifyData.role);
             
-            // Redirect based on role
             if (verifyData.role === 'student') router.push('/student/dashboard');
             else router.push('/franchise/dashboard');
           } else {
             setError(verifyData.message || 'Payment verification failed.');
+            setLoading(false);
           }
         },
         prefill: {
@@ -83,7 +82,12 @@ export default function RegisterPage() {
           email: form.email,
           contact: form.phone,
         },
-        theme: { color: "#01295A" }
+        theme: { color: "#01295A" },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          }
+        }
       };
 
       const paymentObject = new window.Razorpay(options);
@@ -92,7 +96,6 @@ export default function RegisterPage() {
     } catch (err) {
       console.error(err);
       setError('An error occurred during payment initiation.');
-    } finally {
       setLoading(false);
     }
   };
