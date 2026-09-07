@@ -7,6 +7,7 @@ export default function FranchiseDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('leaderboard');
   const [leaderboard, setLeaderboard] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [scope, setScope] = useState('franchise');
   const [loading, setLoading] = useState(false);
   const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '' });
@@ -21,6 +22,7 @@ export default function FranchiseDashboard() {
       return;
     }
     fetchLeaderboard(scope);
+    fetchAgents();
   }, [scope, router]);
 
   const fetchLeaderboard = async (selectedScope) => {
@@ -38,6 +40,21 @@ export default function FranchiseDashboard() {
       console.error('Error fetching leaderboard:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAgents = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/agents/list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAgents(data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching agents:', err);
     }
   };
 
@@ -78,8 +95,8 @@ export default function FranchiseDashboard() {
         {/* Header */}
         <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
           <div>
-            <h1 className="text-xl font-bold text-[#01295A]">Franchise Owner Dashboard</h1>
-            <p className="text-xs text-gray-500">Manage local student enrollments, regional performance, and leaderboards</p>
+            <h1 className="text-xl font-bold text-[#01295A]">Franchise & Agent Operations Dashboard</h1>
+            <p className="text-xs text-gray-500">Manage local student enrollments, 20% commission agent partners, and leaderboards</p>
           </div>
           <button
             onClick={() => { localStorage.clear(); router.push('/login'); }}
@@ -98,6 +115,14 @@ export default function FranchiseDashboard() {
             }`}
           >
             Rankings & Leaderboard
+          </button>
+          <button
+            onClick={() => setActiveTab('agents')}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+              activeTab === 'agents' ? 'bg-[#01295A] text-white shadow' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Agent Partners (20% Incentive)
           </button>
           <button
             onClick={() => setActiveTab('admissions')}
@@ -153,6 +178,43 @@ export default function FranchiseDashboard() {
                         <td className="py-3 px-4 font-bold text-green-600">{item.score} Marks</td>
                         <td className="py-3 px-4">{item.accuracy ? `${item.accuracy}%` : 'N/A'}</td>
                         <td className="py-3 px-4 text-gray-500">{item.correctCount !== undefined ? `${item.correctCount} / ${item.wrongCount}` : 'Detailed view'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab Content: Agent Partners (20% Incentive) */}
+        {activeTab === 'agents' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <h2 className="text-base font-bold text-[#01295A] mb-2">Enrolled Agent Partners & Employee Promoters</h2>
+            <p className="text-xs text-gray-500 mb-6">Track agent performance and calculate 20% commission payouts for successful regional registrations.</p>
+
+            {agents.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-6">No agents enrolled through the website yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-gray-700">
+                  <thead className="bg-gray-50 text-xs uppercase text-gray-500 border-b">
+                    <tr>
+                      <th className="py-3 px-4">Agent Name</th>
+                      <th className="py-3 px-4">Mobile / Email</th>
+                      <th className="py-3 px-4">Location</th>
+                      <th className="py-3 px-4">Role Type</th>
+                      <th className="py-3 px-4">Incentive Commission</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {agents.map((ag, i) => (
+                      <tr key={i} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 font-bold text-[#01295A]">{ag.owner_name}</td>
+                        <td className="py-3 px-4">{ag.phone} <br/><span className="text-xs text-gray-400">{ag.email}</span></td>
+                        <td className="py-3 px-4">{ag.city}, {ag.district}</td>
+                        <td className="py-3 px-4"><span className="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold">{ag.agent_role_type || 'Agent'}</span></td>
+                        <td className="py-3 px-4 font-extrabold text-amber-600">20% Payout Active</td>
                       </tr>
                     ))}
                   </tbody>
