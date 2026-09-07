@@ -46,6 +46,8 @@ app.use('/api/payment', paymentRoutes); // Configured singular route prefix
 app.use('/api/wallet', walletRoutes); // Configured singular route prefix
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/enquiries', enquiryRoutes);
+app.use('/api/franchise', enquiryRoutes);
+app.use('/api/agents', enquiryRoutes);
 
 // Health Check Root Route
 app.get('/', (req, res) => {

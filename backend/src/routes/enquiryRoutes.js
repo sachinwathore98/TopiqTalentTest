@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Enquiry = require('../models/Enquiry');
 
-// Universal shared handler function to process and save any form submission
+// Universal shared handler function to process and save any form submission directly to MongoDB `enquiries`
 const saveEnquiryHandler = async (req, res, defaultType) => {
   try {
     const { 
@@ -27,7 +27,7 @@ const saveEnquiryHandler = async (req, res, defaultType) => {
     
     // Determine and normalize lead type across all form variants
     const rawType = enquiryType || enrollmentType || defaultType;
-    const normalizedType = rawType.toLowerCase();
+    const normalizedType = String(rawType).toLowerCase();
 
     // Construct a comprehensive message string if custom business/agent fields are present
     let detailedMessage = message || '';
@@ -43,6 +43,8 @@ const saveEnquiryHandler = async (req, res, defaultType) => {
       detailedMessage = detailedMessage ? `${detailedMessage} | ${extraDetails}` : extraDetails;
     }
 
+    const finalType = ['student', 'franchise', 'agent'].includes(normalizedType) ? normalizedType : defaultType;
+
     const newEnquiry = new Enquiry({
       fullName: fullName || owner_name || name || 'Website Lead',
       phone: phone || '',
@@ -52,11 +54,12 @@ const saveEnquiryHandler = async (req, res, defaultType) => {
       pincode: pincode || '',
       state: state || 'Maharashtra',
       message: detailedMessage,
-      enquiryType: ['student', 'franchise', 'agent'].includes(normalizedType) ? normalizedType : defaultType,
+      enquiryType: finalType,
       status: 'Pending'
     });
 
     await newEnquiry.save();
+    console.log(`[LIVE ENQUIRY SAVED]: Type -> ${finalType}, Name -> ${newEnquiry.fullName}`);
     return res.status(201).json({ success: true, message: 'Enquiry submitted successfully and logged to dashboard!' });
   } catch (err) {
     console.error('Error saving public enquiry:', err);
@@ -64,17 +67,18 @@ const saveEnquiryHandler = async (req, res, defaultType) => {
   }
 };
 
-// 1. General Submit Endpoint
+// 1. General Submit Endpoint (/api/enquiries/submit)
 router.post('/submit', async (req, res) => {
-  return saveEnquiryHandler(req, res, 'student');
+  const defaultType = req.body.enquiryType || req.body.enrollmentType || 'student';
+  return saveEnquiryHandler(req, res, defaultType);
 });
 
-// 2. Fallback Endpoint for Franchise Section component (/api/franchise/enquire or /api/enquiries/enquire)
+// 2. Franchise Specific Endpoint (/api/franchise/enquire)
 router.post('/enquire', async (req, res) => {
   return saveEnquiryHandler(req, res, 'franchise');
 });
 
-// 3. Fallback Endpoint for Agent Section component (/api/agents/enroll or /api/enquiries/enroll)
+// 3. Agent Specific Endpoint (/api/agents/enroll)
 router.post('/enroll', async (req, res) => {
   return saveEnquiryHandler(req, res, 'agent');
 });
