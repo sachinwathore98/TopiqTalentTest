@@ -23,13 +23,38 @@ import {
   BarChart3
 } from 'lucide-react';
 
-// OFFICIAL 5 ACADEMIC TIERS
+// OFFICIAL 5 ACADEMIC TIERS WITH TIER-SPECIFIC SUBJECTS
 const CLASS_OPTIONS = [
-  { id: 'CLASS_3_5', name: 'Classes 3 to 5 (Foundation Stage)', group: 'Group A' },
-  { id: 'CLASS_6_8', name: 'Classes 6 to 8 (Foundation Plus)', group: 'Group B' },
-  { id: 'CLASS_9_10', name: 'Classes 9 & 10 (Competitive Foundation)', group: 'Group C' },
-  { id: 'CLASS_11_12', name: 'Classes 11 & 12 (Career Preparation)', group: 'Group D' },
-  { id: 'COMPETITIVE', name: 'Competitive 12th & Above (Govt & Professional)', group: 'Group E' },
+  { 
+    id: 'CLASS_3_5', 
+    name: 'Classes 3 to 5 (Foundation Stage)', 
+    group: 'Group A',
+    subjects: ['Mathematics & Science', 'English & Marathi', 'Logical Reasoning & GK']
+  },
+  { 
+    id: 'CLASS_6_8', 
+    name: 'Classes 6 to 8 (Foundation Plus)', 
+    group: 'Group B',
+    subjects: ['Advanced Mathematics & Science', 'Languages (English/Marathi)', 'Reasoning & Basic Current Affairs']
+  },
+  { 
+    id: 'CLASS_9_10', 
+    name: 'Classes 9 & 10 (Competitive Foundation)', 
+    group: 'Group C',
+    subjects: ['Board Mathematics & Science', 'Social Science & English', 'Aptitude & Mental Ability']
+  },
+  { 
+    id: 'CLASS_11_12', 
+    name: 'Classes 11 & 12 (Career Preparation)', 
+    group: 'Group D',
+    subjects: ['Core Quantitative Aptitude', 'Subject Proficiency (PCM/PCB/Commerce)', 'Advanced Logical Reasoning']
+  },
+  { 
+    id: 'COMPETITIVE', 
+    name: 'Competitive 12th & Above (Govt & Professional)', 
+    group: 'Group E',
+    subjects: ['Quantitative Aptitude & DI', 'General Intelligence & Reasoning', 'General Awareness & Computer Awareness']
+  },
 ];
 
 // TAILORED MULTILINGUAL QUESTION BANKS MATCHING OFFICIAL SYLLABUS
@@ -122,6 +147,7 @@ export default function FormatPage() {
   const [timeLeft, setTimeLeft] = useState(300);
 
   const currentQuestions = QUESTION_BANKS[selectedClassId] || QUESTION_BANKS.CLASS_9_10;
+  const activeClassObj = CLASS_OPTIONS.find(c => c.id === selectedClassId) || CLASS_OPTIONS[2];
 
   const [simStep, setSimStep] = useState(0); 
   const [isSimPlaying, setIsSimPlaying] = useState(true);
@@ -517,7 +543,7 @@ export default function FormatPage() {
                   <span className="text-xs font-black text-amber-400 uppercase tracking-widest">Instant Result & Verified Certification</span>
                   <h3 className="text-2xl md:text-3xl font-black">Exam Evaluation Complete</h3>
                   <p className="text-xs text-slate-300">
-                    Student: <span className="font-bold text-white">{studentName}</span> ({mobileNumber}) • Category: <span className="font-bold text-indigo-300">{CLASS_OPTIONS.find(c => c.id === selectedClassId)?.name}</span>
+                    Student: <span className="font-bold text-white">{studentName}</span> ({mobileNumber}) • Category: <span className="font-bold text-indigo-300">{activeClassObj.name}</span>
                   </p>
                 </div>
 
@@ -549,7 +575,7 @@ export default function FormatPage() {
                 </button>
               </div>
 
-              {/* 1. VERIFIED CERTIFICATE OF COMPLETION (PROFESSIONAL DISPLAY) */}
+              {/* 1. VERIFIED CERTIFICATE OF COMPLETION */}
               <div className="bg-gradient-to-br from-slate-900 via-[#01295A] to-blue-950 text-white p-8 md:p-14 rounded-3xl shadow-2xl text-center relative overflow-hidden border-4 border-amber-400/40">
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
                 
@@ -570,7 +596,7 @@ export default function FormatPage() {
                 </h4>
 
                 <p className="text-xs md:text-sm text-slate-200 max-w-2xl mx-auto mb-8 font-medium leading-relaxed">
-                  For outstanding performance and successfully completing the TOPIQ Talent Test (TTT) Assessment in <strong className="text-amber-300 uppercase">{examLanguage}</strong> mode under rigorous AI proctoring standards.
+                  For outstanding performance in <strong className="text-amber-300">{activeClassObj.name}</strong> completing the TOPIQ Talent Test (TTT) Assessment in <strong className="text-amber-300 uppercase">{examLanguage}</strong> mode.
                 </p>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-xl mx-auto text-xs text-slate-300 border-t border-white/20 pt-6">
@@ -580,7 +606,7 @@ export default function FormatPage() {
                 </div>
               </div>
 
-              {/* 2. OVERALL SCORECARD & 3. SUBJECT-WISE ANALYTICS */}
+              {/* 2. OVERALL SCORECARD & 3. DYNAMIC CLASS-SPECIFIC SUBJECT ANALYTICS */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
@@ -604,12 +630,12 @@ export default function FormatPage() {
 
                   <div className="space-y-3 text-xs font-bold text-slate-700">
                     <div className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <span>Correct Answers:</span> 
-                      <strong className="text-emerald-600">{calculateScore()} Correct</strong>
+                      <span>Tier Category:</span> 
+                      <strong className="text-indigo-700">{activeClassObj.group} ({activeClassObj.name})</strong>
                     </div>
                     <div className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <span>Evaluation Time:</span> 
-                      <strong className="text-slate-900">03:45 mins</strong>
+                      <span>Correct Answers:</span> 
+                      <strong className="text-emerald-600">{calculateScore()} Correct</strong>
                     </div>
                     <div className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                       <span>State Percentile:</span> 
@@ -618,19 +644,20 @@ export default function FormatPage() {
                   </div>
                 </div>
 
+                {/* DYNAMIC SUBJECT-WISE ANALYTICS MAPPED TO ACTIVE CLASS SUBJECTS */}
                 <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-black text-[#01295A] uppercase tracking-wider flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-[#FE7C02]" />
                       <span>Subject-Wise Analytics</span>
                     </h4>
-                    <span className="text-[10px] bg-indigo-50 text-indigo-700 font-black px-2.5 py-0.5 rounded-full uppercase">AI Analyzed</span>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-700 font-black px-2.5 py-0.5 rounded-full uppercase">{activeClassObj.group} Syllabus</span>
                   </div>
 
                   <div className="space-y-5 pt-2">
                     <div>
                       <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
-                        <span>Logical Reasoning / Mental Ability</span>
+                        <span>{activeClassObj.subjects[0]}</span>
                         <span className="text-indigo-600">90% Accuracy</span>
                       </div>
                       <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
@@ -640,7 +667,7 @@ export default function FormatPage() {
 
                     <div>
                       <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
-                        <span>Core Mathematics / Quantitative Aptitude</span>
+                        <span>{activeClassObj.subjects[1]}</span>
                         <span className="text-amber-600">80% Accuracy</span>
                       </div>
                       <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
@@ -650,7 +677,7 @@ export default function FormatPage() {
 
                     <div>
                       <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
-                        <span>Science & Subject Proficiency</span>
+                        <span>{activeClassObj.subjects[2]}</span>
                         <span className="text-emerald-600">85% Accuracy</span>
                       </div>
                       <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
@@ -661,7 +688,7 @@ export default function FormatPage() {
 
                   <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 text-[11px] text-indigo-900 font-medium flex items-start gap-2">
                     <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                    <span>Your strongest domain is Logical Reasoning. Keep practicing to reach top state rank across all 100 days.</span>
+                    <span>Strong performance in {activeClassObj.subjects[0]}. Keep practicing to achieve top state rank in {activeClassObj.group}.</span>
                   </div>
                 </div>
 
@@ -675,7 +702,7 @@ export default function FormatPage() {
                   </div>
                   <div>
                     <h4 className="text-base font-black text-[#01295A]">Overview for Future Growth</h4>
-                    <p className="text-xs text-slate-500 font-medium">Strategic 100-Day Challenge Development Roadmap</p>
+                    <p className="text-xs text-slate-500 font-medium">Strategic 100-Day Challenge Development Roadmap for {activeClassObj.name}</p>
                   </div>
                 </div>
 
@@ -683,19 +710,19 @@ export default function FormatPage() {
                   <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                     <span className="text-[10px] font-black bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full uppercase">Phase 1 (Days 1–30)</span>
                     <h5 className="text-xs font-black text-slate-900">Foundation Mastery</h5>
-                    <p className="text-xs text-slate-600 leading-relaxed">Focus on eliminating calculation errors and building bulletproof conceptual speed in Tier topics.</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">Focus on core subjects like {activeClassObj.subjects[0]} to eliminate errors and build bulletproof speed.</p>
                   </div>
 
                   <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                     <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full uppercase">Phase 2 (Days 31–70)</span>
                     <h5 className="text-xs font-black text-slate-900">Advanced Problem Solving</h5>
-                    <p className="text-xs text-slate-600 leading-relaxed">Engage with multi-disciplinary MCQ sets under strict AI timer constraints to build exam stamina.</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">Engage with multidisciplinary sets covering {activeClassObj.subjects[1]} under strict AI timers.</p>
                   </div>
 
                   <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                     <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full uppercase">Phase 3 (Days 71–100)</span>
                     <h5 className="text-xs font-black text-slate-900">State Rank Optimization</h5>
-                    <p className="text-xs text-slate-600 leading-relaxed">Review daily official answer keys and fine-tune weak zones to secure top state rank credentials.</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">Review daily answer keys and fine-tune weak zones in {activeClassObj.name} for top credentials.</p>
                   </div>
                 </div>
 
