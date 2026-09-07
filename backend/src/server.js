@@ -10,11 +10,12 @@ const userRoutes = require('./routes/userRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const examRoutes = require('./routes/examRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const agentRoutes = require('./routes/agentRoutes'); // Added agent routes
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Middleware - Updated with your exact Vercel deployment domain
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -22,7 +23,8 @@ app.use(cors({
     'https://topiqtalent.com',
     'https://www.topiqtalent.com',
     'https://topiq-talent-test.vercel.app',
-    'https://topiq-talent-test.onrender.com' // Added your exact Render backend domain
+    'https://topiq-talent-test-o2q6.vercel.app', // Added your exact Vercel preview/production URL
+    'https://topiq-talent-test.onrender.com'
   ],
   credentials: true
 }));
@@ -35,6 +37,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/agents', agentRoutes); // Mounted agent routes
 
 // Health Check Root Route
 app.get('/', (req, res) => {
