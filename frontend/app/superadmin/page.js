@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Users, DollarSign, Award, Layers, Megaphone, FileText, 
-  CheckCircle2, XCircle, Edit3, PlusCircle, RefreshCw, AlertTriangle, Building, Phone, UserPlus, LogOut 
+  CheckCircle2, XCircle, Edit3, PlusCircle, RefreshCw, AlertTriangle, Building, Phone, UserPlus, LogOut, Save 
 } from 'lucide-react';
 
 export default function SuperAdminCommandCenter() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('fees');
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     totalRevenue: 0,
@@ -18,13 +18,19 @@ export default function SuperAdminCommandCenter() {
     breakdown: { revenueByFranchise: {}, revenueByASM: {}, revenueByAgent: {} }
   });
 
-  const [feesList, setFeesList] = useState([]);
+  const [feesMap, setFeesMap] = useState({});
   const [banners, setBanners] = useState([]);
   const [usersList, setUsersList] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
 
-  // Form states
-  const [feeForm, setFeeForm] = useState({ className: 'Class 8', testFee: 1100, passingMarks: 40, totalMarks: 100 });
+  const classesList = [
+    'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
+    'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
+    '12th & Above (Competitive)', 'Govt & Professional Exams'
+  ];
+
+  // Form states for individual class editing
+  const [editableFees, setEditableFees] = useState({});
   const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', targetLink: '', position: 'hero' });
   const [provisionForm, setProvisionForm] = useState({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
   const [message, setMessage] = useState(null);
@@ -56,7 +62,26 @@ export default function SuperAdminCommandCenter() {
       ]);
 
       if (mRes.success) setMetrics(mRes.metrics);
-      if (fRes.success) setFeesList(fRes.fees);
+      
+      if (fRes.success) {
+        const map = {};
+        const editMap = {};
+        fRes.fees.forEach(f => {
+          map[f.className] = f.testFee;
+          editMap[f.className] = f.testFee;
+        });
+        setFeesMap(map);
+        // Default unconfigured classes to 1100
+        classesList.forEach(c => {
+          if (!editMap[c]) editMap[c] = 1100;
+        });
+        setEditableFees(editMap);
+      } else {
+        const defaultMap = {};
+        classesList.forEach(c => defaultMap[c] = 1100);
+        setEditableFees(defaultMap);
+      }
+
       if (bRes.success) setBanners(bRes.banners);
       if (uRes.success) setUsersList(uRes.users);
       if (eRes.success) setEnquiries(eRes.enquiries);
@@ -68,17 +93,21 @@ export default function SuperAdminCommandCenter() {
     }
   };
 
-  const handleUpdateFee = async (e) => {
-    e.preventDefault();
+  const handleFeeChange = (className, value) => {
+    setEditableFees({ ...editableFees, [className]: Number(value) });
+  };
+
+  const handleSaveSingleFee = async (className) => {
     const token = localStorage.getItem('token');
+    const testFee = editableFees[className];
     const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(feeForm)
+      body: JSON.stringify({ className, testFee, passingMarks: 40, totalMarks: 100 })
     });
     const data = await res.json();
     if (data.success) {
-      setMessage({ type: 'success', text: data.message });
+      setMessage({ type: 'success', text: `Fee for ${className} successfully updated to ₹${testFee}!` });
       fetchAllDashboardData();
     } else {
       setMessage({ type: 'error', text: data.message });
@@ -282,51 +311,49 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 2. TEST FEES CONTROL TAB */}
+        {/* 2. TEST FEES CONTROL TAB (INDIVIDUAL CLASS PRICING MATRIX) */}
         {activeTab === 'fees' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-4">
-              <h3 className="text-base font-black text-[#01295A]">Set Test Fee Per Class</h3>
-              <form onSubmit={handleUpdateFee} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class Name</label>
-                  <select 
-                    value={feeForm.className} 
-                    onChange={e => setFeeForm({ ...feeForm, className: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50"
-                  >
-                    {['Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Govt & Professional Exams'].map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Registration / Test Fee (₹)</label>
-                  <input 
-                    type="number" 
-                    required 
-                    value={feeForm.testFee} 
-                    onChange={e => setFeeForm({ ...feeForm, testFee: Number(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 font-mono"
-                  />
-                </div>
-                <button type="submit" className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md hover:bg-orange-600 transition cursor-pointer">
-                  Save & Live Sync Price
-                </button>
-              </form>
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-4">
+              <div>
+                <h3 className="text-lg font-black text-[#01295A]">Independent Test Fee Matrix Per Class & Category</h3>
+                <p className="text-xs text-slate-500 font-semibold">Configure separate pricing for each class/category. Changes sync live instantly with the public registration portal.</p>
+              </div>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-4">
-              <h3 className="text-base font-black text-[#01295A]">Current Live Fees Configured</h3>
-              <div className="space-y-2">
-                {feesList.map((f, idx) => (
-                  <div key={idx} className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                    <span className="font-black text-xs text-[#01295A]">{f.className}</span>
-                    <span className="font-mono text-emerald-600 font-bold">₹{f.testFee}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {classesList.map((className) => (
+                <div key={className} className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col justify-between space-y-3 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="font-black text-xs text-[#01295A] bg-white px-3 py-1 rounded-xl border border-slate-200 shadow-2xs">
+                      {className}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 font-mono">
+                      Current: ₹{feesMap[className] || 1100}
+                    </span>
                   </div>
-                ))}
-                {feesList.length === 0 && <p className="text-xs text-slate-400">Default global fee of ₹1,100 applies.</p>}
-              </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-black uppercase text-slate-500">Edit Price (₹)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="number" 
+                        value={editableFees[className] ?? 1100} 
+                        onChange={(e) => handleFeeChange(className, e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold bg-white focus:ring-2 focus:ring-[#FE7C02] outline-none"
+                      />
+                      <button 
+                        onClick={() => handleSaveSingleFee(className)}
+                        className="bg-[#FE7C02] hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer shadow-sm flex items-center gap-1 shrink-0"
+                        title="Save & Sync Price Live"
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        <span>Update</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -349,7 +376,7 @@ export default function SuperAdminCommandCenter() {
                 />
                 <select 
                   value={bannerForm.position} onChange={e => setBannerForm({ ...bannerForm, position: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer"
                 >
                   <option value="hero">Hero Slider</option>
                   <option value="festive_offer">Festive Offer Banner</option>
