@@ -7,7 +7,6 @@ router.post('/submit', async (req, res) => {
   try {
     const { fullName, name, phone, email, city, district, pincode, state, message, enquiryType } = req.body;
     
-    // Normalize type (default to 'student' if not specified)
     const normalizedType = (enquiryType || 'student').toLowerCase();
 
     const newEnquiry = new Enquiry({
@@ -19,7 +18,7 @@ router.post('/submit', async (req, res) => {
       pincode: pincode || '',
       state: state || 'Maharashtra',
       message: message || '',
-      enquiryType: normalizedType, // 'student', 'franchise', or 'agent'
+      enquiryType: normalizedType,
       status: 'Pending'
     });
 
@@ -27,11 +26,11 @@ router.post('/submit', async (req, res) => {
     return res.status(201).json({ success: true, message: 'Enquiry submitted successfully!' });
   } catch (err) {
     console.error('Error saving public enquiry:', err);
-    return res.status(500).json({ success: false, message: 'Server error saving enquiry.' });
+    return res.status(500).json({ success: false, message: 'Server error saving enquiry.', error: err.message });
   }
 });
 
-// Temporary seed route to populate test leads for verification across all 3 tabs
+// Temporary seed route with detailed error catching
 router.get('/seed-test-leads', async (req, res) => {
   try {
     await Enquiry.deleteMany({});
@@ -42,8 +41,8 @@ router.get('/seed-test-leads', async (req, res) => {
     ]);
     return res.status(200).json({ success: true, message: 'Test enquiries seeded successfully!' });
   } catch (err) {
-    console.error('Seeding error:', err);
-    return res.status(500).json({ success: false, message: 'Seeding failed.' });
+    console.error('Seeding error details:', err);
+    return res.status(500).json({ success: false, message: 'Seeding failed.', error: err.message });
   }
 });
 
