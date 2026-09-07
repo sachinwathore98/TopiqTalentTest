@@ -6,34 +6,32 @@ export default function PublicRegistrationPage() {
   const [currentFee, setCurrentFee] = useState(1100);
   const [loadingFee, setLoadingFee] = useState(true);
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  // Auto-sanitize API URL to prevent trailing slash errors
+  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  const cleanBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
   useEffect(() => {
-    fetchLiveFees(selectedClass);
+    fetchLiveFeeForClass(selectedClass);
   }, [selectedClass]);
 
-  const fetchLiveFees = async (className) => {
+  const fetchLiveFeeForClass = async (className) => {
     setLoadingFee(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`);
+      const res = await fetch(`${cleanBaseUrl}/api/superadmin/fees`);
       const data = await res.json();
       if (data.success && data.fees) {
-        const classFeeObj = data.fees.find(f => f.className === className);
-        if (classFeeObj) {
-          setCurrentFee(classFeeObj.testFee);
+        const found = data.fees.find(f => f.className === className);
+        if (found) {
+          setCurrentFee(found.testFee);
         } else {
-          setCurrentFee(1100);
+          setCurrentFee(1100); // Fallback default
         }
       }
     } catch (err) {
-      console.error('Failed to fetch live fees:', err);
+      console.error('Failed to sync live fee:', err);
     } finally {
       setLoadingFee(false);
     }
-  };
-
-  const handleClassChange = (e) => {
-    setSelectedClass(e.target.value);
   };
 
   return (
@@ -51,7 +49,7 @@ export default function PublicRegistrationPage() {
           <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Class / Category *</label>
           <select 
             value={selectedClass} 
-            onChange={handleClassChange}
+            onChange={(e) => setSelectedClass(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 cursor-pointer"
           >
             {[

@@ -7,7 +7,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
     name: '',
     phone: '',
     email: '',
-    studentClass: 'Class 5',
+    studentClass: 'Class 8',
     pincode: '',
     city: '',
     district: '',
@@ -22,9 +22,9 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState(null);
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  const cleanBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
-  // Fetch fee whenever the modal opens or class changes
   useEffect(() => {
     if (isOpen) {
       fetchClassFee(formData.studentClass);
@@ -34,14 +34,14 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
   const fetchClassFee = async (className) => {
     setLoadingFee(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`);
+      const res = await fetch(`${cleanBaseUrl}/api/superadmin/fees`);
       const data = await res.json();
       if (data.success && data.fees) {
         const found = data.fees.find(f => f.className === className);
         if (found) {
           setCurrentFee(found.testFee);
         } else {
-          setCurrentFee(1100); // Default fallback
+          setCurrentFee(1100);
         }
       }
     } catch (err) {
@@ -96,14 +96,13 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
 
     const isLoaded = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
     if (!isLoaded) {
-      setStatusMsg({ type: 'error', text: 'Razorpay SDK failed to load. Please check your network connection.' });
+      setStatusMsg({ type: 'error', text: 'Razorpay SDK failed to load.' });
       setLoading(false);
       return;
     }
 
     try {
-      // Create Razorpay order with the dynamic currentFee
-      const orderRes = await fetch(`${apiBaseUrl}/payment/create-order`, {
+      const orderRes = await fetch(`${cleanBaseUrl}/api/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: currentFee })
@@ -123,11 +122,11 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
         amount: razorpayAmount,
         currency: razorpayCurrency,
         name: "TOPIQ Talent Test (TTT)",
-        description: `Student Registration Fee Payment (${formData.studentClass} - ₹${currentFee})`,
+        description: `Student Registration Fee (${formData.studentClass} - ₹${currentFee})`,
         order_id: razorpayOrderId,
         handler: async function (response) {
           try {
-            const verifyRes = await fetch(`${apiBaseUrl}/payment/verify-and-register`, {
+            const verifyRes = await fetch(`${cleanBaseUrl}/api/payment/verify-and-register`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -173,7 +172,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
 
     } catch (err) {
       console.error(err);
-      setStatusMsg({ type: 'error', text: err.message || 'An error occurred during payment initiation.' });
+      setStatusMsg({ type: 'error', text: err.message || 'An error occurred.' });
       setLoading(false);
     }
   };
@@ -195,7 +194,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
               <p className="text-xs text-slate-500 font-semibold">Complete fee payment to access student portal</p>
             </div>
             <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2.5 py-1 rounded-full uppercase font-mono">
-              {loadingFee ? 'Syncing Fee...' : `Fee: ₹${currentFee}`}
+              {loadingFee ? 'Syncing...' : `Fee: ₹${currentFee}`}
             </span>
           </div>
 
@@ -281,7 +280,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
                 type="text" 
                 required 
                 maxLength="6"
-                placeholder="6-digit Pincode (Auto-fills City & District) *" 
+                placeholder="6-digit Pincode *" 
                 className="w-full pl-10 pr-4 py-2.5 text-xs md:text-sm rounded-xl border border-slate-200 outline-none font-semibold focus:ring-2 focus:ring-[#FE7C02] bg-slate-50/50" 
                 value={formData.pincode}
                 onChange={handlePincodeChange} 
