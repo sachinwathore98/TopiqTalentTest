@@ -25,28 +25,28 @@ const verifySuperAdmin = async (req, res, next) => {
 // 1. DREAM 11 STYLE DETAILED METRICS & REVENUE SPLITS BREAKDOWN
 router.get('/metrics', verifySuperAdmin, async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
     const students = await User.find({ role: 'student' }).populate('referredBy');
     const partners = await User.find({ role: { $in: ['asm', 'franchise', 'agent'] } });
     const pendingEnquiriesCount = await Enquiry.countDocuments({ status: { $in: ['Pending', 'Follow-up Required'] } });
 
     // Revenue calculations
-    let totalRevenue = students.length * 1100; // Standard base exam registration fee assumption
-    
-    // Revenue breakdown by Franchise, ASM, Agent
+    let totalRevenue = 0;
     const revenueByFranchise = {};
     const revenueByASM = {};
     const revenueByAgent = {};
 
     students.forEach(student => {
+      const fee = student.registrationFee || 1100;
+      totalRevenue += fee;
+
       if (student.franchiseId) {
-        revenueByFranchise[student.franchiseId] = (revenueByFranchise[student.franchiseId] || 0) + 1100;
+        revenueByFranchise[student.franchiseId] = (revenueByFranchise[student.franchiseId] || 0) + fee;
       }
       if (student.asmId) {
-        revenueByASM[student.asmId] = (revenueByASM[student.asmId] || 0) + 1100;
+        revenueByASM[student.asmId] = (revenueByASM[student.asmId] || 0) + fee;
       }
       if (student.agentId) {
-        revenueByAgent[student.agentId] = (revenueByAgent[student.agentId] || 0) + 1100;
+        revenueByAgent[student.agentId] = (revenueByAgent[student.agentId] || 0) + fee;
       }
     });
 
@@ -83,13 +83,17 @@ router.get('/fees', async (req, res) => {
 router.post('/fees', verifySuperAdmin, async (req, res) => {
   try {
     const { className, testFee, passingMarks, totalMarks } = req.body;
+    if (!className || testFee === undefined) {
+      return res.status(400).json({ success: false, message: 'Class name and test fee are required.' });
+    }
     const updatedFee = await ExamConfig.findOneAndUpdate(
       { className },
-      { testFee, passingMarks, totalMarks, isActive: true },
-      { upsert: true, new: true }
+      { testFee, passingMarks: passingMarks || 40, totalMarks: totalMarks || 100, isActive: true },
+      { upsert: true, new: true, returnDocument: 'after' }
     );
     return res.status(200).json({ success: true, message: `Test fee for ${className} updated successfully!`, updatedFee });
   } catch (err) {
+    console.error('Error updating fee:', err);
     return res.status(500).json({ success: false, message: 'Error updating test fee.' });
   }
 });
