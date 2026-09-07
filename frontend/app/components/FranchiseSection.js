@@ -55,8 +55,13 @@ export default function FranchiseSection() {
     setStatusMsg(null);
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const endpoint = enrollmentType === 'franchise' ? `${apiBaseUrl}/franchise/enquire` : `${apiBaseUrl}/agents/enroll`;
+      // Robust Base URL handling to guarantee the /api prefix is always present
+      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com/api';
+      const apiBaseUrl = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
+      
+      const endpoint = enrollmentType === 'franchise' 
+        ? `${apiBaseUrl}/franchise/enquire` 
+        : `${apiBaseUrl}/agents/enroll`;
       
       const payload = {
         ...formData,
@@ -71,7 +76,7 @@ export default function FranchiseSection() {
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok && (data.success || res.status === 201)) {
         setStatusMsg({ 
           type: 'success', 
           text: enrollmentType === 'franchise' 
@@ -85,8 +90,9 @@ export default function FranchiseSection() {
       } else {
         setStatusMsg({ type: 'error', text: data.message || 'Submission failed.' });
       }
-    } catch {
-      setStatusMsg({ type: 'error', text: 'Unable to connect to server.' });
+    } catch (err) {
+      console.error('Network submission error:', err);
+      setStatusMsg({ type: 'error', text: 'Unable to connect to server. Please check your network.' });
     } finally {
       setLoading(false);
     }
