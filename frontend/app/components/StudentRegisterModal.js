@@ -12,13 +12,25 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
     city: '',
     district: '',
     state: 'Maharashtra',
-    password: ''
+    password: '',
+    role: 'student'
   });
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState(null);
 
   if (!isOpen) return null;
+
+  // Load Razorpay Checkout Script Dynamically
+  const loadScript = (src) => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
   const handlePincodeChange = async (e) => {
     const pincode = e.target.value.replace(/\D/g, '').slice(0, 6);
@@ -51,28 +63,84 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
     setLoading(true);
     setStatusMsg(null);
 
+    const isLoaded = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+    if (!isLoaded) {
+      setStatusMsg({ type: 'error', text: 'Razorpay SDK failed to load. Please check your network connection.' });
+      setLoading(false);
+      return;
+    }
+
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiBaseUrl}/student/register`, {
+      // 1. Create Order on Backend (Registration Fee = ₹1,100)
+      const orderRes = await fetch(`${apiBaseUrl}/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ amount: 1100 })
       });
+      const orderData = await orderRes.json();
 
-      const data = await res.json();
-      if (res.ok && (data.success !== false)) {
-        // Save token and redirect directly to student dashboard upon registration
-        if (data.token) {
-          localStorage.setItem('studentToken', data.token);
-        }
-        window.location.href = '/student/dashboard';
-      } else {
-        setStatusMsg({ type: 'error', text: data.message || 'Registration failed.' });
+      if (!orderData.success) {
+        throw new Error(orderData.message || 'Could not initiate payment order.');
       }
-    } catch {
-      // Fallback demo redirect straight to student dashboard
-      window.location.href = '/student/dashboard';
-    } finally {
+
+      // 2. Open Razorpay Checkout Modal Window
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "TOPIQ Talent Test (TTT)",
+        description: "Student Registration Fee Payment (₹1,100)",
+        order_id: orderData.order.id,
+        handler: async function (response) {
+          // 3. Verify Payment & Register User on Backend
+          try {
+            const verifyRes = await fetch(`${apiBaseUrl}/payment/verify-and-register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                userData: formData
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              if (verifyData.token) {
+                localStorage.setItem('token', verifyData.token);
+                localStorage.setItem('role', verifyData.role || 'student');
+              }
+              window.location.href = '/student/dashboard';
+            } else {
+              setStatusMsg({ type: 'error', text: verifyData.message || 'Payment verification failed.' });
+            }
+          } catch (err) {
+            console.error('Verification error:', err);
+            setStatusMsg({ type: 'error', text: 'Server error during payment verification.' });
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: { color: "#01295A" },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          }
+        }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+
+    } catch (err) {
+      console.error(err);
+      setStatusMsg({ type: 'error', text: err.message || 'An error occurred during payment initiation.' });
       setLoading(false);
     }
   };
@@ -88,9 +156,12 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
         </button>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-xl font-black text-[#01295A]">Free Student Sign Up</h3>
-            <p className="text-xs text-slate-500 font-semibold">Register & redirect instantly to your dashboard</p>
+          <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
+            <div>
+              <h3 className="text-xl font-black text-[#01295A]">Student Registration & Pay</h3>
+              <p className="text-xs text-slate-500 font-semibold">Complete payment of ₹1,100 to access student portal</p>
+            </div>
+            <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2.5 py-1 rounded-full uppercase">Fee: ₹1,100</span>
           </div>
 
           {statusMsg && (
@@ -207,9 +278,10 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
           <button 
             type="submit" 
             disabled={loading} 
-            className="w-full bg-[#FE7C02] hover:bg-[#E06B00] text-white font-black py-3 rounded-xl shadow-md transition cursor-pointer mt-2 text-sm"
+            className="w-full bg-[#FE7C02] hover:bg-[#E06B00] text-white font-black py-3.5 rounded-xl shadow-md transition cursor-pointer mt-2 text-sm flex items-center justify-center gap-2"
           >
-            {loading ? 'Creating Account...' : 'Register & Go to Dashboard'}
+            <ShieldCheck className="w-4 h-4" />
+            <span>{loading ? 'Initializing Payment...' : 'Pay ₹1,100 & Register'}</span>
           </button>
         </form>
       </div>
