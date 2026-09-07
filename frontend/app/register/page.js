@@ -8,20 +8,21 @@ export default function PublicRegistrationPage() {
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
 
-  // Fetch live configured fees on component load
   useEffect(() => {
-    fetchLiveFees();
-  }, []);
+    fetchLiveFees(selectedClass);
+  }, [selectedClass]);
 
-  const fetchLiveFees = async () => {
+  const fetchLiveFees = async (className) => {
+    setLoadingFee(true);
     try {
       const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`);
       const data = await res.json();
       if (data.success && data.fees) {
-        // Find fee for currently selected class
-        const classFeeObj = data.fees.find(f => f.className === selectedClass);
+        const classFeeObj = data.fees.find(f => f.className === className);
         if (classFeeObj) {
           setCurrentFee(classFeeObj.testFee);
+        } else {
+          setCurrentFee(1100);
         }
       }
     } catch (err) {
@@ -31,25 +32,8 @@ export default function PublicRegistrationPage() {
     }
   };
 
-  // Update fee dynamically when user changes the class dropdown
-  const handleClassChange = async (e) => {
-    const newClass = e.target.value;
-    setSelectedClass(newClass);
-
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`);
-      const data = await res.json();
-      if (data.success && data.fees) {
-        const classFeeObj = data.fees.find(f => f.className === newClass);
-        if (classFeeObj) {
-          setCurrentFee(classFeeObj.testFee);
-        } else {
-          setCurrentFee(1100); // Default fallback fee
-        }
-      }
-    } catch (err) {
-      console.error('Error updating fee on class change:', err);
-    }
+  const handleClassChange = (e) => {
+    setSelectedClass(e.target.value);
   };
 
   return (

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, User, Phone, Mail, GraduationCap, ShieldCheck, MapPin, AlertCircle, Lock } from 'lucide-react';
 
 export default function StudentRegisterModal({ isOpen, onClose }) {
@@ -15,9 +15,41 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
     password: '',
     role: 'student'
   });
+  
+  const [currentFee, setCurrentFee] = useState(1100);
+  const [loadingFee, setLoadingFee] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState(null);
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+
+  // Fetch fee whenever the modal opens or class changes
+  useEffect(() => {
+    if (isOpen) {
+      fetchClassFee(formData.studentClass);
+    }
+  }, [isOpen, formData.studentClass]);
+
+  const fetchClassFee = async (className) => {
+    setLoadingFee(true);
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`);
+      const data = await res.json();
+      if (data.success && data.fees) {
+        const found = data.fees.find(f => f.className === className);
+        if (found) {
+          setCurrentFee(found.testFee);
+        } else {
+          setCurrentFee(1100); // Default fallback
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching live fee:', err);
+    } finally {
+      setLoadingFee(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -69,13 +101,12 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
       return;
     }
 
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
     try {
+      // Create Razorpay order with the dynamic currentFee
       const orderRes = await fetch(`${apiBaseUrl}/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 1100 })
+        body: JSON.stringify({ amount: currentFee })
       });
       const orderData = await orderRes.json();
 
@@ -84,7 +115,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
       }
 
       const razorpayOrderId = orderData.order?.id || orderData.order_id || orderData.id;
-      const razorpayAmount = orderData.order?.amount || orderData.amount || 110000;
+      const razorpayAmount = orderData.order?.amount || orderData.amount || (currentFee * 100);
       const razorpayCurrency = orderData.order?.currency || orderData.currency || 'INR';
 
       const options = {
@@ -92,7 +123,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
         amount: razorpayAmount,
         currency: razorpayCurrency,
         name: "TOPIQ Talent Test (TTT)",
-        description: "Student Registration Fee Payment (₹1,100)",
+        description: `Student Registration Fee Payment (${formData.studentClass} - ₹${currentFee})`,
         order_id: razorpayOrderId,
         handler: async function (response) {
           try {
@@ -103,7 +134,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                userData: formData
+                userData: { ...formData, registrationFee: currentFee }
               })
             });
 
@@ -161,9 +192,11 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
           <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
             <div>
               <h3 className="text-xl font-black text-[#01295A]">Student Registration & Pay</h3>
-              <p className="text-xs text-slate-500 font-semibold">Complete payment of ₹1,100 to access student portal</p>
+              <p className="text-xs text-slate-500 font-semibold">Complete fee payment to access student portal</p>
             </div>
-            <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2.5 py-1 rounded-full uppercase">Fee: ₹1,100</span>
+            <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2.5 py-1 rounded-full uppercase font-mono">
+              {loadingFee ? 'Syncing Fee...' : `Fee: ₹${currentFee}`}
+            </span>
           </div>
 
           {statusMsg && (
@@ -232,7 +265,11 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
                 value={formData.studentClass}
                 onChange={(e) => setFormData({ ...formData, studentClass: e.target.value })}
               >
-                {['Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Competitive (12th & Above)'].map((c) => (
+                {[
+                  'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
+                  'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
+                  '12th & Above (Competitive)', 'Govt & Professional Exams'
+                ].map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -279,11 +316,11 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
 
           <button 
             type="submit" 
-            disabled={loading} 
-            className="w-full bg-[#FE7C02] hover:bg-[#E06B00] text-white font-black py-3.5 rounded-xl shadow-md transition cursor-pointer mt-2 text-sm flex items-center justify-center gap-2"
+            disabled={loading || loadingFee} 
+            className="w-full bg-[#FE7C02] hover:bg-[#E06B00] text-white font-black py-3.5 rounded-xl shadow-md transition cursor-pointer mt-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>{loading ? 'Initializing Payment...' : 'Pay ₹1,100 & Register'}</span>
+            <span>{loading ? 'Initializing Payment...' : `Pay ₹${currentFee} & Register`}</span>
           </button>
         </form>
       </div>
