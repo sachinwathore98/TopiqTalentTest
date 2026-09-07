@@ -2,32 +2,81 @@ const express = require('express');
 const router = express.Router();
 const Enquiry = require('../models/Enquiry');
 
-// Public form submission endpoint
-router.post('/submit', async (req, res) => {
+// Universal shared handler function to process and save any form submission
+const saveEnquiryHandler = async (req, res, defaultType) => {
   try {
-    const { fullName, name, phone, email, city, district, pincode, state, message, enquiryType } = req.body;
+    const { 
+      fullName, 
+      name, 
+      owner_name, 
+      phone, 
+      email, 
+      city, 
+      district, 
+      pincode, 
+      state, 
+      message, 
+      requirements,
+      enquiryType, 
+      enrollmentType,
+      current_business,
+      investment_capacity,
+      preferred_location,
+      agent_role_type
+    } = req.body;
     
-    const normalizedType = (enquiryType || 'student').toLowerCase();
+    // Determine and normalize lead type across all form variants
+    const rawType = enquiryType || enrollmentType || defaultType;
+    const normalizedType = rawType.toLowerCase();
+
+    // Construct a comprehensive message string if custom business/agent fields are present
+    let detailedMessage = message || '';
+    if (current_business || investment_capacity || preferred_location || agent_role_type) {
+      const extraDetails = [
+        current_business ? `Business: ${current_business}` : '',
+        investment_capacity ? `Investment/Scope: ${investment_capacity}` : '',
+        preferred_location ? `Preferred Location: ${preferred_location}` : '',
+        agent_role_type ? `Agent Role: ${agent_role_type}` : '',
+        requirements ? `Notes: ${requirements}` : ''
+      ].filter(Boolean).join(' | ');
+
+      detailedMessage = detailedMessage ? `${detailedMessage} | ${extraDetails}` : extraDetails;
+    }
 
     const newEnquiry = new Enquiry({
-      fullName: fullName || name || 'Website Lead',
+      fullName: fullName || owner_name || name || 'Website Lead',
       phone: phone || '',
       email: email || '',
       city: city || '',
       district: district || '',
       pincode: pincode || '',
       state: state || 'Maharashtra',
-      message: message || '',
-      enquiryType: normalizedType,
+      message: detailedMessage,
+      enquiryType: ['student', 'franchise', 'agent'].includes(normalizedType) ? normalizedType : defaultType,
       status: 'Pending'
     });
 
     await newEnquiry.save();
-    return res.status(201).json({ success: true, message: 'Enquiry submitted successfully!' });
+    return res.status(201).json({ success: true, message: 'Enquiry submitted successfully and logged to dashboard!' });
   } catch (err) {
     console.error('Error saving public enquiry:', err);
     return res.status(500).json({ success: false, message: 'Server error saving enquiry.', error: err.message });
   }
+};
+
+// 1. General Submit Endpoint
+router.post('/submit', async (req, res) => {
+  return saveEnquiryHandler(req, res, 'student');
+});
+
+// 2. Fallback Endpoint for Franchise Section component (/api/franchise/enquire or /api/enquiries/enquire)
+router.post('/enquire', async (req, res) => {
+  return saveEnquiryHandler(req, res, 'franchise');
+});
+
+// 3. Fallback Endpoint for Agent Section component (/api/agents/enroll or /api/enquiries/enroll)
+router.post('/enroll', async (req, res) => {
+  return saveEnquiryHandler(req, res, 'agent');
 });
 
 // Temporary seed route with detailed error catching
