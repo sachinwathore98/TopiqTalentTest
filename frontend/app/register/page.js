@@ -34,11 +34,11 @@ export default function RegisterPage() {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
     try {
-      // 1. Create Order on Backend (e.g., Registration Fee = ₹500)
+      // 1. Create Order on Backend with Registration Fee = ₹1,100
       const orderRes = await fetch(`${apiBaseUrl}/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 500 })
+        body: JSON.stringify({ amount: 1100 })
       });
       const orderData = await orderRes.json();
 
@@ -50,7 +50,7 @@ export default function RegisterPage() {
         amount: orderData.order.amount,
         currency: orderData.order.currency,
         name: "TOPIQ Talent Test (TTT)",
-        description: "Registration Fee Payment",
+        description: "Registration Fee Payment (₹1,100)",
         order_id: orderData.order.id,
         handler: async function (response) {
           // 3. Verify Payment & Register User on Backend
@@ -99,21 +99,40 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto py-12 px-6 bg-white rounded-2xl shadow-xl mt-10">
-      <h2 className="text-2xl font-bold text-[#01295A] mb-6">Register & Pay</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-[#01295A]">Register & Pay</h2>
+        <span className="text-xs font-black bg-orange-100 text-[#FE7C02] px-3 py-1 rounded-full uppercase">Fee: ₹1,100</span>
+      </div>
+
       {error && <p className="mb-4 text-xs text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
       
       <form onSubmit={handleRegistrationWithPayment} className="space-y-4">
-        <input type="text" placeholder="Full Name" required className="w-full px-4 py-3 border rounded-xl text-xs" 
-          value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-        <input type="email" placeholder="Email Address" required className="w-full px-4 py-3 border rounded-xl text-xs" 
-          value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-        <input type="tel" placeholder="Mobile Number" required className="w-full px-4 py-3 border rounded-xl text-xs" 
-          value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
-        <input type="password" placeholder="Password" required className="w-full px-4 py-3 border rounded-xl text-xs" 
-          value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+        <div>
+          <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Full Name *</label>
+          <input type="text" required className="w-full px-4 py-3 border rounded-xl text-xs focus:ring-2 focus:ring-[#FE7C02] outline-none" 
+            placeholder="Enter full name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+        </div>
 
-        <button type="submit" disabled={loading} className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md hover:bg-orange-600 transition">
-          {loading ? 'Processing Payment...' : 'Pay ₹500 & Register'}
+        <div>
+          <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label>
+          <input type="email" required className="w-full px-4 py-3 border rounded-xl text-xs focus:ring-2 focus:ring-[#FE7C02] outline-none" 
+            placeholder="Enter email address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+        </div>
+
+        <div>
+          <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Mobile Number *</label>
+          <input type="tel" required className="w-full px-4 py-3 border rounded-xl text-xs focus:ring-2 focus:ring-[#FE7C02] outline-none" 
+            placeholder="10-digit mobile number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+        </div>
+
+        <div>
+          <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Password *</label>
+          <input type="password" required className="w-full px-4 py-3 border rounded-xl text-xs focus:ring-2 focus:ring-[#FE7C02] outline-none" 
+            placeholder="Set portal password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+        </div>
+
+        <button type="submit" disabled={loading} className="w-full py-3.5 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md hover:bg-orange-600 transition cursor-pointer mt-2">
+          {loading ? 'Processing Payment...' : 'Pay ₹1,100 & Register'}
         </button>
       </form>
     </div>
