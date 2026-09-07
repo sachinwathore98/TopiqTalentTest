@@ -152,12 +152,25 @@ router.put('/users/:id', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 5. WEBSITE LEADS & ENQUIRIES (Live sync, Accept/Deny, Edit, Create Account)
+// 5. WEBSITE LEADS & ENQUIRIES (Segmented by Student, Franchise, Agent)
 router.get('/enquiries', verifySuperAdmin, async (req, res) => {
   try {
-    const enquiries = await Enquiry.find({}).sort({ createdAt: -1 });
+    const rawEnquiries = await Enquiry.find({}).sort({ createdAt: -1 });
+    
+    // Normalize or assign default enquiryType if missing
+    const enquiries = rawEnquiries.map(enq => {
+      const obj = enq.toObject();
+      if (!obj.enquiryType && !obj.type) {
+        obj.enquiryType = 'student'; // Fallback default
+      } else {
+        obj.enquiryType = (obj.enquiryType || obj.type).toLowerCase();
+      }
+      return obj;
+    });
+
     return res.status(200).json({ success: true, enquiries });
   } catch (err) {
+    console.error('Error fetching enquiries:', err);
     return res.status(500).json({ success: false, message: 'Error fetching enquiries.' });
   }
 });
@@ -194,7 +207,7 @@ router.post('/provision', verifySuperAdmin, async (req, res) => {
       name,
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      role: targetRole, // 'asm', 'franchise', 'agent', 'admin'
+      role: targetRole, 
       gstNumber: gstNumber || '',
       status: 'active',
       walletBalance: 0

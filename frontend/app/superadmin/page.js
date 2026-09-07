@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Users, DollarSign, Megaphone, FileText, 
-  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Save, Layers, Edit3, X 
+  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Save, Layers, Edit3, X, GraduationCap, Building2, Briefcase 
 } from 'lucide-react';
 
 export default function SuperAdminCommandCenter() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
+  const [enquirySubTab, setEnquirySubTab] = useState('student');
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     totalRevenue: 0,
@@ -26,7 +27,6 @@ export default function SuperAdminCommandCenter() {
   const [usersList, setUsersList] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
 
-  // Edit User Modal State
   const [editingUser, setEditingUser] = useState(null);
   const [userEditForm, setUserEditForm] = useState({ name: '', email: '', role: 'franchise', gstNumber: '' });
 
@@ -115,10 +115,7 @@ export default function SuperAdminCommandCenter() {
     try {
       const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${token}` 
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ className, testFee, passingMarks: 40, totalMarks: 100 })
       });
       const data = await res.json();
@@ -223,6 +220,15 @@ export default function SuperAdminCommandCenter() {
     fetchAllDashboardData();
   };
 
+  // Filter enquiries based on selected sub-tab
+  const filteredEnquiries = enquiries.filter(enq => {
+    const type = (enq.enquiryType || enq.type || 'student').toLowerCase();
+    if (enquirySubTab === 'student') return type.includes('student') || type.includes('exam') || type === '';
+    if (enquirySubTab === 'franchise') return type.includes('franchise');
+    if (enquirySubTab === 'agent') return type.includes('agent');
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-slate-100 text-[#01295A] pb-12">
       {/* HEADER BAR */}
@@ -315,7 +321,6 @@ export default function SuperAdminCommandCenter() {
               </div>
             </div>
 
-            {/* GRANULAR REVENUE SPLIT BREAKDOWN */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-3">
                 <h3 className="text-sm font-black text-[#01295A] uppercase border-b pb-2">Revenue by Franchise</h3>
@@ -462,7 +467,7 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 4. HIERARCHY & USERS TAB WITH EDIT & DEACTIVATE */}
+        {/* 4. HIERARCHY & USERS TAB */}
         {activeTab === 'hierarchy' && (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-4">
             <h3 className="text-base font-black text-[#01295A]">Ecosystem Users & Hierarchy Directory</h3>
@@ -513,36 +518,101 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 5. WEBSITE LEADS & ENQUIRIES TAB */}
+        {/* 5. WEBSITE LEADS & ENQUIRIES TAB WITH 3 SUB-TABS */}
         {activeTab === 'enquiries' && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-4">
-            <h3 className="text-base font-black text-[#01295A]">Live Website & Partnership Enquiries</h3>
-            <div className="space-y-3">
-              {enquiries.map(enq => (
-                <div key={enq._id} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-sm text-[#01295A]">{enq.fullName || enq.name}</span>
-                      <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2 py-0.5 rounded uppercase">{enq.enquiryType || enq.type || 'General'}</span>
-                    </div>
-                    <div className="text-xs text-slate-500 font-mono">Phone: {enq.phone} | Email: {enq.email} | City: {enq.city || 'N/A'}</div>
-                    <div className="text-xs text-slate-700">{enq.message}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select 
-                      value={enq.status || 'Pending'} 
-                      onChange={e => handleUpdateEnquiryStatus(enq._id, e.target.value)}
-                      className="px-3 py-1.5 rounded-xl border text-xs font-bold bg-white cursor-pointer"
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+              <div>
+                <h3 className="text-lg font-black text-[#01295A]">Live Website & Partnership Enquiries</h3>
+                <p className="text-xs text-slate-500 font-semibold">Review complete form submissions from students, franchises, and agents.</p>
+              </div>
+              
+              {/* SUB-TABS SELECTOR */}
+              <div className="flex gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                {[
+                  { id: 'student', label: 'Students Enquiry', icon: GraduationCap },
+                  { id: 'franchise', label: 'Franchise Enquiry', icon: Building2 },
+                  { id: 'agent', label: 'Agent Enquiry', icon: Briefcase },
+                ].map(sub => {
+                  const SubIcon = sub.icon;
+                  return (
+                    <button
+                      key={sub.id}
+                      onClick={() => setEnquirySubTab(sub.id)}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                        enquirySubTab === sub.id ? 'bg-[#FE7C02] text-white shadow' : 'text-slate-600 hover:bg-white'
+                      }`}
                     >
-                      <option value="Pending">Pending</option>
-                      <option value="Follow-up Required">Follow-up Required</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Denied">Denied</option>
-                    </select>
+                      <SubIcon className="w-3.5 h-3.5" />
+                      <span>{sub.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {filteredEnquiries.map(enq => (
+                <div key={enq._id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200/60 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-sm text-[#01295A]">{enq.fullName || enq.name || 'Unnamed Lead'}</span>
+                      <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        {enq.enquiryType || enq.type || enquirySubTab}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-slate-400 font-bold">
+                        Submitted: {new Date(enq.createdAt || Date.now()).toLocaleString()}
+                      </span>
+                      <select 
+                        value={enq.status || 'Pending'} 
+                        onChange={e => handleUpdateEnquiryStatus(enq._id, e.target.value)}
+                        className="px-3 py-1.5 rounded-xl border text-xs font-bold bg-white cursor-pointer"
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Follow-up Required">Follow-up Required</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Denied">Denied</option>
+                      </select>
+                    </div>
                   </div>
+
+                  {/* FULL FORM DATA GRID */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-semibold">
+                    <div className="bg-white p-3 rounded-xl border border-slate-200">
+                      <span className="text-[10px] font-black text-slate-400 uppercase block">Phone Number</span>
+                      <span className="font-mono font-bold text-[#01295A]">{enq.phone || 'N/A'}</span>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200">
+                      <span className="text-[10px] font-black text-slate-400 uppercase block">Email Address</span>
+                      <span className="font-mono font-bold text-[#01295A]">{enq.email || 'N/A'}</span>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200">
+                      <span className="text-[10px] font-black text-slate-400 uppercase block">City / District</span>
+                      <span className="font-bold text-[#01295A]">{enq.city || enq.district || 'N/A'}</span>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200">
+                      <span className="text-[10px] font-black text-slate-400 uppercase block">Pincode / State</span>
+                      <span className="font-mono font-bold text-[#01295A]">{enq.pincode || 'N/A'} / {enq.state || 'Maharashtra'}</span>
+                    </div>
+                  </div>
+
+                  {enq.message && (
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 text-xs">
+                      <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Detailed Message / Remarks</span>
+                      <p className="text-slate-700 font-medium">{enq.message}</p>
+                    </div>
+                  )}
                 </div>
               ))}
-              {enquiries.length === 0 && <p className="text-xs text-slate-400 text-center py-6">No enquiries registered.</p>}
+
+              {filteredEnquiries.length === 0 && (
+                <div className="text-center py-12 space-y-2">
+                  <FileText className="w-10 h-10 text-slate-300 mx-auto" />
+                  <p className="text-xs font-bold text-slate-400 uppercase">No {enquirySubTab} enquiries registered yet.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
