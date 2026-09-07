@@ -29,73 +29,86 @@ const CLASS_OPTIONS = [
   { id: 'COMPETITIVE', name: 'Competitive Exams (12th & Above)', group: 'Group E' },
 ];
 
-// SAMPLE 10-QUESTION BANKS PER CLASS TIER
+// SAMPLE 10-QUESTION BANKS PER CLASS TIER (Multilingual Support: en, hi, mr)
 const QUESTION_BANKS = {
   CLASS_3_5: [
-    { id: 1, question: "What is 15 multiplied by 8?", options: ["100", "120", "130", "140"], correct: 1, explanation: "15 x 8 = 120." },
-    { id: 2, question: "Which is the largest land animal in the world?", options: ["Giraffe", "Blue Whale", "African Elephant", "Hippopotamus"], correct: 2, explanation: "African Elephant is the largest land mammal." },
-    { id: 3, question: "Choose the correct spelling:", options: ["Beautifull", "Beautiful", "Beautifil", "Beutiful"], correct: 1, explanation: "The correct spelling is B-E-A-U-T-I-F-U-L." },
-    { id: 4, question: "How many sides does a hexagon have?", options: ["5", "6", "7", "8"], correct: 1, explanation: "A hexagon has 6 sides." },
-    { id: 5, question: "Which gas do plants absorb during photosynthesis?", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], correct: 2, explanation: "Plants take in Carbon Dioxide to make food." },
-    { id: 6, question: "If 1 kg = 1000 grams, how many grams are in 3.5 kg?", options: ["3000g", "3500g", "3050g", "350g"], correct: 1, explanation: "3.5 x 1000 = 3500 grams." },
-    { id: 7, question: "Complete the pattern: 2, 4, 8, 16, __", options: ["20", "24", "32", "64"], correct: 2, explanation: "Each number is multiplied by 2. 16 x 2 = 32." },
-    { id: 8, question: "Which organ controls all functions of the human body?", options: ["Heart", "Lungs", "Brain", "Stomach"], correct: 2, explanation: "The brain is the control center of the body." },
-    { id: 9, question: "Antonym of 'ANCIENT' is:", options: ["Old", "Modern", "Historic", "Past"], correct: 1, explanation: "Modern is the opposite of Ancient." },
-    { id: 10, question: "How many hours are there in 2 days?", options: ["24", "36", "48", "60"], correct: 2, explanation: "24 hours/day x 2 = 48 hours." }
+    { 
+      id: 1, 
+      question: { en: "What is 15 multiplied by 8?", hi: "15 को 8 से गुणा करने पर क्या मिलता है?", mr: "15 ला 8 ने गुणले असता उत्तर काय येते?" }, 
+      options: { en: ["100", "120", "130", "140"], hi: ["100", "120", "130", "140"], mr: ["100", "120", "130", "140"] }, 
+      correct: 1, 
+      explanation: { en: "15 x 8 = 120.", hi: "15 x 8 = 120.", mr: "15 x 8 = 120." } 
+    },
+    { 
+      id: 2, 
+      question: { en: "Which is the largest land animal in the world?", hi: "दुनिया का सबसे बड़ा स्थलीय जानवर कौन सा है?", mr: "जगातील सर्वात मोठा भूचर प्राणी कोणता आहे?" }, 
+      options: { en: ["Giraffe", "Blue Whale", "African Elephant", "Hippopotamus"], hi: ["जिराफ", "नीली व्हेल", "अफ्रीकी हाथी", "हिप्पोपोटामस"], mr: ["जिराफ", "ब्लू व्हेल", "आफ्रिकन हत्ती", "हिप्पोपोटॅमस"] }, 
+      correct: 2, 
+      explanation: { en: "African Elephant is the largest land mammal.", hi: "अफ्रीकी हाथी सबसे बड़ा स्थलीय स्तनधारी है.", mr: "आफ्रिकन हत्ती हा सर्वात मोठा भूचर सस्तन प्राणी आहे." } 
+    },
+    { id: 3, question: { en: "Choose the correct spelling:", hi: "सही वर्तनी चुनें:", mr: "योग्य स्पेलिंग निवडा:" }, options: { en: ["Beautifull", "Beautiful", "Beautifil", "Beutiful"], hi: ["Beautifull", "Beautiful", "Beautifil", "Beutiful"], mr: ["Beautifull", "Beautiful", "Beautifil", "Beutiful"] }, correct: 1, explanation: { en: "The correct spelling is B-E-A-U-T-I-F-U-L.", hi: "सही वर्तनी B-E-A-U-T-I-F-U-L है.", mr: "योग्य स्पेलिंग B-E-A-U-T-I-F-U-L आहे." } },
+    { id: 4, question: { en: "How many sides does a hexagon have?", hi: "षट्कोण की कितनी भुजाएँ होती हैं?", mr: "षटकोनाला किती बाजू असतात?" }, options: { en: ["5", "6", "7", "8"], hi: ["5", "6", "7", "8"], mr: ["5", "6", "7", "8"] }, correct: 1, explanation: { en: "A hexagon has 6 sides.", hi: "षट्कोण में 6 भुजाएँ होती हैं.", mr: "षटकोनाला 6 बाजू असतात." } },
+    { id: 5, question: { en: "Which gas do plants absorb during photosynthesis?", hi: "प्रकाश संश्लेषण के दौरान पौधे कौन सी गैस吸收 करते हैं?", mr: "प्रकाशसंश्लेषणादरम्यान वनस्पती कोणती वायू शोषून घेतात?" }, options: { en: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], hi: ["ऑक्सीजन", "नाइट्रोजन", "कार्बन डाइऑक्साइड", "हाइड्रोजन"], mr: ["ऑक्सिजन", "नायट्रोजन", "कार्बन डायऑक्साइड", "हायड्रोजन"] }, correct: 2, explanation: { en: "Plants take in Carbon Dioxide to make food.", hi: "पौधे भोजन बनाने के लिए कार्बन डाइऑक्साइड लेते हैं.", mr: "वनस्पती अन्न तयार करण्यासाठी कार्बन डायऑक्साइड शोषतात." } },
+    { id: 6, question: { en: "If 1 kg = 1000 grams, how many grams are in 3.5 kg?", hi: "यदि 1 kg = 1000 ग्राम, तो 3.5 kg में कितने ग्राम होंगे?", mr: "जर 1 kg = 1000 ग्रॅम, तर 3.5 kg मध्ये किती ग्रॅम असतात?" }, options: { en: ["3000g", "3500g", "3050g", "350g"], hi: ["3000g", "3500g", "3050g", "350g"], mr: ["3000g", "3500g", "3050g", "350g"] }, correct: 1, explanation: { en: "3.5 x 1000 = 3500 grams.", hi: "3.5 x 1000 = 3500 ग्राम.", mr: "3.5 x 1000 = 3500 ग्रॅम." } },
+    { id: 7, question: { en: "Complete the pattern: 2, 4, 8, 16, __", hi: "पैटर्न पूरा करें: 2, 4, 8, 16, __", mr: "पॅटर्न पूर्ण करा: 2, 4, 8, 16, __" }, options: { en: ["20", "24", "32", "64"], hi: ["20", "24", "32", "64"], mr: ["20", "24", "32", "64"] }, correct: 2, explanation: { en: "Each number is multiplied by 2. 16 x 2 = 32.", hi: "प्रत्येक संख्या को 2 से गुणा किया जाता है. 16 x 2 = 32.", mr: "प्रत्येक संख्याला 2 ने गुणले आहे. 16 x 2 = 32." } },
+    { id: 8, question: { en: "Which organ controls all functions of the human body?", hi: "मानव शरीर के सभी कार्यों को कौन सा अंग नियंत्रित करता है?", mr: "मानवी शरीराची सर्व कार्ये कोणता अवयव नियंत्रित करतो?" }, options: { en: ["Heart", "Lungs", "Brain", "Stomach"], hi: ["हृदय", "फेफड़े", "मस्तिष्क", "पेट"], mr: ["हृदय", "फुफ्फुस", "मदूष्क (मदूद)", "पोट"] }, correct: 2, explanation: { en: "The brain is the control center of the body.", hi: "मस्तिष्क शरीर का नियंत्रण केंद्र है.", mr: "मेंदू हा शरीराचा नियंत्रण केंद्र आहे." } },
+    { id: 9, question: { en: "Antonym of 'ANCIENT' is:", hi: "'ANCIENT' (प्राचीन) का विलोम शब्द है:", mr: "'ANCIENT' (प्राचीन) चा विरुद्धार्थी शब्द:" }, options: { en: ["Old", "Modern", "Historic", "Past"], hi: ["पुराना", "आधुनिक", "ऐतिहासिक", "अतीत"], mr: ["जुना", "आधुनिक", "ऐतिहासिक", "भूतकाळ"] }, correct: 1, explanation: { en: "Modern is the opposite of Ancient.", hi: "प्राचीन का विलोम आधुनिक है.", mr: "प्राचीनच्या विरुद्ध आधुनिक आहे." } },
+    { id: 10, question: { en: "How many hours are there in 2 days?", hi: "2 दिनों में कितने घंटे होते हैं?", mr: "2 दिवसांत किती तास असतात?" }, options: { en: ["24", "36", "48", "60"], hi: ["24", "36", "48", "60"], mr: ["24", "36", "48", "60"] }, correct: 2, explanation: { en: "24 hours/day x 2 = 48 hours.", hi: "24 घंटे/दिन x 2 = 48 घंटे.", mr: "24 तास/दिवस x 2 = 48 तास." } }
   ],
   CLASS_6_8: [
-    { id: 1, question: "Simplify: (-12) + (-8) - (-10)", options: ["-10", "-30", "10", "0"], correct: 0, explanation: "-12 - 8 + 10 = -10." },
-    { id: 2, question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], correct: 1, explanation: "Mars appears red due to iron oxide on its surface." },
-    { id: 3, question: "Identify the pronoun in: 'She sings melodiously.'", options: ["She", "Sings", "Melodiously", "None"], correct: 0, explanation: "'She' is a pronoun." },
-    { id: 4, question: "What is the square root of 144?", options: ["11", "12", "14", "16"], correct: 1, explanation: "12 x 12 = 144." },
-    { id: 5, question: "Which light color bends the most through a glass prism?", options: ["Red", "Yellow", "Violet", "Green"], correct: 2, explanation: "Violet light has the shortest wavelength and bends the most." },
-    { id: 6, question: "An angle measuring 90° is called:", options: ["Acute Angle", "Obtuse Angle", "Right Angle", "Reflex Angle"], correct: 2, explanation: "A 90-degree angle is a Right Angle." },
-    { id: 7, question: "Which is the smallest prime number?", options: ["0", "1", "2", "3"], correct: 2, explanation: "2 is the smallest prime number." },
-    { id: 8, question: "Chemical symbol for Sodium is:", options: ["So", "Na", "Sd", "S"], correct: 1, explanation: "Sodium symbol is Na." },
-    { id: 9, question: "Find the average of 10, 20, 30, 40, and 50:", options: ["25", "30", "35", "40"], correct: 1, explanation: "Sum = 150 / 5 = 30." },
-    { id: 10, question: "Which instrument measures atmospheric pressure?", options: ["Thermometer", "Barometer", "Ammeter", "Speedometer"], correct: 1, explanation: "Barometers measure atmospheric pressure." }
+    { id: 1, question: { en: "Simplify: (-12) + (-8) - (-10)", hi: "सरल करें: (-12) + (-8) - (-10)", mr: "सोपे करा: (-12) + (-8) - (-10)" }, options: { en: ["-10", "-30", "10", "0"], hi: ["-10", "-30", "10", "0"], mr: ["-10", "-30", "10", "0"] }, correct: 0, explanation: { en: "-12 - 8 + 10 = -10.", hi: "-12 - 8 + 10 = -10.", mr: "-12 - 8 + 10 = -10." } },
+    { id: 2, question: { en: "Which planet is known as the Red Planet?", hi: "किस ग्रह को लाल ग्रह के रूप में जाना जाता है?", mr: "कोणत्या ग्रहाला लाल ग्रह म्हणून ओळखले जाते?" }, options: { en: ["Venus", "Mars", "Jupiter", "Saturn"], hi: ["शुक्र", "मंगल", "बृहस्पति", "शनि"], mr: ["शुक्र", "मंगळ", "गुरू", "शनी"] }, correct: 1, explanation: { en: "Mars appears red due to iron oxide on its surface.", hi: "मंगल अपनी सतह पर आयरन ऑक्साइड के कारण लाल दिखाई देता है.", mr: "मंगळाच्या पृष्ठभागावर आयर्न ऑक्साईड असल्यामुळे तो लाल दिसतो." } },
+    { id: 3, question: { en: "Identify the pronoun in: 'She sings melodiously.'", hi: "'She sings melodiously.' में सर्वनाम पहचानिए:", mr: "'She sings melodiously.' मधील सर्वनाम ओळखा:" }, options: { en: ["She", "Sings", "Melodiously", "None"], hi: ["She", "Sings", "Melodiously", "कोई नहीं"], mr: ["She", "Sings", "Melodiously", "काहीही नाही"] }, correct: 0, explanation: { en: "'She' is a pronoun.", hi: "'She' एक सर्वनाम है.", mr: "'She' हे सर्वनाम आहे." } },
+    { id: 4, question: { en: "What is the square root of 144?", hi: "144 का वर्गमूल क्या है?", mr: "144 चे वर्गमूळ किती आहे?" }, options: { en: ["11", "12", "14", "16"], hi: ["11", "12", "14", "16"], mr: ["11", "12", "14", "16"] }, correct: 1, explanation: { en: "12 x 12 = 144.", hi: "12 x 12 = 144.", mr: "12 x 12 = 144." } },
+    { id: 5, question: { en: "Which light color bends the most through a glass prism?", hi: "कांच के प्रिज्म से गुजरने पर कौन सा प्रकाश सबसे अधिक झुकता है?", mr: "काचेच्या प्रिझममधून जाताना कोणता प्रकाश सर्वात जास्त वाकतो?" }, options: { en: ["Red", "Yellow", "Violet", "Green"], hi: ["लाल", "पीला", "बैंगनी", "हरा"], mr: ["लाल", "पिवळा", "जांभळा", "हिरवा"] }, correct: 2, explanation: { en: "Violet light has the shortest wavelength and bends the most.", hi: "बैंगनी प्रकाश की तरंग दैर्ध्य सबसे कम होती है और यह सबसे अधिक झुकता है.", mr: "जांभळ्या प्रकाशाची तरंग लांबी सर्वात कमी असते आणि तो सर्वात जास्त वाकतो." } },
+    { id: 6, question: { en: "An angle measuring 90° is called:", hi: "90° माप वाले कोण को क्या कहते हैं:", mr: "90° च्या कोनाला काय म्हणतात:" }, options: { en: ["Acute Angle", "Obtuse Angle", "Right Angle", "Reflex Angle"], hi: ["न्यून कोण", "अधिक कोण", "समकोण", "प्रतिवर्ती कोण"], mr: ["लघूकोन", "विशालकोन", "काटकोन", "प्रविशालकोन"] }, correct: 2, explanation: { en: "A 90-degree angle is a Right Angle.", hi: "90 डिग्री का कोण समकोण होता है.", mr: "90 अंशाचा कोन हा काटकोन असतो." } },
+    { id: 7, question: { en: "Which is the smallest prime number?", hi: "सबसे छोटी अभाज्य संख्या कौन सी है?", mr: "सर्वात लहान मूळ संख्या कोणती आहे?" }, options: { en: ["0", "1", "2", "3"], hi: ["0", "1", "2", "3"], mr: ["0", "1", "2", "3"] }, correct: 2, explanation: { en: "2 is the smallest prime number.", hi: "2 सबसे छोटी अभाज्य संख्या है.", mr: "2 ही सर्वात लहान मूळ संख्या आहे." } },
+    { id: 8, question: { en: "Chemical symbol for Sodium is:", hi: "सोडियम का रासायनिक प्रतीक है:", mr: "सोडियमचे रासायनिक चिन्ह काय आहे:" }, options: { en: ["So", "Na", "Sd", "S"], hi: ["So", "Na", "Sd", "S"], mr: ["So", "Na", "Sd", "S"] }, correct: 1, explanation: { en: "Sodium symbol is Na.", hi: "सोडियम का प्रतीक Na है.", mr: "सोडियमचे चिन्ह Na आहे." } },
+    { id: 9, question: { en: "Find the average of 10, 20, 30, 40, and 50:", hi: "10, 20, 30, 40 और 50 का औसत ज्ञात कीजिए:", mr: "10, 20, 30, 40 आणि 50 ची सरासरी काढा:" }, options: { en: ["25", "30", "35", "40"], hi: ["25", "30", "35", "40"], mr: ["25", "30", "35", "40"] }, correct: 1, explanation: { en: "Sum = 150 / 5 = 30.", hi: "योग = 150 / 5 = 30.", mr: "बेरीज = 150 / 5 = 30." } },
+    { id: 10, question: { en: "Which instrument measures atmospheric pressure?", hi: "वायुमंडलीय दबाव किस यंत्र से मापा जाता है?", mr: "वातावरणीय दाब कोणत्या उपकरणाने मोजला जातो?" }, options: { en: ["Thermometer", "Barometer", "Ammeter", "Speedometer"], hi: ["थर्मामीटर", "बैरोमीटर", "एमीटर", "स्पीडोमीटर"], mr: ["थर्मामीटर", "बॅरोमीटर", "अॅमीटर", "स्पीडोमीटर"] }, correct: 1, explanation: { en: "Barometers measure atmospheric pressure.", hi: "बैरोमीटर वायुमंडलीय दबाव मापता है.", mr: "बॅरोमीटर वातावरणीय दाब मोजतो." } }
   ],
   CLASS_9_10: [
-    { id: 1, question: "If a train travels 240 km in 4 hours, what is its average speed?", options: ["50 km/h", "60 km/h", "70 km/h", "80 km/h"], correct: 1, explanation: "Speed = Distance/Time = 240/4 = 60 km/h." },
-    { id: 2, question: "Which organ in the human body filters blood to produce urine?", options: ["Heart", "Lungs", "Kidney", "Liver"], correct: 2, explanation: "Kidneys filter waste products from the blood." },
-    { id: 3, question: "Select the synonym for 'PERSISTENT':", options: ["Temporary", "Determined", "Lazy", "Uncertain"], correct: 1, explanation: "Persistent means continuing firmly." },
-    { id: 4, question: "What is the pH value of pure distilled water?", options: ["5", "7", "9", "14"], correct: 1, explanation: "Pure water is neutral with a pH of 7." },
-    { id: 5, question: "Value of sin(30°) is:", options: ["0", "1/2", "1/√2", "1"], correct: 1, explanation: "sin(30°) = 0.5 or 1/2." },
-    { id: 6, question: "Unit of electrical resistance is:", options: ["Volt", "Ampere", "Ohm", "Watt"], correct: 2, explanation: "Resistance is measured in Ohms (Ω)." },
-    { id: 7, question: "Which metal is liquid at room temperature?", options: ["Mercury", "Sodium", "Lead", "Aluminum"], correct: 0, explanation: "Mercury (Hg) is liquid at room temperature." },
-    { id: 8, question: "Quadratic equation x² - 9 = 0 has roots:", options: ["±3", "±9", "3 only", "9 only"], correct: 0, explanation: "x² = 9 => x = +3 and -3." },
-    { id: 9, question: "Who formulated the Laws of Motion?", options: ["Albert Einstein", "Isaac Newton", "Galileo Galilei", "Nikola Tesla"], correct: 1, explanation: "Sir Isaac Newton formulated the three laws of motion." },
-    { id: 10, question: "Find HCF of 24 and 36:", options: ["6", "8", "12", "18"], correct: 2, explanation: "12 is the highest common factor of 24 and 36." }
+    { id: 1, question: { en: "If a train travels 240 km in 4 hours, what is its average speed?", hi: "यदि एक ट्रेन 4 घंटे में 240 किमी चलती है, तो उसकी औसत गति क्या है?", mr: "जर ट्रेन 4 तासांत 240 किमी अंतर पार करते, तर तिचा सरासरी वेग किती?" }, options: { en: ["50 km/h", "60 km/h", "70 km/h", "80 km/h"], hi: ["50 किमी/घंटा", "60 किमी/घंटा", "70 किमी/घंटा", "80 किमी/घंटा"], mr: ["50 किमी/तास", "60 किमी/तास", "70 किमी/तास", "80 किमी/तास"] }, correct: 1, explanation: { en: "Speed = Distance/Time = 240/4 = 60 km/h.", hi: "गति = दूरी/समय = 240/4 = 60 किमी/घंटा.", mr: "वेग = अंतर/वेळ = 240/4 = 60 किमी/तास." } },
+    { id: 2, question: { en: "Which organ in the human body filters blood to produce urine?", hi: "मानव शरीर में कौन सा अंग रक्त को छानकर मूत्र बनाता है?", mr: "मानवी शरीरातील कोणता अवयव रक्ताचे गाळण करून मूत्र तयार करतो?" }, options: { en: ["Heart", "Lungs", "Kidney", "Liver"], hi: ["हृदय", "फेफड़े", "गुर्दा (किडनी)", "यकृत"], mr: ["हृदय", "फुफ्फुस", "मूत्रपिंड (किडनी)", "यकृत"] }, correct: 2, explanation: { en: "Kidneys filter waste products from the blood.", hi: "गुर्दे रक्त से अपशिष्ट उत्पादों को फ़िल्टर करते हैं.", mr: "मूत्रपिंड रक्तातील टाकाऊ पदार्थ गाळतात." } },
+    { id: 3, question: { en: "Select the synonym for 'PERSISTENT':", hi: "'PERSISTENT' का पर्यायवाची चुनें:", mr: "'PERSISTENT' चा समानार्थी शब्द निवडा:" }, options: { en: ["Temporary", "Determined", "Lazy", "Uncertain"], hi: ["अस्थाई", "दृढ़/संकल्पित", "आलसी", "अनिश्चित"], mr: ["अस्थायी", "निश्चयी / दृढ", "आळशी", "अनिश्चित"] }, correct: 1, explanation: { en: "Persistent means continuing firmly.", hi: "Persistent का अर्थ है दृढ़ता से लगे रहना.", mr: "Persistent म्हणजे दृढ निश्चयाने टिकून राहणे." } },
+    { id: 4, question: { en: "What is the pH value of pure distilled water?", hi: "शुद्ध आसुत जल का pH मान कितना होता है?", mr: "शुद्ध डिस्टिल्ड पाण्याचा pH मान किती असतो?" }, options: { en: ["5", "7", "9", "14"], hi: ["5", "7", "9", "14"], mr: ["5", "7", "9", "14"] }, correct: 1, explanation: { en: "Pure water is neutral with a pH of 7.", hi: "शुद्ध पानी 7 के pH के साथ तटस्थ होता है.", mr: "शुद्ध पाणी 7 pH सह तटस्थ असते." } },
+    { id: 5, question: { en: "Value of sin(30°) is:", hi: "sin(30°) का मान है:", mr: "sin(30°) चे मूल्य किती आहे:" }, options: { en: ["0", "1/2", "1/√2", "1"], hi: ["0", "1/2", "1/√2", "1"], mr: ["0", "1/2", "1/√2", "1"] }, correct: 1, explanation: { en: "sin(30°) = 0.5 or 1/2.", hi: "sin(30°) = 0.5 या 1/2.", mr: "sin(30°) = 0.5 किंवा 1/2." } },
+    { id: 6, question: { en: "Unit of electrical resistance is:", hi: "विद्युत प्रतिरोध की इकाई है:", mr: "विद्युत रोधाचे (Resistance) एकक काय आहे:" }, options: { en: ["Volt", "Ampere", "Ohm", "Watt"], hi: ["वोल्ट", "एम्पीयर", "ओम", "वाट"], mr: ["व्होल्ट", "अँपिअर", "ओम",ियन"] }, correct: 2, explanation: { en: "Resistance is measured in Ohms (Ω).", hi: "प्रतिरोध को ओम (Ω) में मापा जाता है.", mr: "रोध ओम (Ω) मध्ये मोजला जातो." } },
+    ,{ id: 7, question: { en: "Which metal is liquid at room temperature?", hi: "कमरे के तापमान पर कौन सी धातु तरल होती है?", mr: "खोलीच्या तापमानाला कोणती धातू द्रव अवस्थेत असते?" }, options: { en: ["Mercury", "Sodium", "Lead", "Aluminum"], hi: ["पारा (मर्करी)", "सोडियम", "लेड", "एल्युमिनियम"], mr: ["पारा (मर्क्यूरी)", "सोडियम", "लेड", "ॲल्युमिनियम"] }, correct: 0, explanation: { en: "Mercury (Hg) is liquid at room temperature.", hi: "पारा कमरे के तापमान पर तरल होता है.", mr: "पारा खोलीच्या तापमानाला द्रव असतो." } },
+    { id: 8, question: { en: "Quadratic equation x² - 9 = 0 has roots:", hi: "द्विघात समीकरण x² - 9 = 0 के मूल हैं:", mr: "द्विघाती समीकरण x² - 9 = 0 ची मुळे काय आहेत:" }, options: { en: ["±3", "±9", "3 only", "9 only"], hi: ["±3", "±9", "केवल 3", "केवल 9"], mr: ["±3", "±9", "फक्त 3", "फक्त 9"] }, correct: 0, explanation: { en: "x² = 9 => x = +3 and -3.", hi: "x² = 9 => x = +3 और -3.", mr: "x² = 9 => x = +3 आणि -3." } },
+    { id: 9, question: { en: "Who formulated the Laws of Motion?", hi: "गति के नियमों का प्रतिपादन किसने किया?", mr: "गतीचे नियम कोणी मांडले?" }, options: { en: ["Albert Einstein", "Isaac Newton", "Galileo Galilei", "Nikola Tesla"], hi: ["अल्बर्ट आइंस्टीन", "आइजैक न्यूटन", "गैलीलियो गैलीली", "निकोला टेस्ला"], mr: ["अल्बर्ट आइनस्टाइन", "आयझॅक न्यूटन", "गॅलीलियो गॅिलेली", "निकोला टेस्ला"] }, correct: 1, explanation: { en: "Sir Isaac Newton formulated the three laws of motion.", hi: "सर आइजैक न्यूटन ने गति के तीन नियम प्रतिपादित किए.", mr: "सर आयझॅक न्यूटन यांनी गतीचे तीन नियम प्रतिपादित केले." } },
+    { id: 10, question: { en: "Find HCF of 24 and 36:", hi: "24 और 36 का HCF ज्ञात कीजिए:", mr: "24 आणि 36 चा मसावी (HCF) काढा:" }, options: { en: ["6", "8", "12", "18"], hi: ["6", "8", "12", "18"], mr: ["6", "8", "12", "18"] }, correct: 2, explanation: { en: "12 is the highest common factor of 24 and 36.", hi: "24 और 36 का महत्तम समापवर्तक 12 है.", mr: "24 आणि 36 चा सर्वात मोठा सामायिक विभाषक 12 आहे." } }
   ],
   CLASS_11_12: [
-    { id: 1, question: "Derivative of sin(x) with respect to x is:", options: ["-cos(x)", "cos(x)", "tan(x)", "-sin(x)"], correct: 1, explanation: "d/dx(sin x) = cos x." },
-    { id: 2, question: "SI unit of Electric Charge is:", options: ["Farad", "Coulomb", "Tesla", "Weber"], correct: 1, explanation: "Charge is measured in Coulombs (C)." },
-    { id: 3, question: "Which gas obeys PV = nRT under ideal conditions?", options: ["Ideal Gas", "Real Gas", "Noble Gas", "Heavy Gas"], correct: 0, explanation: "Ideal gases strictly follow the Ideal Gas Law." },
-    { id: 4, question: "Oxidation state of Oxygen in H₂O is:", options: ["+2", "-2", "-1", "0"], correct: 1, explanation: "In H₂O, Oxygen is -2." },
-    { id: 5, question: "If log₁₀(x) = 3, then x equals:", options: ["30", "100", "1000", "3000"], correct: 2, explanation: "x = 10³ = 1000." },
-    { id: 6, question: "Work done by a force when displacement is perpendicular to force:", options: ["Maximum", "Zero", "Negative", "Infinite"], correct: 1, explanation: "W = F·d·cos(90°) = 0." },
-    { id: 7, question: "Which structure produces ribosomes in a cell?", options: ["Mitochondria", "Nucleolus", "Golgi Body", "Lysosome"], correct: 1, explanation: "The nucleolus synthesizes ribosomes." },
-    { id: 8, question: "Integral of 1/x dx is:", options: ["x²", "ln|x| + C", "eˣ", "1/x²"], correct: 1, explanation: "∫(1/x)dx = ln|x| + C." },
-    { id: 9, question: "Light year is a unit of:", options: ["Time", "Distance", "Speed", "Intensity"], correct: 1, explanation: "Light year measures astronomical distance." },
-    { id: 10, question: "Which element has highest electronegativity?", options: ["Fluorine", "Chlorine", "Oxygen", "Nitrogen"], correct: 0, explanation: "Fluorine has the highest electronegativity." }
+    { id: 1, question: { en: "Derivative of sin(x) with respect to x is:", hi: "x के सापेक्ष sin(x) का अवकलज (derivative) है:", mr: "x च्या संदर्भात sin(x) चा डेरिव्हेटिव्ह काय आहे:" }, options: { en: ["-cos(x)", "cos(x)", "tan(x)", "-sin(x)"], hi: ["-cos(x)", "cos(x)", "tan(x)", "-sin(x)"], mr: ["-cos(x)", "cos(x)", "tan(x)", "-sin(x)"] }, correct: 1, explanation: { en: "d/dx(sin x) = cos x.", hi: "d/dx(sin x) = cos x.", mr: "d/dx(sin x) = cos x." } },
+    { id: 2, question: { en: "SI unit of Electric Charge is:", hi: "विद्युत आवेश (Electric Charge) की SI इकाई है:", mr: "विद्युत चार्जचे SI एकक काय आहे:" }, options: { en: ["Farad", "Coulomb", "Tesla", "Weber"], hi: ["फैराड", "कूलम्ब", "टेस्ला", "वेबर"], mr: ["फॅरड", "कुलॉम्ब", "टेस्ला", "वेबर"] }, correct: 1, explanation: { en: "Charge is measured in Coulombs (C).", hi: "आवेश को कूलम्ब (C) में मापा जाता है.", mr: "चार्ज कुलॉम्ब (C) मध्ये मोजला जातो." } },
+    { id: 3, question: { en: "Which gas obeys PV = nRT under ideal conditions?", hi: "आदर्श परिस्थितियों में कौन सी गैस PV = nRT का पालन करती है?", mr: "आदर्श परिस्थितीत कोणती वायू PV = nRT चे पालन करते?" }, options: { en: ["Ideal Gas", "Real Gas", "Noble Gas", "Heavy Gas"], hi: ["आदर्श गैस", "वास्तविक गैस", "उत्कृष्ट गैस", "भारी गैस"], mr: ["आदर्श वायू", "वास्तविक वायू", "उत्कृष्ट वायू", "जड वायू"] }, correct: 0, explanation: { en: "Ideal gases strictly follow the Ideal Gas Law.", hi: "आदर्श गैसें आदर्श गैस नियम का सख्ती से पालन करती हैं.", mr: "आदर्श वायू आदर्श वायू नियमाचे तंतोतंत पालन करतात." } },
+    { id: 4, question: { en: "Oxidation state of Oxygen in H₂O is:", hi: "H₂O में ऑक्सीजन की ऑक्सीकरण अवस्था है:", mr: "H₂O मधील ऑक्सिजनची ऑक्सिडेशन स्टेट काय आहे:" }, options: { en: ["+2", "-2", "-1", "0"], hi: ["+2", "-2", "-1", "0"], mr: ["+2", "-2", "-1", "0"] }, correct: 1, explanation: { en: "In H₂O, Oxygen is -2.", hi: "H₂O में ऑक्सीजन -2 है.", mr: "H₂O मध्ये ऑक्सिजन -2 आहे." } },
+    { id: 5, question: { en: "If log₁₀(x) = 3, then x equals:", hi: "यदि log₁₀(x) = 3, तो x का मान है:", mr: "जर log₁₀(x) = 3, तर x ची किंमत किती:" }, options: { en: ["30", "100", "1000", "3000"], hi: ["30", "100", "1000", "3000"], mr: ["30", "100", "1000", "3000"] }, correct: 2, explanation: { en: "x = 10³ = 1000.", hi: "x = 10³ = 1000.", mr: "x = 10³ = 1000." } },
+    { id: 6, question: { en: "Work done by a force when displacement is perpendicular to force:", hi: "बल द्वारा किया गया कार्य जब विस्थापन बल के लंबवत हो:", mr: "जेव्हा विस्थापन बलाशी लंब असते तेव्हा बलाद्वारे केलेले कार्य:" }, options: { en: ["Maximum", "Zero", "Negative", "Infinite"], hi: ["अधिकतम", "शून्य", "ऋणात्मक", "अनंत"], mr: ["कमाल", "शून्य", "ऋणात्मक", "अनंत"] }, correct: 1, explanation: { en: "W = F·d·cos(90°) = 0.", hi: "W = F·d·cos(90°) = 0.", mr: "W = F·d·cos(90°) = 0." } },
+    { id: 7, question: { en: "Which structure produces ribosomes in a cell?", hi: "कोशिका में कौन सी संरचना राइबोसोम का उत्पादन करती है?", mr: "पेशीमध्ये कोणती रचना रायबोसोम तयार करते?" }, options: { en: ["Mitochondria", "Nucleolus", "Golgi Body", "Lysosome"], hi: ["माइटोकॉन्ड्रिया", "केंद्रिका (Nucleolus)", "गोल्गी बॉडी", "लाइसोसोम"], mr: ["मायटोकाँड्रिया", "न्युक्लिओलस (केंद्रिका)", "गोल्गी बॉडी", "लायसोसोम"] }, correct: 1, explanation: { en: "The nucleolus synthesizes ribosomes.", hi: "केंद्रिका राइबोसोम का संश्लेषण करती है.", mr: "न्युक्लिओलस रायबोसोमचे संश्लेषण करते." } },
+    { id: 8, question: { en: "Integral of 1/x dx is:", hi: "1/x dx का समाकलन (integral) है:", mr: "1/x dx चे समाकलन (integral) काय आहे:" }, options: { en: ["x²", "ln|x| + C", "eˣ", "1/x²"], hi: ["x²", "ln|x| + C", "eˣ", "1/x²"], mr: ["x²", "ln|x| + C", "eˣ", "1/x²"] }, correct: 1, explanation: { en: "∫(1/x)dx = ln|x| + C.", hi: "∫(1/x)dx = ln|x| + C.", mr: "∫(1/x)dx = ln|x| + C." } },
+    { id: 9, question: { en: "Light year is a unit of:", hi: "प्रकाश वर्ष किसकी इकाई है:", mr: "प्रकाश वर्ष कशाचे एकक आहे:" }, options: { en: ["Time", "Distance", "Speed", "Intensity"], hi: ["समय", "दूरी", "गति", "तीव्रता"], mr: ["वेळ", "अंतर", "वेग", "प्रखरता"] }, correct: 1, explanation: { en: "Light year measures astronomical distance.", hi: "प्रकाश वर्ष खगोलीय दूरी को मापता है.", mr: "प्रकाश वर्ष खगोलीय अंतर मोजतो." } },
+    { id: 10, question: { en: "Which element has highest electronegativity?", hi: "किस तत्व की विद्युत ऋणात्मकता (electronegativity) सबसे अधिक है?", mr: "कोणत्या मूलद्रव्याची विद्युत ऋणात्मकता (electronegativity) सर्वात जास्त आहे?" }, options: { en: ["Fluorine", "Chlorine", "Oxygen", "Nitrogen"], hi: ["फ्लोरिन", "क्लोरीन", "ऑक्सीजन", "नाइट्रोजन"], mr: ["फ्लुरिन", "क्लोरीन", "ऑक्सिजन", "नायट्रोजन"] }, correct: 0, explanation: { en: "Fluorine has the highest electronegativity.", hi: "फ्लोरिन की विद्युत ऋणात्मकता सबसे अधिक है.", mr: "फ्लुरिनची विद्युत ऋणात्मकता सर्वात जास्त आहे." } }
   ],
   COMPETITIVE: [
-    { id: 1, question: "If A can do a job in 10 days and B in 15 days, together they complete it in:", options: ["5 days", "6 days", "8 days", "12 days"], correct: 1, explanation: "Work rate = 1/10 + 1/15 = 1/6 => 6 days." },
-    { id: 2, question: "Capital of Maharashtra is:", options: ["Pune", "Nagpur", "Mumbai", "Chhatrapati Sambhajinagar"], correct: 2, explanation: "Mumbai is the state capital." },
-    { id: 3, question: "Who is known as the Father of the Indian Constitution?", options: ["Mahatma Gandhi", "Dr. B.R. Ambedkar", "Jawaharlal Nehru", "Sardar Patel"], correct: 1, explanation: "Dr. B.R. Ambedkar chaired the drafting committee." },
-    { id: 4, question: "Simple interest on ₹5000 at 10% per annum for 2 years is:", options: ["₹500", "₹1000", "₹1200", "₹1500"], correct: 1, explanation: "SI = (5000 x 10 x 2)/100 = ₹1000." },
-    { id: 5, question: "Look at the series: 7, 10, 8, 11, 9, 12, __ What comes next?", options: ["7", "10", "12", "13"], correct: 1, explanation: "Series pattern (-2): 12 - 2 = 10." },
-    { id: 6, question: "Which article of Indian Constitution deals with Equality before law?", options: ["Article 12", "Article 14", "Article 19", "Article 21"], correct: 1, explanation: "Article 14 guarantees equality before law." },
-    { id: 7, question: "Headquarters of Reserve Bank of India (RBI) is located in:", options: ["New Delhi", "Mumbai", "Kolkata", "Chennai"], correct: 1, explanation: "RBI head office is in Mumbai." },
-    { id: 8, question: "If CAT = 24 and DOG = 26, then PIG = ?", options: ["32", "30", "36", "40"], correct: 0, explanation: "P(16) + I(9) + G(7) = 32." },
-    { id: 9, question: "Largest river basin in India is:", options: ["Ganga", "Godavari", "Krishna", "Narmada"], correct: 0, explanation: "Ganga basin is the largest." },
-    { id: 10, question: "Computer CPU stands for:", options: ["Central Processing Unit", "Core Power Utility", "Central Performance Unit", "Control Program Unit"], correct: 0, explanation: "CPU = Central Processing Unit." }
+    { id: 1, question: { en: "If A can do a job in 10 days and B in 15 days, together they complete it in:", hi: "यदि A किसी काम को 10 दिन में और B 15 दिन में कर सकता है, तो दोनों मिलकर इसे कितने दिन में पूरा करेंगे:", mr: "जर A एक काम 10 दिवसांत आणि B 15 दिवसांत करू शकत असेल, तर दोघे मिळून ते किती दिवसांत पूर्ण करतील:" }, options: { en: ["5 days", "6 days", "8 days", "12 days"], hi: ["5 दिन", "6 दिन", "8 दिन", "12 दिन"], mr: ["5 दिवस", "6 दिवस", "8 दिवस", "12 दिवस"] }, correct: 1, explanation: { en: "Work rate = 1/10 + 1/15 = 1/6 => 6 days.", hi: "कार्य दर = 1/10 + 1/15 = 1/6 => 6 दिन.", mr: "काम दर = 1/10 + 1/15 = 1/6 => 6 दिवस." } },
+    { id: 2, question: { en: "Capital of Maharashtra is:", hi: "महाराष्ट्र की राजधानी है:", mr: "महाराष्ट्राची राजधानी कोणती आहे:" }, options: { en: ["Pune", "Nagpur", "Mumbai", "Chhatrapati Sambhajinagar"], hi: ["पुणे", "नागपुर", "मुंबई", "छत्रपति संभाजीनगर"], mr: ["पुणे", "नागपूर", "मुंबई", "छत्रपती संभाजीनगर"] }, correct: 2, explanation: { en: "Mumbai is the state capital.", hi: "मुंबई राज्य की राजधानी है.", mr: "मुंबई ही राज्याची राजधानी आहे." } },
+    { id: 3, question: { en: "Who is known as the Father of the Indian Constitution?", hi: "भारतीय संविधान के पिता के रूप में किसे जाना जाता है?", mr: "भारतीय संविधानाचे जनक म्हणून कोणाला ओळखले जाते?" }, options: { en: ["Mahatma Gandhi", "Dr. B.R. Ambedkar", "Jawaharlal Nehru", "Sardar Patel"], hi: ["महात्मा गांधी", "डॉ. बी.आर. अम्बेडकर", "जवाहरलाल नेहरू", "सरदार पटेल"], mr: ["महात्मा गांधी", "डॉ. बी. आर. आंबेडकर", "जवाहरलाल नेहरू", "सरदार पटेल"] }, correct: 1, explanation: { en: "Dr. B.R. Ambedkar chaired the drafting committee.", hi: "डॉ. बी.आर. अम्बेडकर ने प्रारूप समिति की अध्यक्षता की.", mr: "डॉ. बी. आर. आंबेडकर यांनी मसुदा समितीचे अध्यक्षपद भूषवले." } },
+    { id: 4, question: { en: "Simple interest on ₹5000 at 10% per annum for 2 years is:", hi: "₹5000 पर 10% वार्षिक ब्याज की दर से 2 वर्षों का साधारण ब्याज है:", mr: "₹5000 वर दरसाल 10% ने 2 वर्षांचे सरळ व्याज किती होईल:" }, options: { en: ["₹500", "₹1000", "₹1200", "₹1500"], hi: ["₹500", "₹1000", "₹1200", "₹1500"], mr: ["₹500", "₹1000", "₹1200", "₹1500"] }, correct: 1, explanation: { en: "SI = (5000 x 10 x 2)/100 = ₹1000.", hi: "SI = (5000 x 10 x 2)/100 = ₹1000.", mr: "SI = (5000 x 10 x 2)/100 = ₹1000." } },
+    { id: 5, question: { en: "Look at the series: 7, 10, 8, 11, 9, 12, __ What comes next?", hi: "श्रृंखला को देखें: 7, 10, 8, 11, 9, 12, __ अगला क्या होगा?", mr: "मालिका पहा: 7, 10, 8, 11, 9, 12, __ पुढे काय येईल?" }, options: { en: ["7", "10", "12", "13"], hi: ["7", "10", "12", "13"], mr: ["7", "10", "12", "13"] }, correct: 1, explanation: { en: "Series pattern (-2): 12 - 2 = 10.", hi: "श्रृंखला पैटर्न (-2): 12 - 2 = 10.", mr: "मालिका पॅटर्न (-2): 12 - 2 = 10." } },
+    { id: 6, question: { en: "Which article of Indian Constitution deals with Equality before law?", hi: "भारतीय संविधान का कौन सा अनुच्छेद कानून के समक्ष समानता से संबंधित है?", mr: "भारतीय संविधानातील कोणते कलमानुसार कायद्यासमोर समानता दिलेली आहे?" }, options: { en: ["Article 12", "Article 14", "Article 19", "Article 21"], hi: ["अनुच्छेद 12", "अनुच्छेद 14", "अनुच्छेद 19", "अनुच्छेद 21"], mr: ["कलम 12", "कलम 14", "कलम 19", "कलम 21"] }, correct: 1, explanation: { en: "Article 14 guarantees equality before law.", hi: "अनुच्छेद 14 कानून के समक्ष समानता की गारंटी देता है.", mr: "कलम 14 कायद्यासमोर समानतेची हमी देते." } },
+    { id: 7, question: { en: "Headquarters of Reserve Bank of India (RBI) is located in:", hi: "भारतीय रिजर्व बैंक (RBI) का मुख्यालय कहाँ स्थित है?", mr: "भारतीय रिझर्व्ह बँक (RBI) चे मुख्यालये कुठे आहे:" }, options: { en: ["New Delhi", "Mumbai", "Kolkata", "Chennai"], hi: ["नई दिल्ली", "मुंबई", "कोलकाता", "चेन्नई"], mr: ["नवी दिल्ली", "मुंबई", "कोलकाता", "चेन्नई"] }, correct: 1, explanation: { en: "RBI head office is in Mumbai.", hi: "RBI का मुख्य कार्यालय मुंबई में है.", mr: "RBI चे मुख्य कार्यालय मुंबईत आहे." } },
+    { id: 8, question: { en: "If CAT = 24 and DOG = 26, then PIG = ?", hi: "यदि CAT = 24 और DOG = 26, तो PIG = ?", mr: "जर CAT = 24 आणि DOG = 26, तर PIG = ?" }, options: { en: ["32", "30", "36", "40"], hi: ["32", "30", "36", "40"], mr: ["32", "30", "36", "40"] }, correct: 0, explanation: { en: "P(16) + I(9) + G(7) = 32.", hi: "P(16) + I(9) + G(7) = 32.", mr: "P(16) + I(9) + G(7) = 32." } },
+    { id: 9, question: { en: "Largest river basin in India is:", hi: "भारत में सबसे बड़ा नदी बेसिन है:", mr: "भारतातील सर्वात मोठे नदी खोरे कोणते आहे:" }, options: { en: ["Ganga", "Godavari", "Krishna", "Narmada"], hi: ["गंगा", "गोदावरी", "कृष्णा", "नर्मदा"], mr: ["गंगा", "गोदावरी", "कृष्णा", "नर्मदा"] }, correct: 0, explanation: { en: "Ganga basin is the largest.", hi: "गंगा बेसिन सबसे बड़ा है.", mr: "गंगा खोरे सर्वात मोठे आहे." } },
+    { id: 10, question: { en: "Computer CPU stands for:", hi: "कंप्यूटर CPU का पूर्ण रूप है:", mr: "संगणक CPU चा अर्थ काय:" }, options: { en: ["Central Processing Unit", "Core Power Utility", "Central Performance Unit", "Control Program Unit"], hi: ["Central Processing Unit", "Core Power Utility", "Central Performance Unit", "Control Program Unit"], mr: ["Central Processing Unit", "Core Power Utility", "Central Performance Unit", "Control Program Unit"] }, correct: 0, explanation: { en: "CPU = Central Processing Unit.", hi: "CPU = Central Processing Unit.", mr: "CPU = Central Processing Unit." } }
   ]
 };
 
 export default function FormatPage() {
   const [step, setStep] = useState(1);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [examLanguage, setExamLanguage] = useState('en'); // 'en' | 'hi' | 'mr'
 
   const [studentName, setStudentName] = useState('Rahul Sharma');
   const [mobileNumber, setMobileNumber] = useState('8956643326');
@@ -165,17 +178,50 @@ export default function FormatPage() {
     <div className="py-12 min-h-screen bg-slate-50/50 px-4 md:px-6 animate-fade-in space-y-16">
       <div className="max-w-7xl mx-auto space-y-16">
         
+        {/* LANGUAGE SWITCHER BAR */}
+        <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-2xl shadow-xs border border-slate-200 gap-4">
+          <span className="text-xs font-black text-indigo-900 uppercase tracking-widest">
+            🌐 {examLanguage === 'hi' ? 'भाषा चुनें (Select Language)' : examLanguage === 'mr' ? 'भाषा निवडा (Select Language)' : 'Select Exam Language'}
+          </span>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setExamLanguage('en')}
+              className={`px-4 py-1.5 text-xs font-black rounded-xl transition cursor-pointer ${
+                examLanguage === 'en' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setExamLanguage('hi')}
+              className={`px-4 py-1.5 text-xs font-black rounded-xl transition cursor-pointer ${
+                examLanguage === 'hi' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              हिंदी (Hindi)
+            </button>
+            <button
+              onClick={() => setExamLanguage('mr')}
+              className={`px-4 py-1.5 text-xs font-black rounded-xl transition cursor-pointer ${
+                examLanguage === 'mr' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              मराठी (Marathi)
+            </button>
+          </div>
+        </div>
+
         {/* 1. HEADER */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase shadow-xs">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            <span>EXAM ARCHITECTURE & DEMO</span>
+            <span>EXAM ARCHITECTURE & MULTILINGUAL DEMO</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             How Students Take the Exam
           </h1>
           <p className="text-slate-600 text-sm md:text-base leading-relaxed font-normal">
-            Experience our full student portal journey—from student login and class category selection to solving sample questions, viewing instant analytics, and inspecting the official answer key.
+            Experience our full student portal journey across English, Hindi, and Marathi—from student login to live multi-tier testing, verified digital certificates, subject-wise analytics, and future growth roadmaps.
           </p>
         </div>
 
@@ -205,8 +251,8 @@ export default function FormatPage() {
             {[
               { step: "01", title: "Log in at 8:00 PM", desc: "Students sign into their portal using their registered mobile number. The exam opens precisely at 8:00 PM.", icon: UserCheck },
               { step: "02", title: "AI Camera Verification", desc: "Browser camera permissions activate AI monitoring to ensure fair play and prevent malpractice during the test.", icon: Camera },
-              { step: "03", title: "40-Min Timed Test", desc: "60 randomized MCQs appear one by one with a live countdown timer and easy option selection controls.", icon: Laptop },
-              { step: "04", title: "Instant Marksheet & Rank", desc: "Upon submission or timer expiry at 8:40 PM, instant digital marksheets and state/district rankings are generated.", icon: Award }
+              { step: "03", title: "40-Min Timed Test", desc: "60 randomized MCQs appear one by one in English, Hindi or Marathi with live timers.", icon: Laptop },
+              { step: "04", title: "Instant Marksheet & Rank", desc: "Upon test completion, verified certificates, subject analytics, and rankings are generated instantly.", icon: Award }
             ].map((stepItem, idx) => {
               const Icon = stepItem.icon;
               return (
@@ -234,7 +280,7 @@ export default function FormatPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                  Live Test Simulator
+                  Live Test Simulator ({examLanguage.toUpperCase()})
                 </span>
                 <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">🧪 FULL STUDENT PORTAL DEMO</span>
               </div>
@@ -248,7 +294,7 @@ export default function FormatPage() {
               <span className="text-slate-300">•</span>
               <span className={`px-3 py-1 rounded-full ${step === 3 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}>3. Attempt Test</span>
               <span className="text-slate-300">•</span>
-              <span className={`px-3 py-1 rounded-full ${step === 4 ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>4. Analytics</span>
+              <span className={`px-3 py-1 rounded-full ${step === 4 ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>4. Certificate & Analytics</span>
             </div>
           </div>
 
@@ -309,7 +355,7 @@ export default function FormatPage() {
 
               <div className="space-y-2 text-center">
                 <h3 className="text-xl md:text-2xl font-black text-slate-900">Select Your Academic Class / Category</h3>
-                <p className="text-xs text-slate-500">Choose a class category below to load a tailored 10-question practice test</p>
+                <p className="text-xs text-slate-500">Choose a class category below to load a tailored 10-question practice test in {examLanguage.toUpperCase()}</p>
               </div>
 
               <div className="space-y-3">
@@ -341,7 +387,7 @@ export default function FormatPage() {
                 className="w-full bg-emerald-600 text-white font-black py-4 rounded-2xl text-sm shadow-lg hover:bg-emerald-700 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-white" />
-                <span>Start 10-Question Test</span>
+                <span>Start 10-Question Test ({examLanguage.toUpperCase()})</span>
               </button>
             </div>
           )}
@@ -352,7 +398,7 @@ export default function FormatPage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-900 text-white p-4 rounded-2xl gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
-                  <span className="text-xs font-black text-amber-400">AI PROCTORING ACTIVE</span>
+                  <span className="text-xs font-black text-amber-400">AI PROCTORING ACTIVE ({examLanguage.toUpperCase()})</span>
                   <span className="text-xs text-slate-400">| Student: {studentName}</span>
                 </div>
 
@@ -401,11 +447,11 @@ export default function FormatPage() {
 
               <div className="bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200/80 space-y-6">
                 <h3 className="text-base md:text-lg font-black text-slate-900 leading-snug">
-                  {currentQuestions[currentQIndex].id}. {currentQuestions[currentQIndex].question}
+                  {currentQuestions[currentQIndex].id}. {currentQuestions[currentQIndex].question[examLanguage] || currentQuestions[currentQIndex].question.en}
                 </h3>
 
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {currentQuestions[currentQIndex].options.map((opt, optIdx) => {
+                  {(currentQuestions[currentQIndex].options[examLanguage] || currentQuestions[currentQIndex].options.en).map((opt, optIdx) => {
                     const isSelected = selectedAnswers[currentQIndex] === optIdx;
                     return (
                       <button
@@ -456,7 +502,7 @@ export default function FormatPage() {
             </div>
           )}
 
-          {/* STEP 4: RESULT ANALYTICS & ANSWER KEY */}
+          {/* STEP 4: CERTIFICATE, SCORECARD, SUBJECT ANALYTICS & FUTURE GROWTH */}
           {step === 4 && (
             <div className="space-y-10 animate-fade-in">
               <div className="bg-slate-900 text-white p-8 rounded-3xl space-y-6 text-center border border-slate-800">
@@ -465,7 +511,7 @@ export default function FormatPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-xs font-black text-amber-400 uppercase tracking-widest">Instant Result & Performance Report</span>
+                  <span className="text-xs font-black text-amber-400 uppercase tracking-widest">Instant Result & Verified Certification</span>
                   <h3 className="text-2xl md:text-3xl font-black">Exam Evaluation Complete</h3>
                   <p className="text-xs text-slate-300">
                     Student: <span className="font-bold text-white">{studentName}</span> ({mobileNumber}) • Category: <span className="font-bold text-indigo-300">{CLASS_OPTIONS.find(c => c.id === selectedClassId)?.name}</span>
@@ -500,8 +546,94 @@ export default function FormatPage() {
                 </button>
               </div>
 
+              {/* 1. VERIFIED CERTIFICATE OF COMPLETION */}
+              <div className="bg-gradient-to-r from-blue-950 via-[#01295A] to-indigo-950 text-white p-8 md:p-12 rounded-3xl shadow-2xl text-center relative overflow-hidden border border-[#FE7C02]/30">
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                <span className="text-[10px] tracking-widest uppercase font-black text-[#FE7C02] bg-white/10 px-4 py-1.5 rounded-full border border-white/15">
+                  TOPIQ Talent Test (TTT) Official Credential
+                </span>
+                <h3 className="text-3xl md:text-4xl font-black mt-6 mb-3">Certificate of Excellence</h3>
+                <p className="text-xs md:text-sm text-slate-200 max-w-xl mx-auto mb-8 font-medium leading-relaxed">
+                  This is proudly presented to <strong className="text-white underline">{studentName}</strong> for successfully completing the TOPIQ Talent Test (TTT) Sample Assessment in {examLanguage.toUpperCase()} mode.
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-6 text-xs text-slate-300 border-t border-white/15 pt-6">
+                  <div>Issued by: <strong className="text-white">TOPIQ Academic Board</strong></div>
+                  <div>Status: <strong className="text-green-400">Verified & Authenticated</strong></div>
+                </div>
+                <div className="mt-8">
+                  <button
+                    onClick={() => window.print()}
+                    className="px-8 py-3 bg-[#FE7C02] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-xl hover:bg-orange-600 transition cursor-pointer"
+                  >
+                    Download / Print Certificate
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. OVERALL SCORECARD & 3. SUBJECT-WISE ANALYTICS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-200 shadow-md">
+                  <h4 className="text-sm font-black text-[#01295A] mb-6 uppercase tracking-wider">Overall Scorecard</h4>
+                  <div className="flex items-center justify-between p-5 bg-blue-900 text-white rounded-2xl mb-6 shadow-inner">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-200">Total Score</span>
+                    <span className="text-3xl font-black text-[#FE7C02]">{Math.round((calculateScore() / currentQuestions.length) * 100)}%</span>
+                  </div>
+                  <div className="space-y-3 text-xs font-bold text-slate-700">
+                    <div className="flex justify-between p-2 bg-white rounded-xl border border-slate-200"><span>Correct Answers:</span> <strong className="text-green-600">{calculateScore()} / {currentQuestions.length}</strong></div>
+                    <div className="flex justify-between p-2 bg-white rounded-xl border border-slate-200"><span>Time Taken:</span> <strong className="text-slate-900">03:45 mins</strong></div>
+                    <div className="flex justify-between p-2 bg-white rounded-xl border border-slate-200"><span>Percentile Rank:</span> <strong className="text-blue-700">94th Percentile</strong></div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-200 shadow-md">
+                  <h4 className="text-sm font-black text-[#01295A] mb-6 uppercase tracking-wider">Subject-Wise Performance Analytics</h4>
+                  <div className="space-y-5">
+                    <div>
+                      <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
+                        <span>Logical Reasoning</span><span>90%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                        <div className="bg-[#01295A] h-full rounded-full" style={{ width: '90%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
+                        <span>Quantitative Aptitude</span><span>80%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                        <div className="bg-[#FE7C02] h-full rounded-full" style={{ width: '80%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
+                        <span>Conceptual Problem Solving</span><span>85%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                        <div className="bg-indigo-600 h-full rounded-full" style={{ width: '85%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. OVERVIEW FOR FUTURE GROWTH */}
+              <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-200 shadow-md">
+                <h4 className="text-sm font-black text-[#01295A] mb-3 uppercase tracking-wider">Overview for Future Growth</h4>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-medium mb-6">
+                  Based on your sample assessment performance, your logical foundation and cognitive processing speed are strong. To maximize future growth during the 100-Day Challenge, we recommend adhering to daily 40-minute practice sessions and maintaining steady focus on multi-disciplinary analytical problem solving.
+                </p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="px-6 py-3 bg-[#01295A] text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-blue-900 transition shadow cursor-pointer"
+                  >
+                    Retake Demo Exam
+                  </button>
+                </div>
+              </div>
+
               {/* ANSWER KEY REVIEW */}
-              <div className="space-y-6">
+              <div className="space-y-6 pt-6 border-t border-slate-200">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                   <div>
                     <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">🔑 DAILY OFFICIAL ANSWER KEY</span>
@@ -517,12 +649,15 @@ export default function FormatPage() {
                     const userSel = selectedAnswers[idx];
                     const isCorrect = userSel === q.correct;
                     const isAttempted = userSel !== undefined;
+                    const qText = q.question[examLanguage] || q.question.en;
+                    const optList = q.options[examLanguage] || q.options.en;
+                    const expText = q.explanation[examLanguage] || q.explanation.en;
 
                     return (
                       <div key={idx} className={`p-6 rounded-2xl border ${isCorrect ? 'bg-emerald-50/40 border-emerald-200' : isAttempted ? 'bg-rose-50/40 border-rose-200' : 'bg-slate-50 border-slate-200'} space-y-4`}>
                         <div className="flex items-start justify-between gap-4">
                           <h4 className="text-sm font-black text-slate-900">
-                            Q{idx + 1}. {q.question}
+                            Q{idx + 1}. {qText}
                           </h4>
 
                           {isCorrect ? (
@@ -541,7 +676,7 @@ export default function FormatPage() {
                         </div>
 
                         <div className="grid sm:grid-cols-2 gap-2 text-xs">
-                          {q.options.map((opt, optIdx) => {
+                          {optList.map((opt, optIdx) => {
                             const isThisCorrect = optIdx === q.correct;
                             const isThisUserSel = userSel === optIdx;
 
@@ -564,7 +699,7 @@ export default function FormatPage() {
 
                         <div className="p-3 bg-white/80 rounded-xl border border-slate-200 text-xs text-slate-700 font-medium">
                           <span className="font-black text-indigo-900 block mb-0.5">💡 Solution & Explanation:</span>
-                          {q.explanation}
+                          {expText}
                         </div>
                       </div>
                     );
