@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Users, DollarSign, Megaphone, FileText, 
-  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Save, Layers 
+  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Save, Layers, Edit3, X 
 } from 'lucide-react';
 
 export default function SuperAdminCommandCenter() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('fees');
+  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     totalRevenue: 0,
@@ -26,6 +26,10 @@ export default function SuperAdminCommandCenter() {
   const [usersList, setUsersList] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
 
+  // Edit User Modal State
+  const [editingUser, setEditingUser] = useState(null);
+  const [userEditForm, setUserEditForm] = useState({ name: '', email: '', role: 'franchise', gstNumber: '' });
+
   const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', targetLink: '', position: 'hero' });
   const [provisionForm, setProvisionForm] = useState({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
   const [message, setMessage] = useState(null);
@@ -36,7 +40,6 @@ export default function SuperAdminCommandCenter() {
     '12th & Above (Competitive)', 'Govt & Professional Exams'
   ];
 
-  // Clean API Base URL setup (removes trailing slash to prevent double slashes)
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
@@ -176,6 +179,38 @@ export default function SuperAdminCommandCenter() {
       body: JSON.stringify({ status: newStatus })
     });
     fetchAllDashboardData();
+  };
+
+  const handleOpenEditUser = (user) => {
+    setEditingUser(user);
+    setUserEditForm({
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'franchise',
+      gstNumber: user.gstNumber || ''
+    });
+  };
+
+  const handleSaveUserEdit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/users/${editingUser._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(userEditForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: 'User profile updated successfully!' });
+        setEditingUser(null);
+        fetchAllDashboardData();
+      } else {
+        setMessage({ type: 'error', text: data.message || 'Failed to update user.' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Server error updating user profile.' });
+    }
   };
 
   const handleUpdateEnquiryStatus = async (enquiryId, status) => {
@@ -330,7 +365,7 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 2. TEST FEES CONTROL TAB (STREAMLINED TABLE UI) */}
+        {/* 2. TEST FEES CONTROL TAB */}
         {activeTab === 'fees' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-4">
@@ -427,7 +462,7 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 4. HIERARCHY & USERS TAB */}
+        {/* 4. HIERARCHY & USERS TAB WITH EDIT & DEACTIVATE */}
         {activeTab === 'hierarchy' && (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-4">
             <h3 className="text-base font-black text-[#01295A]">Ecosystem Users & Hierarchy Directory</h3>
@@ -440,22 +475,29 @@ export default function SuperAdminCommandCenter() {
                     <th className="py-3 px-3">Role</th>
                     <th className="py-3 px-3">GST Number</th>
                     <th className="py-3 px-3">Status</th>
-                    <th className="py-3 px-3">Action</th>
+                    <th className="py-3 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y text-xs font-semibold text-slate-700">
                   {usersList.map(u => (
                     <tr key={u._id} className="hover:bg-slate-50">
-                      <td className="py-3 px-3 font-black text-[#01295A]">{u.name}</td>
-                      <td className="py-3 px-3 font-mono">{u.email}</td>
-                      <td className="py-3 px-3 uppercase text-[10px] font-black bg-slate-100 rounded px-2">{u.role}</td>
-                      <td className="py-3 px-3 font-mono text-slate-500">{u.gstNumber || 'N/A'}</td>
-                      <td className="py-3 px-3">
+                      <td className="py-3.5 px-3 font-black text-[#01295A]">{u.name}</td>
+                      <td className="py-3.5 px-3 font-mono">{u.email}</td>
+                      <td className="py-3.5 px-3 uppercase text-[10px] font-black bg-slate-100 rounded px-2">{u.role}</td>
+                      <td className="py-3.5 px-3 font-mono text-slate-500">{u.gstNumber || 'N/A'}</td>
+                      <td className="py-3.5 px-3">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${u.status === 'deactivated' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
                           {u.status || 'active'}
                         </span>
                       </td>
-                      <td className="py-3 px-3">
+                      <td className="py-3.5 px-3 text-right space-x-2">
+                        <button 
+                          onClick={() => handleOpenEditUser(u)}
+                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-[#01295A] rounded-xl text-[10px] font-black cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
                         <button 
                           onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
                           className={`px-3 py-1.5 rounded-xl text-[10px] font-black cursor-pointer ${u.status === 'deactivated' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}
@@ -569,6 +611,78 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
       </div>
+
+      {/* EDIT USER MODAL */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 relative shadow-2xl border border-slate-200 text-[#01295A]">
+            <button 
+              onClick={() => setEditingUser(null)} 
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#01295A] transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-black mb-1">Edit User Profile</h3>
+            <p className="text-xs text-slate-500 mb-4">Modify user credentials, role, or GST number.</p>
+
+            <form onSubmit={handleSaveUserEdit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Full Name *</label>
+                <input 
+                  type="text" required value={userEditForm.name} 
+                  onChange={e => setUserEditForm({ ...userEditForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label>
+                <input 
+                  type="email" required value={userEditForm.email} 
+                  onChange={e => setUserEditForm({ ...userEditForm, email: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Role *</label>
+                  <select 
+                    value={userEditForm.role} 
+                    onChange={e => setUserEditForm({ ...userEditForm, role: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer uppercase"
+                  >
+                    <option value="super_admin">Super Admin</option>
+                    <option value="admin">Admin</option>
+                    <option value="asm">ASM</option>
+                    <option value="franchise">Franchise</option>
+                    <option value="agent">Agent</option>
+                    <option value="student">Student</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">GST Number</label>
+                  <input 
+                    type="text" value={userEditForm.gstNumber} 
+                    onChange={e => setUserEditForm({ ...userEditForm, gstNumber: e.target.value.toUpperCase() })}
+                    placeholder="27AAAAA0000A1Z5"
+                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono uppercase"
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2"
+              >
+                Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
