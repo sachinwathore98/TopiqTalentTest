@@ -12,6 +12,7 @@ const examRoutes = require('./routes/examRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const walletRoutes = require('./routes/walletRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use('/api/exams', examRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/payment', paymentRoutes); // Configured singular route prefix
+app.use('/api/wallet', walletRoutes); // Configured singular route prefix
 
 // Health Check Root Route
 app.get('/', (req, res) => {
