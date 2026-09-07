@@ -1,23 +1,27 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Clock, 
-  Camera, 
-  Laptop, 
-  Award, 
-  Play, 
+import {  
+  Clock,  
+  Camera,  
+  Laptop,  
+  Award,  
+  Play,  
   Pause,
-  RotateCcw, 
-  CheckCircle2, 
-  Sparkles, 
-  ChevronRight, 
+  RotateCcw,  
+  CheckCircle2,  
+  Sparkles,  
+  ChevronRight,  
   XCircle,
   Video,
   X,
   ArrowRight,
   UserCheck,
-  Check
+  Check,
+  Download,
+  TrendingUp,
+  ShieldCheck,
+  BarChart3
 } from 'lucide-react';
 
 // CLASS CATEGORIES
@@ -32,19 +36,19 @@ const CLASS_OPTIONS = [
 // SAMPLE 10-QUESTION BANKS PER CLASS TIER (Multilingual Support: en, hi, mr)
 const QUESTION_BANKS = {
   CLASS_3_5: [
-    { 
-      id: 1, 
-      question: { en: "What is 15 multiplied by 8?", hi: "15 को 8 से गुणा करने पर क्या मिलता है?", mr: "15 ला 8 ने गुणले असता उत्तर काय येते?" }, 
-      options: { en: ["100", "120", "130", "140"], hi: ["100", "120", "130", "140"], mr: ["100", "120", "130", "140"] }, 
-      correct: 1, 
-      explanation: { en: "15 x 8 = 120.", hi: "15 x 8 = 120.", mr: "15 x 8 = 120." } 
+    {  
+      id: 1,  
+      question: { en: "What is 15 multiplied by 8?", hi: "15 को 8 से गुणा करने पर क्या मिलता है?", mr: "15 ला 8 ने गुणले असता उत्तर काय येते?" },  
+      options: { en: ["100", "120", "130", "140"], hi: ["100", "120", "130", "140"], mr: ["100", "120", "130", "140"] },  
+      correct: 1,  
+      explanation: { en: "15 x 8 = 120.", hi: "15 x 8 = 120.", mr: "15 x 8 = 120." }  
     },
-    { 
-      id: 2, 
-      question: { en: "Which is the largest land animal in the world?", hi: "दुनिया का सबसे बड़ा स्थलीय जानवर कौन सा है?", mr: "जगातील सर्वात मोठा भूचर प्राणी कोणता आहे?" }, 
-      options: { en: ["Giraffe", "Blue Whale", "African Elephant", "Hippopotamus"], hi: ["जिराफ", "नीली व्हेल", "अफ्रीकी हाथी", "हिप्पोपोटामस"], mr: ["जिराफ", "ब्लू व्हेल", "आफ्रिकन हत्ती", "हिप्पोपोटॅमस"] }, 
-      correct: 2, 
-      explanation: { en: "African Elephant is the largest land mammal.", hi: "अफ्रीकी हाथी सबसे बड़ा स्थलीय स्तनधारी है.", mr: "आफ्रिकन हत्ती हा सर्वात मोठा भूचर सस्तन प्राणी आहे." } 
+    {  
+      id: 2,  
+      question: { en: "Which is the largest land animal in the world?", hi: "दुनिया का सबसे बड़ा स्थलीय जानवर कौन सा है?", mr: "जगातील सर्वात मोठा भूचर प्राणी कोणता आहे?" },  
+      options: { en: ["Giraffe", "Blue Whale", "African Elephant", "Hippopotamus"], hi: ["जिराफ", "नीली व्हेल", "अफ्रीकी हाथी", "हिप्पोपोटामस"], mr: ["जिराफ", "ब्लू व्हेल", "आफ्रिकन हत्ती", "हिप्पोपोटॅमस"] },  
+      correct: 2,  
+      explanation: { en: "African Elephant is the largest land mammal.", hi: "अफ्रीकी हाथी सबसे बड़ा स्थलीय स्तनधारी है.", mr: "आफ्रिकन हत्ती हा सर्वात मोठा भूचर सस्तन प्राणी आहे." }  
     },
     { id: 3, question: { en: "Choose the correct spelling:", hi: "सही वर्तनी चुनें:", mr: "योग्य स्पेलिंग निवडा:" }, options: { en: ["Beautifull", "Beautiful", "Beautifil", "Beutiful"], hi: ["Beautifull", "Beautiful", "Beautifil", "Beutiful"], mr: ["Beautifull", "Beautiful", "Beautifil", "Beutiful"] }, correct: 1, explanation: { en: "The correct spelling is B-E-A-U-T-I-F-U-L.", hi: "सही वर्तनी B-E-A-U-T-I-F-U-L है.", mr: "योग्य स्पेलिंग B-E-A-U-T-I-F-U-L आहे." } },
     { id: 4, question: { en: "How many sides does a hexagon have?", hi: "षट्कोण की कितनी भुजाएँ होती हैं?", mr: "षटकोनाला किती बाजू असतात?" }, options: { en: ["5", "6", "7", "8"], hi: ["5", "6", "7", "8"], mr: ["5", "6", "7", "8"] }, correct: 1, explanation: { en: "A hexagon has 6 sides.", hi: "षट्कोण में 6 भुजाएँ होती हैं.", mr: "षटकोनाला 6 बाजू असतात." } },
@@ -172,6 +176,11 @@ export default function FormatPage() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Dedicated Print / Download Certificate Handler
+  const handleDownloadCertificate = () => {
+    window.print();
   };
 
   return (
@@ -546,88 +555,176 @@ export default function FormatPage() {
                 </button>
               </div>
 
-              {/* 1. VERIFIED CERTIFICATE OF COMPLETION */}
-              <div className="bg-gradient-to-r from-blue-950 via-[#01295A] to-indigo-950 text-white p-8 md:p-12 rounded-3xl shadow-2xl text-center relative overflow-hidden border border-[#FE7C02]/30">
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                <span className="text-[10px] tracking-widest uppercase font-black text-[#FE7C02] bg-white/10 px-4 py-1.5 rounded-full border border-white/15">
-                  TOPIQ Talent Test (TTT) Official Credential
-                </span>
-                <h3 className="text-3xl md:text-4xl font-black mt-6 mb-3">Certificate of Excellence</h3>
-                <p className="text-xs md:text-sm text-slate-200 max-w-xl mx-auto mb-8 font-medium leading-relaxed">
-                  This is proudly presented to <strong className="text-white underline">{studentName}</strong> for successfully completing the TOPIQ Talent Test (TTT) Sample Assessment in {examLanguage.toUpperCase()} mode.
-                </p>
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-6 text-xs text-slate-300 border-t border-white/15 pt-6">
-                  <div>Issued by: <strong className="text-white">TOPIQ Academic Board</strong></div>
-                  <div>Status: <strong className="text-green-400">Verified & Authenticated</strong></div>
+              {/* 1. VERIFIED CERTIFICATE OF COMPLETION (PROFESSIONAL & PRINTABLE) */}
+              <div className="bg-gradient-to-br from-slate-900 via-[#01295A] to-blue-950 text-white p-8 md:p-14 rounded-3xl shadow-2xl text-center relative overflow-hidden border-4 border-amber-400/40">
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+                
+                {/* Decorative Badge */}
+                <div className="w-20 h-20 bg-amber-400/20 rounded-full flex items-center justify-center mx-auto border-2 border-amber-400 mb-4 shadow-lg animate-pulse">
+                  <Award className="w-10 h-10 text-amber-400" />
                 </div>
-                <div className="mt-8">
+
+                <span className="text-xs tracking-widest uppercase font-black text-amber-400 bg-amber-400/10 px-4 py-1.5 rounded-full border border-amber-400/30">
+                  TOPIQ Talent Test (TTT) • Certificate of Merit
+                </span>
+
+                <h3 className="text-3xl md:text-5xl font-black mt-6 mb-3 tracking-tight font-serif text-amber-200">Certificate of Excellence</h3>
+                
+                <p className="text-xs md:text-sm text-slate-300 uppercase tracking-widest font-bold mb-2">This is proudly presented to</p>
+                
+                <h4 className="text-2xl md:text-4xl font-extrabold text-white underline decoration-amber-400 decoration-2 underline-offset-8 mb-6 font-serif">
+                  {studentName}
+                </h4>
+
+                <p className="text-xs md:text-sm text-slate-200 max-w-2xl mx-auto mb-8 font-medium leading-relaxed">
+                  For outstanding performance and successfully completing the TOPIQ Talent Test (TTT) Sample Assessment in <strong className="text-amber-300 uppercase">{examLanguage}</strong> mode under rigorous AI proctoring standards.
+                </p>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-xl mx-auto text-xs text-slate-300 border-t border-white/20 pt-6 mb-8">
+                  <div>Issued by: <strong className="text-white block mt-0.5">TOPIQ Academic Board</strong></div>
+                  <div>Accuracy Rate: <strong className="text-amber-400 block mt-0.5">{Math.round((calculateScore() / currentQuestions.length) * 100)}%</strong></div>
+                  <div>Status: <strong className="text-emerald-400 block mt-0.5">Verified & Authenticated 🛡️</strong></div>
+                </div>
+
+                <div>
                   <button
-                    onClick={() => window.print()}
-                    className="px-8 py-3 bg-[#FE7C02] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-xl hover:bg-orange-600 transition cursor-pointer"
+                    onClick={handleDownloadCertificate}
+                    className="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-[#FE7C02] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-2xl hover:brightness-110 transition flex items-center justify-center gap-2 mx-auto cursor-pointer"
                   >
-                    Download / Print Certificate
+                    <Download className="w-4 h-4" />
+                    <span>Download / Print Verified Certificate</span>
                   </button>
                 </div>
               </div>
 
-              {/* 2. OVERALL SCORECARD & 3. SUBJECT-WISE ANALYTICS */}
+              {/* 2. OVERALL SCORECARD & 3. SUBJECT-WISE ANALYTICS (GRAPHICAL SUITE) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-200 shadow-md">
-                  <h4 className="text-sm font-black text-[#01295A] mb-6 uppercase tracking-wider">Overall Scorecard</h4>
-                  <div className="flex items-center justify-between p-5 bg-blue-900 text-white rounded-2xl mb-6 shadow-inner">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-200">Total Score</span>
-                    <span className="text-3xl font-black text-[#FE7C02]">{Math.round((calculateScore() / currentQuestions.length) * 100)}%</span>
+                
+                {/* Overall Scorecard Card */}
+                <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-black text-[#01295A] uppercase tracking-wider flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4 text-indigo-600" />
+                      <span>Overall Scorecard</span>
+                    </h4>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-2.5 py-0.5 rounded-full uppercase">Passed</span>
                   </div>
+
+                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#01295A] to-indigo-900 text-white rounded-2xl shadow-md">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-indigo-200">Performance Index</span>
+                      <h3 className="text-3xl font-black text-[#FE7C02] mt-1">{Math.round((calculateScore() / currentQuestions.length) * 100)}% Score</h3>
+                    </div>
+                    <div className="w-16 h-16 rounded-full bg-white/10 border-2 border-amber-400 flex items-center justify-center text-xl font-black text-amber-400 shadow-inner">
+                      {calculateScore()}/{currentQuestions.length}
+                    </div>
+                  </div>
+
                   <div className="space-y-3 text-xs font-bold text-slate-700">
-                    <div className="flex justify-between p-2 bg-white rounded-xl border border-slate-200"><span>Correct Answers:</span> <strong className="text-green-600">{calculateScore()} / {currentQuestions.length}</strong></div>
-                    <div className="flex justify-between p-2 bg-white rounded-xl border border-slate-200"><span>Time Taken:</span> <strong className="text-slate-900">03:45 mins</strong></div>
-                    <div className="flex justify-between p-2 bg-white rounded-xl border border-slate-200"><span>Percentile Rank:</span> <strong className="text-blue-700">94th Percentile</strong></div>
+                    <div className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span>Correct Answers:</span> 
+                      <strong className="text-emerald-600">{calculateScore()} Correct</strong>
+                    </div>
+                    <div className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span>Evaluation Time:</span> 
+                      <strong className="text-slate-900">03:45 mins</strong>
+                    </div>
+                    <div className="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span>State Percentile:</span> 
+                      <strong className="text-indigo-700">94th Percentile 🚀</strong>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-200 shadow-md">
-                  <h4 className="text-sm font-black text-[#01295A] mb-6 uppercase tracking-wider">Subject-Wise Performance Analytics</h4>
-                  <div className="space-y-5">
+                {/* Subject-Wise Analytics Graphic Bars */}
+                <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-black text-[#01295A] uppercase tracking-wider flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-[#FE7C02]" />
+                      <span>Subject-Wise Analytics</span>
+                    </h4>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-700 font-black px-2.5 py-0.5 rounded-full uppercase">AI Analyzed</span>
+                  </div>
+
+                  <div className="space-y-5 pt-2">
                     <div>
                       <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
-                        <span>Logical Reasoning</span><span>90%</span>
+                        <span>Logical Reasoning</span>
+                        <span className="text-indigo-600">90% Accuracy</span>
                       </div>
-                      <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                        <div className="bg-[#01295A] h-full rounded-full" style={{ width: '90%' }}></div>
+                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                        <div className="bg-gradient-to-r from-indigo-500 to-indigo-700 h-full rounded-full transition-all duration-1000" style={{ width: '90%' }}></div>
                       </div>
                     </div>
+
                     <div>
                       <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
-                        <span>Quantitative Aptitude</span><span>80%</span>
+                        <span>Quantitative Aptitude</span>
+                        <span className="text-amber-600">80% Accuracy</span>
                       </div>
-                      <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                        <div className="bg-[#FE7C02] h-full rounded-full" style={{ width: '80%' }}></div>
+                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                        <div className="bg-gradient-to-r from-amber-500 to-[#FE7C02] h-full rounded-full transition-all duration-1000" style={{ width: '80%' }}></div>
                       </div>
                     </div>
+
                     <div>
                       <div className="flex justify-between text-xs font-black mb-1.5 text-slate-800">
-                        <span>Conceptual Problem Solving</span><span>85%</span>
+                        <span>Conceptual Problem Solving</span>
+                        <span className="text-emerald-600">85% Accuracy</span>
                       </div>
-                      <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                        <div className="bg-indigo-600 h-full rounded-full" style={{ width: '85%' }}></div>
+                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-1000" style={{ width: '85%' }}></div>
                       </div>
                     </div>
                   </div>
+
+                  <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 text-[11px] text-indigo-900 font-medium flex items-start gap-2">
+                    <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                    <span>Your strongest domain is Logical Reasoning. Keep practicing Quantitative Aptitude to reach top 10 state rank.</span>
+                  </div>
                 </div>
+
               </div>
 
-              {/* 4. OVERVIEW FOR FUTURE GROWTH */}
-              <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-200 shadow-md">
-                <h4 className="text-sm font-black text-[#01295A] mb-3 uppercase tracking-wider">Overview for Future Growth</h4>
-                <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-medium mb-6">
-                  Based on your sample assessment performance, your logical foundation and cognitive processing speed are strong. To maximize future growth during the 100-Day Challenge, we recommend adhering to daily 40-minute practice sessions and maintaining steady focus on multi-disciplinary analytical problem solving.
-                </p>
-                <div className="flex justify-end">
+              {/* 4. OVERVIEW FOR FUTURE GROWTH (STRATEGIC ROADMAP) */}
+              <div className="bg-white p-6 md:p-10 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                  <div className="w-10 h-10 bg-amber-100 text-[#FE7C02] rounded-2xl flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-black text-[#01295A]">Overview for Future Growth</h4>
+                    <p className="text-xs text-slate-500 font-medium">Strategic 100-Day Challenge Development Roadmap</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <span className="text-[10px] font-black bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full uppercase">Phase 1 (Days 1–30)</span>
+                    <h5 className="text-xs font-black text-slate-900">Foundation Mastery</h5>
+                    <p className="text-xs text-slate-600 leading-relaxed">Focus on eliminating calculation errors and building bulletproof conceptual speed in Tier-1 topics.</p>
+                  </div>
+
+                  <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full uppercase">Phase 2 (Days 31–70)</span>
+                    <h5 className="text-xs font-black text-slate-900">Advanced Problem Solving</h5>
+                    <p className="text-xs text-slate-600 leading-relaxed">Engage with multi-disciplinary MCQ sets under strict AI timer constraints to build exam stamina.</p>
+                  </div>
+
+                  <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full uppercase">Phase 3 (Days 71–100)</span>
+                    <h5 className="text-xs font-black text-slate-900">State Rank Optimization</h5>
+                    <p className="text-xs text-slate-600 leading-relaxed">Review daily official answer keys and fine-tune weak zones to secure top state rank credentials.</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
                   <button
                     onClick={() => setStep(1)}
-                    className="px-6 py-3 bg-[#01295A] text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-blue-900 transition shadow cursor-pointer"
+                    className="px-8 py-3.5 bg-[#01295A] text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-blue-900 transition shadow-lg cursor-pointer flex items-center gap-2"
                   >
-                    Retake Demo Exam
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Retake Demo Exam</span>
                   </button>
                 </div>
               </div>
