@@ -295,7 +295,7 @@ export default function SuperAdminCommandCenter() {
                     onChange={e => setFeeForm({ ...feeForm, className: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50"
                   >
-                    {['Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'].map(c => (
+                    {['Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Govt & Professional Exams'].map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
