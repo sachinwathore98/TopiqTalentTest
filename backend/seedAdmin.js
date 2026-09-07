@@ -1,60 +1,32 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+const User = require('./src/models/User');
 
-// Define a simple User schema matching your multiroleusers collection
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, required: true },
-  franchiseId: { type: mongoose.Schema.Types.ObjectId, default: null }
-});
-
-const User = mongoose.model('User', userSchema, 'multiroleusers');
-
-const seedSuperAdmin = async () => {
+async function seedSuperAdmin() {
   try {
-    // Connect to MongoDB Atlas
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected to MongoDB Atlas for seeding...');
-
-    const email = 'topiqtalenttest@gmail.com';
-    const plainPassword = 'Admin@123';
     
-    // Hash the password using bcrypt (10 rounds)
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(plainPassword, salt);
-
-    // Check if super admin already exists
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-      // Update existing user with the correct bcrypt hash
-      existingUser.password = hashedPassword;
-      existingUser.role = 'super_admin';
-      existingUser.name = 'Super Admin';
-      await existingUser.save();
-      console.log('Super Admin user updated successfully with a fresh bcrypt hash!');
-    } else {
-      // Create new super admin user
-      const newAdmin = new User({
+    const hashedPassword = await bcrypt.hash('Topiq@123', 10);
+    
+    await User.findOneAndUpdate(
+      { email: 'topiqtalenttest@gmail.com' },
+      {
         name: 'Super Admin',
-        email: email,
+        email: 'topiqtalenttest@gmail.com',
         password: hashedPassword,
         role: 'super_admin',
-        franchiseId: null
-      });
-      await newAdmin.save();
-      console.log('Super Admin user created successfully with a hashed password!');
-    }
+        status: 'active'
+      },
+      { upsert: true, new: true }
+    );
 
-    mongoose.connection.close();
-    console.log('Database connection closed.');
-  } catch (error) {
-    console.error('Error seeding Super Admin:', error);
-    mongoose.connection.close();
+    console.log('Super Admin account successfully updated/created: topiqtalenttest@gmail.com');
+    process.exit(0);
+  } catch (err) {
+    console.error('Seeding error:', err);
+    process.exit(1);
   }
-};
+}
 
 seedSuperAdmin();
