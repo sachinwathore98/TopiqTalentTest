@@ -57,7 +57,7 @@ router.get('/metrics', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 2. EXAM FEES
+// 2. EXAM FEES (With Dual Pricing Support)
 router.get('/fees', async (req, res) => {
   try {
     const fees = await ExamConfig.find({});
@@ -69,14 +69,27 @@ router.get('/fees', async (req, res) => {
 
 router.post('/fees', verifySuperAdmin, async (req, res) => {
   try {
-    const { className, testFee, passingMarks, totalMarks } = req.body;
+    const { className, testFee, originalFee, passingMarks, totalMarks } = req.body;
+    
     const updatedFee = await ExamConfig.findOneAndUpdate(
       { className },
-      { testFee, passingMarks: passingMarks || 40, totalMarks: totalMarks || 100, isActive: true },
+      { 
+        testFee: Number(testFee), 
+        originalFee: originalFee ? Number(originalFee) : Number(testFee), 
+        passingMarks: passingMarks || 40, 
+        totalMarks: totalMarks || 100, 
+        isActive: true 
+      },
       { upsert: true, new: true, returnDocument: 'after' }
     );
-    return res.status(200).json({ success: true, message: `Test fee updated successfully!`, updatedFee });
+
+    return res.status(200).json({ 
+      success: true, 
+      message: `Dual pricing updated successfully for ${className}!`, 
+      updatedFee 
+    });
   } catch (err) {
+    console.error('Error updating test fee:', err);
     return res.status(500).json({ success: false, message: 'Error updating test fee.' });
   }
 });
@@ -136,7 +149,6 @@ router.get('/enquiries', verifySuperAdmin, async (req, res) => {
   try {
     const rawEnquiries = await Enquiry.find({}).sort({ createdAt: -1 });
     
-    // Normalize enquiryType for frontend filtering
     const enquiries = rawEnquiries.map(enq => {
       const obj = enq.toObject();
       const type = (obj.enquiryType || obj.type || 'student').toLowerCase();

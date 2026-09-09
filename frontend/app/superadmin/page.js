@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Users, DollarSign, Megaphone, FileText, 
-  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Save, Layers, Edit3, X, GraduationCap, Building2, Briefcase 
+  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Edit3, X, GraduationCap, Building2, Briefcase 
 } from 'lucide-react';
+import TestFeesControl from './components/TestFeesControl';
 
 export default function SuperAdminCommandCenter() {
   const router = useRouter();
@@ -18,10 +19,6 @@ export default function SuperAdminCommandCenter() {
     pendingEnquiriesCount: 0,
     breakdown: { revenueByFranchise: {}, revenueByASM: {}, revenueByAgent: {} }
   });
-
-  const [feesMap, setFeesMap] = useState({});
-  const [editableFees, setEditableFees] = useState({});
-  const [updatingClass, setUpdatingClass] = useState(null);
   
   const [banners, setBanners] = useState([]);
   const [usersList, setUsersList] = useState([]);
@@ -33,12 +30,6 @@ export default function SuperAdminCommandCenter() {
   const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', targetLink: '', position: 'hero' });
   const [provisionForm, setProvisionForm] = useState({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
   const [message, setMessage] = useState(null);
-
-  const classesList = [
-    'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
-    'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
-    '12th & Above (Competitive)', 'Govt & Professional Exams'
-  ];
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
@@ -59,32 +50,14 @@ export default function SuperAdminCommandCenter() {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      const [mRes, fRes, bRes, uRes, eRes] = await Promise.all([
+      const [mRes, bRes, uRes, eRes] = await Promise.all([
         fetch(`${apiBaseUrl}/api/superadmin/metrics`, { headers }).then(r => r.json()),
-        fetch(`${apiBaseUrl}/api/superadmin/fees`).then(r => r.json()),
         fetch(`${apiBaseUrl}/api/superadmin/banners`).then(r => r.json()),
         fetch(`${apiBaseUrl}/api/superadmin/users-directory`, { headers }).then(r => r.json()),
         fetch(`${apiBaseUrl}/api/superadmin/enquiries`, { headers }).then(r => r.json())
       ]);
 
       if (mRes.success) setMetrics(mRes.metrics);
-      
-      const map = {};
-      const editMap = {};
-      classesList.forEach(c => {
-        map[c] = 1100;
-        editMap[c] = 1100;
-      });
-
-      if (fRes.success && fRes.fees) {
-        fRes.fees.forEach(f => {
-          map[f.className] = f.testFee;
-          editMap[f.className] = f.testFee;
-        });
-      }
-      setFeesMap(map);
-      setEditableFees(editMap);
-
       if (bRes.success) setBanners(bRes.banners);
       if (uRes.success) setUsersList(uRes.users);
       if (eRes.success) setEnquiries(eRes.enquiries);
@@ -93,43 +66,6 @@ export default function SuperAdminCommandCenter() {
       console.error('Error loading dashboard data:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFeeChange = (className, value) => {
-    setEditableFees({ ...editableFees, [className]: value });
-  };
-
-  const handleSaveSingleFee = async (className) => {
-    const token = localStorage.getItem('token');
-    const testFee = Number(editableFees[className]);
-    
-    if (isNaN(testFee) || testFee < 0) {
-      setMessage({ type: 'error', text: 'Please enter a valid numeric fee amount.' });
-      return;
-    }
-
-    setUpdatingClass(className);
-    setMessage(null);
-
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/superadmin/fees`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ className, testFee, passingMarks: 40, totalMarks: 100 })
-      });
-      const data = await res.json();
-      
-      if (res.ok && data.success) {
-        setMessage({ type: 'success', text: `Successfully updated ${className} fee to ₹${testFee} (Live Synced!)` });
-        setFeesMap(prev => ({ ...prev, [className]: testFee }));
-      } else {
-        throw new Error(data.message || 'Failed to update fee.');
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: err.message });
-    } finally {
-      setUpdatingClass(null);
     }
   };
 
@@ -220,7 +156,6 @@ export default function SuperAdminCommandCenter() {
     fetchAllDashboardData();
   };
 
-  // Filter enquiries based on selected sub-tab
   const filteredEnquiries = enquiries.filter(enq => {
     const type = (enq.enquiryType || enq.type || 'student').toLowerCase();
     if (enquirySubTab === 'student') return type.includes('student') || type.includes('exam') || type === '';
@@ -231,7 +166,6 @@ export default function SuperAdminCommandCenter() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-[#01295A] pb-12">
-      {/* HEADER BAR */}
       <div className="bg-[#01295A] text-white px-6 py-6 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
           <span className="text-[10px] font-black bg-[#FE7C02] text-white px-3 py-1 rounded-full uppercase tracking-wider">
@@ -254,7 +188,6 @@ export default function SuperAdminCommandCenter() {
         </div>
       </div>
 
-      {/* NAVIGATION TABS */}
       <div className="max-w-7xl mx-auto px-4 mt-6">
         <div className="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-md border border-slate-200">
           {[
@@ -292,7 +225,6 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 1. OVERVIEW & METRICS TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -370,63 +302,12 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 2. TEST FEES CONTROL TAB */}
         {activeTab === 'fees' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-4">
-              <div>
-                <h3 className="text-lg font-black text-[#01295A]">Master Test Fee Matrix Per Class & Category</h3>
-                <p className="text-xs text-slate-500 font-semibold">Update prices individually. Changes sync live instantly with the public registration portal.</p>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b text-[10px] font-black uppercase text-slate-400 bg-slate-50">
-                    <th className="py-3.5 px-4">Class / Category</th>
-                    <th className="py-3.5 px-4">Currently Live Fee</th>
-                    <th className="py-3.5 px-4">Edit New Fee (₹)</th>
-                    <th className="py-3.5 px-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y text-xs font-semibold text-slate-700">
-                  {classesList.map((className) => (
-                    <tr key={className} className="hover:bg-slate-50/80 transition">
-                      <td className="py-4 px-4 font-black text-[#01295A] flex items-center gap-2">
-                        <Layers className="w-4 h-4 text-[#FE7C02]" />
-                        <span>{className}</span>
-                      </td>
-                      <td className="py-4 px-4 font-mono font-bold text-emerald-600 text-sm">
-                        ₹{feesMap[className] || 1100}
-                      </td>
-                      <td className="py-4 px-4 max-w-xs">
-                        <input 
-                          type="number" 
-                          value={editableFees[className] ?? 1100} 
-                          onChange={(e) => handleFeeChange(className, e.target.value)}
-                          className="w-40 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold bg-white focus:ring-2 focus:ring-[#FE7C02] outline-none"
-                        />
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <button 
-                          onClick={() => handleSaveSingleFee(className)}
-                          disabled={updatingClass === className}
-                          className="bg-[#FE7C02] hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer shadow-md inline-flex items-center gap-1.5 disabled:opacity-50"
-                        >
-                          <Save className="w-3.5 h-3.5" />
-                          <span>{updatingClass === className ? 'Updating...' : 'Save & Sync'}</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl">
+            <TestFeesControl />
           </div>
         )}
 
-        {/* 3. BANNERS & OFFERS TAB */}
         {activeTab === 'banners' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl max-w-xl">
@@ -467,7 +348,6 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 4. HIERARCHY & USERS TAB */}
         {activeTab === 'hierarchy' && (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-4">
             <h3 className="text-base font-black text-[#01295A]">Ecosystem Users & Hierarchy Directory</h3>
@@ -518,7 +398,6 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 5. WEBSITE LEADS & ENQUIRIES TAB WITH 3 SUB-TABS */}
         {activeTab === 'enquiries' && (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
@@ -527,7 +406,6 @@ export default function SuperAdminCommandCenter() {
                 <p className="text-xs text-slate-500 font-semibold">Review complete form submissions from students, franchises, and agents.</p>
               </div>
               
-              {/* SUB-TABS SELECTOR */}
               <div className="flex gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
                 {[
                   { id: 'student', label: 'Students Enquiry', icon: GraduationCap },
@@ -578,7 +456,6 @@ export default function SuperAdminCommandCenter() {
                     </div>
                   </div>
 
-                  {/* FULL FORM DATA GRID */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-semibold">
                     <div className="bg-white p-3 rounded-xl border border-slate-200">
                       <span className="text-[10px] font-black text-slate-400 uppercase block">Phone Number</span>
@@ -617,7 +494,6 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* 6. PROVISION HIERARCHICAL ACCOUNT TAB */}
         {activeTab === 'provision' && (
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl max-w-xl">
             <h3 className="text-base font-black text-[#01295A] mb-1">Provision Hierarchical Account</h3>
@@ -682,7 +558,6 @@ export default function SuperAdminCommandCenter() {
         )}
       </div>
 
-      {/* EDIT USER MODAL */}
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 animate-fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 relative shadow-2xl border border-slate-200 text-[#01295A]">
