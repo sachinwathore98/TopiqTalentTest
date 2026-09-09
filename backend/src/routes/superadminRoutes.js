@@ -7,6 +7,12 @@ const Enquiry = require('../models/Enquiry');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const classesList = [
+  'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
+  'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
+  '12th & Above & Competitive Exams'
+];
+
 const verifySuperAdmin = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -57,12 +63,34 @@ router.get('/metrics', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 2. EXAM FEES (With Dual Pricing Support)
+// 2. EXAM FEES (With Universal 11-Class Normalization & Dual Pricing Support)
 router.get('/fees', async (req, res) => {
   try {
-    const fees = await ExamConfig.find({});
-    return res.status(200).json({ success: true, fees });
+    const existingFees = await ExamConfig.find({});
+    const feeMap = {};
+    
+    existingFees.forEach(f => {
+      feeMap[f.className] = f;
+    });
+
+    const completeFeesList = classesList.map(className => {
+      if (feeMap[className]) {
+        return feeMap[className];
+      } else {
+        return {
+          className,
+          testFee: 1100,
+          originalFee: 1500,
+          passingMarks: 40,
+          totalMarks: 100,
+          isActive: true
+        };
+      }
+    });
+
+    return res.status(200).json({ success: true, fees: completeFeesList });
   } catch (err) {
+    console.error('Error fetching fees:', err);
     return res.status(500).json({ success: false, message: 'Error fetching fees.' });
   }
 });
