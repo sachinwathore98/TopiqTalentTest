@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, GraduationCap, ShieldCheck, MapPin, AlertCircle, Lock } from 'lucide-react';
+import { X, User, Phone, Mail, GraduationCap, ShieldCheck, MapPin, AlertCircle, Lock, Flame, Sparkles } from 'lucide-react';
 
 export default function StudentRegisterModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
@@ -180,6 +180,10 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
     }
   };
 
+  const discountPercent = feeDetails.originalFee > feeDetails.testFee 
+    ? Math.round(((feeDetails.originalFee - feeDetails.testFee) / feeDetails.originalFee) * 100) 
+    : 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 animate-fade-in">
       <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 relative shadow-2xl border border-[#C0C0C0]/60 text-[#01295A]">
@@ -191,22 +195,26 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
         </button>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
+          <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
+              <div className="flex items-center gap-1.5 text-rose-600 text-[10px] font-black uppercase tracking-wider mb-0.5">
+                <Flame className="w-3.5 h-3.5 fill-rose-600 animate-pulse" />
+                <span>Limited Seats - Special Offer Active</span>
+              </div>
               <h3 className="text-xl font-black text-[#01295A]">Student Registration & Pay</h3>
-              <p className="text-xs text-slate-500 font-semibold">Complete fee payment to access student portal</p>
             </div>
-            <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1 rounded-full font-mono">
+            
+            <div className="flex items-center gap-2 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 px-3 py-1.5 rounded-2xl font-mono shadow-xs">
               <span className="text-[10px] font-black uppercase text-slate-500">Fee:</span>
               {loadingFee ? (
                 <span className="text-[10px] font-bold text-slate-400">Syncing...</span>
               ) : (
-                <>
-                  <span className="text-xs font-black text-emerald-600">₹{feeDetails.testFee}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-black text-emerald-600">₹{feeDetails.testFee}</span>
                   {feeDetails.originalFee > feeDetails.testFee && (
-                    <span className="text-[10px] font-bold text-slate-400 line-through">₹{feeDetails.originalFee}</span>
+                    <span className="text-xs font-bold text-slate-400 line-through">₹{feeDetails.originalFee}</span>
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -329,17 +337,17 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
           <button 
             type="submit" 
             disabled={loading || loadingFee} 
-            className="w-full bg-[#FE7C02] hover:bg-[#E06B00] text-white font-black py-3.5 rounded-xl shadow-md transition cursor-pointer mt-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-[#FE7C02] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black py-4 rounded-2xl shadow-xl transition cursor-pointer mt-2 text-xs md:text-sm flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50"
           >
-            <ShieldCheck className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-amber-200 animate-spin" />
             <span>{loading ? 'Initializing Payment...' : (
               <>
-                <span>Pay</span>
-                <span className="font-mono">₹{feeDetails.testFee}</span>
+                <span>Lock In Offer Price: ₹</span>
+                <span className="font-mono text-base underline decoration-amber-200">{feeDetails.testFee}</span>
                 {feeDetails.originalFee > feeDetails.testFee && (
-                  <span className="font-mono text-orange-200 line-through text-xs">₹{feeDetails.originalFee}</span>
+                  <span className="font-mono text-orange-200 line-through text-xs ml-1">₹{feeDetails.originalFee}</span>
                 )}
-                <span>& Register</span>
+                <span className="ml-1">& Register</span>
               </>
             )}</span>
           </button>
