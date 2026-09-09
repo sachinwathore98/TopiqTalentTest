@@ -10,7 +10,12 @@ export default function TestFeesControl() {
 
   const fetchFees = async () => {
     try {
-      const res = await fetch('https://topiq-talent-test.onrender.com/api/superadmin/fees');
+      const token = localStorage.getItem('token') || localStorage.getItem('superAdminToken');
+      const res = await fetch('https://topiq-talent-test.onrender.com/api/superadmin/fees', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await res.json();
       if (data.success) {
         const formatted = data.fees.map(f => ({
@@ -42,7 +47,7 @@ export default function TestFeesControl() {
     setStatusMsg(null);
 
     try {
-      const token = localStorage.getItem('superAdminToken');
+      const token = localStorage.getItem('token') || localStorage.getItem('superAdminToken');
       const res = await fetch('https://topiq-talent-test.onrender.com/api/superadmin/fees', {
         method: 'POST',
         headers: {
