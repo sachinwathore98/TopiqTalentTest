@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 export default function PublicRegistrationPage() {
   const [selectedClass, setSelectedClass] = useState('Class 8');
-  const [currentFee, setCurrentFee] = useState(1100);
+  const [feeDetails, setFeeDetails] = useState({ testFee: 1100, originalFee: 1500 });
   const [loadingFee, setLoadingFee] = useState(true);
 
   // Auto-sanitize API URL to prevent trailing slash errors
@@ -22,9 +22,12 @@ export default function PublicRegistrationPage() {
       if (data.success && data.fees) {
         const found = data.fees.find(f => f.className === className);
         if (found) {
-          setCurrentFee(found.testFee);
+          setFeeDetails({
+            testFee: found.testFee || 1100,
+            originalFee: found.originalFee || found.testFee || 1500
+          });
         } else {
-          setCurrentFee(1100); // Fallback default
+          setFeeDetails({ testFee: 1100, originalFee: 1500 }); // Fallback default
         }
       }
     } catch (err) {
@@ -41,7 +44,7 @@ export default function PublicRegistrationPage() {
           Live Auto-Sync Registration
         </span>
         <h2 className="text-2xl font-black mt-2">Student Examination Entry</h2>
-        <p className="text-xs text-slate-500 font-semibold">Select your class to view the dynamically updated registration fee.</p>
+        <p className="text-xs text-slate-500 font-semibold">Select your class to view the dynamically updated dual registration fee.</p>
       </div>
 
       <div className="space-y-4">
@@ -55,7 +58,7 @@ export default function PublicRegistrationPage() {
             {[
               'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
               'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
-              '12th & Above (Competitive)', 'Govt & Professional Exams'
+              '12th & Above & Competitive Exams'
             ].map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -64,16 +67,29 @@ export default function PublicRegistrationPage() {
 
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center">
           <span className="text-xs font-black uppercase text-slate-600">Applicable Registration Fee:</span>
-          <span className="text-2xl font-black font-mono text-emerald-600">
-            {loadingFee ? 'Syncing...' : `₹${currentFee}`}
-          </span>
+          <div className="flex items-center gap-2">
+            {loadingFee ? (
+              <span className="text-xs font-bold text-slate-400">Syncing...</span>
+            ) : (
+              <>
+                <span className="text-2xl font-black font-mono text-emerald-600">₹{feeDetails.testFee}</span>
+                {feeDetails.originalFee > feeDetails.testFee && (
+                  <span className="text-sm font-bold font-mono text-slate-400 line-through">₹{feeDetails.originalFee}</span>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         <button 
-          onClick={() => alert(`Proceeding to Razorpay payment of ₹${currentFee} for ${selectedClass}`)}
-          className="w-full py-3.5 bg-[#FE7C02] hover:bg-orange-600 text-white font-black rounded-xl text-xs shadow-md cursor-pointer transition"
+          onClick={() => alert(`Proceeding to Razorpay payment of ₹${feeDetails.testFee} for ${selectedClass}`)}
+          className="w-full py-3.5 bg-[#FE7C02] hover:bg-orange-600 text-white font-black rounded-xl text-xs shadow-md cursor-pointer transition flex items-center justify-center gap-2"
         >
-          Proceed to Pay ₹{currentFee}
+          <span>Proceed to Pay</span>
+          <span className="font-mono font-bold">₹{feeDetails.testFee}</span>
+          {feeDetails.originalFee > feeDetails.testFee && (
+            <span className="font-mono text-orange-200 line-through text-[11px]">₹{feeDetails.originalFee}</span>
+          )}
         </button>
       </div>
     </div>

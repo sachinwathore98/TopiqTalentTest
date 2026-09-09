@@ -16,7 +16,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
     role: 'student'
   });
   
-  const [currentFee, setCurrentFee] = useState(1100);
+  const [feeDetails, setFeeDetails] = useState({ testFee: 1100, originalFee: 1500 });
   const [loadingFee, setLoadingFee] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -39,9 +39,12 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
       if (data.success && data.fees) {
         const found = data.fees.find(f => f.className === className);
         if (found) {
-          setCurrentFee(found.testFee);
+          setFeeDetails({
+            testFee: found.testFee || 1100,
+            originalFee: found.originalFee || found.testFee || 1500
+          });
         } else {
-          setCurrentFee(1100);
+          setFeeDetails({ testFee: 1100, originalFee: 1500 });
         }
       }
     } catch (err) {
@@ -105,7 +108,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
       const orderRes = await fetch(`${cleanBaseUrl}/api/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: currentFee })
+        body: JSON.stringify({ amount: feeDetails.testFee })
       });
       const orderData = await orderRes.json();
 
@@ -114,7 +117,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
       }
 
       const razorpayOrderId = orderData.order?.id || orderData.order_id || orderData.id;
-      const razorpayAmount = orderData.order?.amount || orderData.amount || (currentFee * 100);
+      const razorpayAmount = orderData.order?.amount || orderData.amount || (feeDetails.testFee * 100);
       const razorpayCurrency = orderData.order?.currency || orderData.currency || 'INR';
 
       const options = {
@@ -122,7 +125,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
         amount: razorpayAmount,
         currency: razorpayCurrency,
         name: "TOPIQ Talent Test (TTT)",
-        description: `Student Registration Fee (${formData.studentClass} - ₹${currentFee})`,
+        description: `Student Registration Fee (${formData.studentClass} - ₹${feeDetails.testFee})`,
         order_id: razorpayOrderId,
         handler: async function (response) {
           try {
@@ -133,7 +136,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                userData: { ...formData, registrationFee: currentFee }
+                userData: { ...formData, registrationFee: feeDetails.testFee }
               })
             });
 
@@ -193,9 +196,19 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
               <h3 className="text-xl font-black text-[#01295A]">Student Registration & Pay</h3>
               <p className="text-xs text-slate-500 font-semibold">Complete fee payment to access student portal</p>
             </div>
-            <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2.5 py-1 rounded-full uppercase font-mono">
-              {loadingFee ? 'Syncing...' : `Fee: ₹${currentFee}`}
-            </span>
+            <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1 rounded-full font-mono">
+              <span className="text-[10px] font-black uppercase text-slate-500">Fee:</span>
+              {loadingFee ? (
+                <span className="text-[10px] font-bold text-slate-400">Syncing...</span>
+              ) : (
+                <>
+                  <span className="text-xs font-black text-emerald-600">₹{feeDetails.testFee}</span>
+                  {feeDetails.originalFee > feeDetails.testFee && (
+                    <span className="text-[10px] font-bold text-slate-400 line-through">₹{feeDetails.originalFee}</span>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           {statusMsg && (
@@ -267,7 +280,7 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
                 {[
                   'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
                   'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
-                  '12th & Above (Competitive)', 'Govt & Professional Exams'
+                  '12th & Above & Competitive Exams'
                 ].map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -319,7 +332,16 @@ export default function StudentRegisterModal({ isOpen, onClose }) {
             className="w-full bg-[#FE7C02] hover:bg-[#E06B00] text-white font-black py-3.5 rounded-xl shadow-md transition cursor-pointer mt-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>{loading ? 'Initializing Payment...' : `Pay ₹${currentFee} & Register`}</span>
+            <span>{loading ? 'Initializing Payment...' : (
+              <>
+                <span>Pay</span>
+                <span className="font-mono">₹{feeDetails.testFee}</span>
+                {feeDetails.originalFee > feeDetails.testFee && (
+                  <span className="font-mono text-orange-200 line-through text-xs">₹{feeDetails.originalFee}</span>
+                )}
+                <span>& Register</span>
+              </>
+            )}</span>
           </button>
         </form>
       </div>
