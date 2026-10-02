@@ -172,7 +172,7 @@ export default function SuperAdminCommandCenter() {
             Superadmin Command Console
           </span>
           <h1 className="text-2xl sm:text-3xl font-black mt-1">TOPIQ Talent Ecosystem</h1>
-          <p className="text-xs text-slate-300">Dream11-grade revenue distribution, dynamic live pricing, and partner management.</p>
+          <p className="text-xs text-slate-300">Maharashtra Edition - Revenue distribution, dynamic fee tiers, and ad banner control.</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={fetchAllDashboardData} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer" title="Refresh Data">
@@ -193,7 +193,7 @@ export default function SuperAdminCommandCenter() {
           {[
             { id: 'overview', label: 'Overview & Metrics', icon: ShieldCheck },
             { id: 'fees', label: 'Test Fees Control', icon: DollarSign },
-            { id: 'banners', label: 'Banners & Offers', icon: Megaphone },
+            { id: 'banners', label: 'Banners & Ads Manager', icon: Megaphone },
             { id: 'hierarchy', label: 'Hierarchy & Users', icon: Users },
             { id: 'enquiries', label: 'Website Leads', icon: FileText },
             { id: 'provision', label: 'Provision Account', icon: UserPlus },
@@ -311,39 +311,74 @@ export default function SuperAdminCommandCenter() {
         {activeTab === 'banners' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl max-w-xl">
-              <h3 className="text-base font-black text-[#01295A] mb-4">Add Promotional Banner / Festive Offer</h3>
+              <h3 className="text-base font-black text-[#01295A] mb-1">Upload Website Advertisements & Banners</h3>
+              <p className="text-xs text-slate-500 font-semibold mb-4">Publish static images, promotional flyers, or festive offers directly across portals.</p>
+              
               <form onSubmit={handleAddBanner} className="space-y-3">
-                <input 
-                  type="text" placeholder="Banner Title / Offer Name" required 
-                  value={bannerForm.title} onChange={e => setBannerForm({ ...bannerForm, title: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
-                />
-                <input 
-                  type="url" placeholder="Image URL (Cloudinary / Direct Link)" required 
-                  value={bannerForm.imageUrl} onChange={e => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
-                />
-                <select 
-                  value={bannerForm.position} onChange={e => setBannerForm({ ...bannerForm, position: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer"
-                >
-                  <option value="hero">Hero Slider</option>
-                  <option value="festive_offer">Festive Offer Banner</option>
-                  <option value="popup">Pop-up Announcement</option>
-                </select>
-                <button type="submit" className="w-full py-3 bg-[#01295A] text-white font-black rounded-xl text-xs cursor-pointer">Publish Banner Live</button>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Banner Title *</label>
+                  <input 
+                    type="text" placeholder="e.g. Maharashtra Edition Launch Banner" required 
+                    value={bannerForm.title} onChange={e => setBannerForm({ ...bannerForm, title: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Image URL (Cloudinary / Direct Link) *</label>
+                  <input 
+                    type="url" placeholder="https://res.cloudinary.com/.../image.jpg" required 
+                    value={bannerForm.imageUrl} onChange={e => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Display Position *</label>
+                    <select 
+                      value={bannerForm.position} onChange={e => setBannerForm({ ...bannerForm, position: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer"
+                    >
+                      <option value="hero">Hero Slider</option>
+                      <option value="festive_offer">Festive / Flash Offer</option>
+                      <option value="popup">Pop-up Announcement</option>
+                      <option value="sidebar_ad">Sidebar Ad</option>
+                      <option value="footer_banner">Footer Banner</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Target Link</label>
+                    <input 
+                      type="text" placeholder="/register" 
+                      value={bannerForm.targetLink} onChange={e => setBannerForm({ ...bannerForm, targetLink: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow-md transition">Publish Advertisement Live</button>
               </form>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {banners.map(b => (
-                <div key={b._id} className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-2">
-                  <img src={b.imageUrl} alt={b.title} className="w-full h-32 object-cover rounded-xl" />
-                  <div className="font-black text-xs text-[#01295A]">{b.title}</div>
-                  <div className="text-[10px] text-slate-400 uppercase font-bold">Position: {b.position}</div>
-                  <button onClick={() => fetch(`${apiBaseUrl}/api/superadmin/banners/${b._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(fetchAllDashboardData)} className="w-full py-1.5 bg-rose-50 text-rose-700 font-bold rounded-xl text-[10px] cursor-pointer">Delete Banner</button>
+                <div key={b._id} className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-2 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <img src={b.imageUrl} alt={b.title} className="w-full h-32 object-cover rounded-xl border border-slate-100" />
+                    <div className="font-black text-xs text-[#01295A] truncate">{b.title}</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold">Position: {b.position}</div>
+                  </div>
+                  <button 
+                    onClick={() => fetch(`${apiBaseUrl}/api/superadmin/banners/${b._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(fetchAllDashboardData)} 
+                    className="w-full py-2 bg-rose-50 text-rose-700 font-bold rounded-xl text-xs cursor-pointer transition hover:bg-rose-100"
+                  >
+                    Delete Advertisement
+                  </button>
                 </div>
               ))}
+              {banners.length === 0 && (
+                <div className="col-span-3 text-center py-12 text-slate-400 text-xs font-bold uppercase bg-white rounded-3xl border border-slate-200">
+                  No advertisements or banners uploaded yet.
+                </div>
+              )}
             </div>
           </div>
         )}

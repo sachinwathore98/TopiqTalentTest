@@ -7,6 +7,7 @@ const Enquiry = require('../models/Enquiry');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// 11 Consolidated Class Groups aligned with TOPIQ Talent Test specifications
 const classesList = [
   'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
   'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
@@ -63,7 +64,7 @@ router.get('/metrics', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 2. EXAM FEES (With Universal 11-Class Normalization & Dual Pricing Support)
+// 2. EXAM FEES (With 15-Day Increment & Dual Pricing Support)
 router.get('/fees', async (req, res) => {
   try {
     const existingFees = await ExamConfig.find({});
@@ -79,8 +80,8 @@ router.get('/fees', async (req, res) => {
       } else {
         return {
           className,
-          testFee: 1100,
-          originalFee: 1500,
+          testFee: 1999,
+          originalFee: 2399,
           passingMarks: 40,
           totalMarks: 100,
           isActive: true
@@ -122,7 +123,7 @@ router.post('/fees', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 3. BANNERS
+// 3. BANNERS & ADVERTISEMENTS MANAGEMENT
 router.get('/banners', async (req, res) => {
   try {
     const banners = await Banner.find({}).sort({ createdAt: -1 });
@@ -135,10 +136,18 @@ router.get('/banners', async (req, res) => {
 router.post('/banners', verifySuperAdmin, async (req, res) => {
   try {
     const { title, imageUrl, targetLink, position, startDate, endDate } = req.body;
-    const newBanner = new Banner({ title, imageUrl, targetLink, position, startDate, endDate });
+    const newBanner = new Banner({ 
+      title, 
+      imageUrl, 
+      targetLink: targetLink || '#', 
+      position: position || 'hero', 
+      startDate: startDate || Date.now(), 
+      endDate: endDate || new Date(Date.now() + 90*24*60*60*1000) 
+    });
     await newBanner.save();
-    return res.status(201).json({ success: true, message: 'Banner added successfully!', newBanner });
+    return res.status(201).json({ success: true, message: 'Advertisement / Banner published successfully!', newBanner });
   } catch (err) {
+    console.error('Error saving banner:', err);
     return res.status(500).json({ success: false, message: 'Error saving banner.' });
   }
 });
@@ -146,7 +155,7 @@ router.post('/banners', verifySuperAdmin, async (req, res) => {
 router.delete('/banners/:id', verifySuperAdmin, async (req, res) => {
   try {
     await Banner.findByIdAndDelete(req.params.id);
-    return res.status(200).json({ success: true, message: 'Banner deleted.' });
+    return res.status(200).json({ success: true, message: 'Advertisement banner deleted.' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Error deleting banner.' });
   }
@@ -172,7 +181,7 @@ router.put('/users/:id', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 5. WEBSITE LEADS & ENQUIRIES (Universal Fetch & Normalization)
+// 5. WEBSITE LEADS & ENQUIRIES
 router.get('/enquiries', verifySuperAdmin, async (req, res) => {
   try {
     const rawEnquiries = await Enquiry.find({}).sort({ createdAt: -1 });
