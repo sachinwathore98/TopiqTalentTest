@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import HeroSection from './components/HeroSection';
 import BrandingMarqueeBanner from './components/BrandingMarqueeBanner';
+import MultiGridBannerSection from './components/MultiGridBannerSection';
 import AboutSection from './components/AboutSection';
 import LearningGroupsSection from './components/LearningGroupsSection';
 import ExamFormatSection from './components/ExamFormatSection';
@@ -146,35 +147,38 @@ export default function HomePage() {
         <HeroSection onOpenStudentModal={handleOpenRegister} />
       </section>
 
-      {/* 3. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
+      {/* 3. MULTI-CARD PROMOTIONAL GRID SECTION */}
+      <MultiGridBannerSection />
+
+      {/* 4. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
       <BrandingMarqueeBanner onOpenStudentModal={handleOpenRegister} />
 
-      {/* 4. ABOUT TOPIQ TALENT TEST */}
+      {/* 5. ABOUT TOPIQ TALENT TEST */}
       <section id="about" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AboutSection />
       </section>
 
-      {/* 5. LEARNING GROUPS */}
+      {/* 6. LEARNING GROUPS */}
       <section id="groups" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <LearningGroupsSection />
       </section>
 
-      {/* 6. SMART EXAM SYSTEM */}
+      {/* 7. SMART EXAM SYSTEM */}
       <section id="format" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <ExamFormatSection />
       </section>
 
-      {/* 7. PERFORMANCE ANALYTICS */}
+      {/* 8. PERFORMANCE ANALYTICS */}
       <section id="analytics" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AnalyticsSection />
       </section>
 
-      {/* 8. RECOGNITION & SCHOLARSHIPS */}
+      {/* 9. RECOGNITION & SCHOLARSHIPS */}
       <section id="rewards" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <RecognitionSection />
       </section>
 
-      {/* 9. FRANCHISE BUSINESS MODEL */}
+      {/* 10. FRANCHISE BUSINESS MODEL */}
       <section id="franchise" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <FranchiseSection />
       </section>
