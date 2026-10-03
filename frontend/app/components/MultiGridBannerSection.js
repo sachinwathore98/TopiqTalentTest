@@ -36,13 +36,12 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
 
   if (banners.length === 0) return null;
 
-  // 1. PROFESSIONAL INTERACTIVE SLIDER
+  // 1. TOP WIDE SLIDER (Matching the wide shape of the first image)
   if (type === 'slider') {
     return (
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-6">
-        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-200 bg-[#01295A] group">
-          {/* Slider Container displaying current slide */}
-          <div className="relative aspect-[21/9] sm:aspect-[3.8/1] w-full overflow-hidden bg-slate-900">
+        <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-black group">
+          <div className="relative aspect-[21/9] sm:aspect-[3.8/1] w-full overflow-hidden">
             {banners.map((banner, idx) => (
               <div 
                 key={banner._id || idx}
@@ -53,9 +52,9 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
                   alt={banner.title} 
                   className="w-full h-full object-cover" 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-6 md:p-8 text-white">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 md:p-8 text-white">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="bg-[#FE7C02] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                    <span className="bg-[#FE7C02] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow">
                       <Sparkles className="w-3 h-3" /> Featured Spotlight
                     </span>
                   </div>
@@ -70,26 +69,26 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
             <>
               <button 
                 onClick={() => setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1))}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/85 text-white p-2.5 rounded-full backdrop-blur-xs transition cursor-pointer shadow-md"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/85 text-white p-3 rounded-full backdrop-blur-xs transition cursor-pointer shadow-lg"
                 aria-label="Previous Slide"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button 
                 onClick={() => setCurrentIndex((prev) => (prev + 1) % banners.length)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/85 text-white p-2.5 rounded-full backdrop-blur-xs transition cursor-pointer shadow-md"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/85 text-white p-3 rounded-full backdrop-blur-xs transition cursor-pointer shadow-lg"
                 aria-label="Next Slide"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
 
               {/* Indicator Dots */}
-              <div className="absolute bottom-3 right-6 flex space-x-1.5 z-25">
+              <div className="absolute bottom-4 right-6 flex space-x-1.5 z-25">
                 {banners.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentIndex(idx)}
-                    className={`h-1.5 rounded-full transition-all cursor-pointer ${idx === currentIndex ? 'bg-[#FE7C02] w-5' : 'bg-white/50 w-1.5'}`}
+                    className={`h-2 rounded-full transition-all cursor-pointer shadow ${idx === currentIndex ? 'bg-[#FE7C02] w-6' : 'bg-white/50 w-2'}`}
                     aria-label={`Go to slide ${idx + 1}`}
                   />
                 ))}
@@ -101,7 +100,7 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
     );
   }
 
-  // 2. SMOOTH RIGHT-TO-LEFT MOVING MARQUEE (For bottom partner strip)
+  // 2. BOTTOM SMOOTH RIGHT-TO-LEFT MOVING MARQUEE (Clean and compact cards)
   return (
     <section className="w-full bg-slate-50 border-y border-slate-200 py-6 overflow-hidden relative my-4">
       <style dangerouslySetInnerHTML={{__html: `
