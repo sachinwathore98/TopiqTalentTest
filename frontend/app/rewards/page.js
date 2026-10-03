@@ -1,18 +1,19 @@
 'use client';
 import React from 'react';
 import { Trophy, Award, Sparkles } from 'lucide-react';
+import ScholarshipPrizesDisplay from '../components/ScholarshipPrizesDisplay';
 
 const MILESTONE_TABLE = [
-  { day: 'Day 10', award: '🏅 TOPIQ Merit Award' },
-  { day: 'Day 20', award: '🌟 TOPIQ Scholar Award' },
-  { day: 'Day 30', award: '⭐ TOPIQ Achiever Award' },
-  { day: 'Day 40', award: '🏆 TOPIQ Excellence Award' },
-  { day: 'Day 50', award: '💎 TOPIQ Elite Award' },
-  { day: 'Day 60', award: '🎖️ TOPIQ Honor Award' },
-  { day: 'Day 70', award: '👑 TOPIQ Champion Award' },
-  { day: 'Day 80', award: '🚀 TOPIQ Master Award' },
-  { day: 'Day 90', award: '🏔️ TOPIQ Pinnacle Award' },
-  { day: 'Day 100', award: '👑 TOPIQ Grand Award' }
+  { day: 'Day 1–10 (SPARK)', award: '🏅 District Top 60 Trophy' },
+  { day: 'Day 11–20 (RISE)', award: '🌟 District Top 60 Trophy' },
+  { day: 'Day 21–30 (SHINE)', award: '⭐ District Top 60 Trophy' },
+  { day: 'Day 31–40 (EXCEL)', award: '🏆 District Top 60 Trophy' },
+  { day: 'Day 41–50 (FOCUS)', award: '💎 District Top 60 Trophy' },
+  { day: 'Day 51–60 (ACHIEVE)', award: '🎖️ District Top 60 Trophy' },
+  { day: 'Day 61–70 (INSPIRE)', award: '👑 District Top 60 Trophy' },
+  { day: 'Day 71–80 (ELITE)', award: '🚀 District Top 60 Trophy' },
+  { day: 'Day 81–90 (CHAMPION)', award: '🏔️ District Top 60 Trophy' },
+  { day: 'Day 91–100 (LEGEND)', award: '👑 District Top 60 Trophy' }
 ];
 
 export default function RewardsPage() {
@@ -25,40 +26,20 @@ export default function RewardsPage() {
           <span className="text-xs font-black text-[#FE7C02] uppercase tracking-widest block">RECOGNITION STRUCTURE</span>
           <h1 className="text-3xl md:text-5xl font-black text-[#01295A]">Awards, Certificates & Scholarships</h1>
           <p className="text-slate-600 text-sm md:text-base font-medium">
-            All Results, Rankings, Awards, Certificates, and Scholarships are declared separately for each class.
+            All Results, Rankings, Awards, Certificates, and Scholarships are declared separately for each class[cite: 13].
           </p>
         </div>
 
         {/* GRAND STATE SCHOLARSHIPS */}
         <div className="animate-zoom-in">
-          <h2 className="text-2xl font-black text-[#01295A] mb-6 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-[#FE7C02]" />
-            <span>State Excellence Scholarships (After 100 Days)</span>
-          </h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              { rank: 'Rank 1–10', amount: '₹11,111', badge: '🥇 Rank 1-10' },
-              { rank: 'Rank 11–25', amount: '₹9,999', badge: '🥈 Rank 11-25' },
-              { rank: 'Rank 26–60', amount: '₹7,777', badge: '🥉 Rank 26-60' },
-              { rank: 'Rank 61–100', amount: '₹5,555', badge: '🏅 Rank 61-100' }
-            ].map((item, i) => (
-              <div key={i} className="p-8 rounded-3xl border border-[#FE7C02]/40 bg-[#01295A] text-white text-center shadow-xl hover:scale-105 transition duration-300">
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#FE7C02] bg-white/10 px-3 py-1 rounded-full border border-white/10">{item.badge}</span>
-                <div className="text-3xl font-black text-[#FE7C02] my-3">{item.amount}</div>
-                <div className="text-xs font-bold text-[#C0C0C0] uppercase tracking-wide">{item.rank}</div>
-                <div className="text-xs text-white font-bold mt-4 border-t border-white/15 pt-3">
-                  🏆 Certificate + Memento + Cash
-                </div>
-              </div>
-            ))}
-          </div>
+          <ScholarshipPrizesDisplay />
         </div>
 
         {/* 10-DAY MILESTONE AWARDS GRID */}
         <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-[#C0C0C0]/60 shadow-xl animate-fade-in-up">
           <h2 className="text-2xl font-black text-[#01295A] mb-6 flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-[#FE7C02]" />
-            <span>TOPIQ 10-Day Milestone Awards (Separate for Every Class)</span>
+            <span>TOPIQ 10-Day Milestone Awards (District Level - Top 60 in Each Class)[cite: 12]</span>
           </h2>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
@@ -66,7 +47,7 @@ export default function RewardsPage() {
               <div key={idx} className="p-4 bg-white rounded-2xl border border-[#C0C0C0]/40 text-center shadow-xs hover:border-[#FE7C02] hover:scale-105 transition duration-300">
                 <span className="text-xs font-black text-white bg-[#01295A] px-2.5 py-1 rounded-full">{m.day}</span>
                 <h3 className="text-xs font-bold text-[#01295A] mt-3">{m.award}</h3>
-                <p className="text-[10px] text-slate-500 font-bold mt-1">Certificate + Memento</p>
+                <p className="text-[10px] text-slate-500 font-bold mt-1">Digital Certificate + Trophy</p>
               </div>
             ))}
           </div>
