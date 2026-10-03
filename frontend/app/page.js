@@ -15,40 +15,25 @@ import { X } from 'lucide-react';
 
 export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [banners, setBanners] = useState([
-    '/banners/1.png',
-    '/banners/2.png',
-    '/banners/3.png',
-    '/banners/4.png'
-  ]);
   const [popupBanners, setPopupBanners] = useState([]);
   const [festiveBanners, setFestiveBanners] = useState([]);
   const [showPopup, setShowPopup] = useState(true);
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
-  // Fetch dynamic banners/ads uploaded from Super Admin dashboard for all positions
+  // Fetch dynamic popups and festive offers uploaded from Super Admin dashboard
   useEffect(() => {
     const fetchLiveBanners = async () => {
       try {
         const res = await fetch(`${apiBaseUrl}/api/superadmin/banners`);
         const data = await res.json();
         if (data.success && data.banners && data.banners.length > 0) {
-          // 1. Hero Banners
-          const heroBanners = data.banners
-            .filter(b => b.position === 'hero' && b.isActive !== false)
-            .map(b => b.imageUrl);
-          if (heroBanners.length > 0) {
-            setBanners(heroBanners);
-          }
-
-          // 2. Popup Banners
+          // 1. Popup Banners
           const popups = data.banners.filter(b => b.position === 'popup' && b.isActive !== false);
           setPopupBanners(popups);
 
-          // 3. Festive / Flash Offer Banners
+          // 2. Festive / Flash Offer Banners
           const festive = data.banners.filter(b => b.position === 'festive_offer' && b.isActive !== false);
           setFestiveBanners(festive);
         }
@@ -58,14 +43,6 @@ export default function HomePage() {
     };
     fetchLiveBanners();
   }, [apiBaseUrl]);
-
-  // Auto-slide effect every 4 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBannerIndex((prevIndex) => (prevIndex + 1) % banners.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [banners.length]);
 
   const handleOpenRegister = () => {
     setIsRegisterOpen(true);
@@ -108,77 +85,43 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 1. DYNAMIC PHOTO BANNER SLIDER (Auto-synced with Super Admin Banners) */}
-      <section className="w-full bg-black m-0 p-0 leading-none">
-        <div className="w-full relative m-0 p-0 overflow-hidden">
-          {banners.map((banner, index) => (
-            <div
-              key={index}
-              className={`w-full transition-opacity duration-1000 ease-in-out ${
-                index === currentBannerIndex ? 'opacity-100 relative z-10 block' : 'opacity-0 absolute inset-0 z-0 hidden'
-              }`}
-            >
-              <img
-                src={banner}
-                alt={`TOPIQ Banner ${index + 1}`}
-                className="w-full h-auto object-contain block m-0 p-0"
-              />
-            </div>
-          ))}
-          
-          {/* Indicator Dots Overlay */}
-          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center space-x-2 pointer-events-auto">
-            {banners.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentBannerIndex(index)}
-                className={`h-2 rounded-full transition-all shadow-md ${
-                  index === currentBannerIndex ? 'bg-white w-6' : 'bg-white/50 w-2'
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 2. HERO BANNER & DAILY EXAM TIMER */}
+      {/* 1. HERO BANNER & DAILY EXAM TIMER */}
       <section id="hero" className="scroll-mt-20 my-0 py-0">
         <HeroSection onOpenStudentModal={handleOpenRegister} />
       </section>
 
-      {/* 3. MULTI-CARD PROMOTIONAL GRID SECTION */}
+      {/* 2. PROFESSIONAL MULTI-GRID & SLIDER BANNER CAROUSEL */}
       <MultiGridBannerSection />
 
-      {/* 4. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
+      {/* 3. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
       <BrandingMarqueeBanner onOpenStudentModal={handleOpenRegister} />
 
-      {/* 5. ABOUT TOPIQ TALENT TEST */}
+      {/* 4. ABOUT TOPIQ TALENT TEST */}
       <section id="about" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AboutSection />
       </section>
 
-      {/* 6. LEARNING GROUPS */}
+      {/* 5. LEARNING GROUPS */}
       <section id="groups" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <LearningGroupsSection />
       </section>
 
-      {/* 7. SMART EXAM SYSTEM */}
+      {/* 6. SMART EXAM SYSTEM */}
       <section id="format" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <ExamFormatSection />
       </section>
 
-      {/* 8. PERFORMANCE ANALYTICS */}
+      {/* 7. PERFORMANCE ANALYTICS */}
       <section id="analytics" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AnalyticsSection />
       </section>
 
-      {/* 9. RECOGNITION & SCHOLARSHIPS */}
+      {/* 8. RECOGNITION & SCHOLARSHIPS */}
       <section id="rewards" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <RecognitionSection />
       </section>
 
-      {/* 10. FRANCHISE BUSINESS MODEL */}
+      {/* 9. FRANCHISE BUSINESS MODEL */}
       <section id="franchise" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <FranchiseSection />
       </section>
