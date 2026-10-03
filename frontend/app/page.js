@@ -11,19 +11,41 @@ import RecognitionSection from './components/RecognitionSection';
 import FranchiseSection from './components/FranchiseSection';
 import StudentRegisterModal from './components/StudentRegisterModal';
 
-
 export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-
-  // Correct path pointing to your banners folder inside public
-  const banners = [
+  const [banners, setBanners] = useState([
     '/banners/1.png',
     '/banners/2.png',
     '/banners/3.png',
     '/banners/4.png'
-  ];
-  
+  ]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+
+  // Fetch dynamic banners/ads uploaded from Super Admin dashboard
+  useEffect(() => {
+    const fetchLiveBanners = async () => {
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/superadmin/banners`);
+        const data = await res.json();
+        if (data.success && data.banners && data.banners.length > 0) {
+          // Filter banners designated for the hero slider position
+          const heroBanners = data.banners
+            .filter(b => b.position === 'hero' && b.isActive !== false)
+            .map(b => b.imageUrl);
+          
+          if (heroBanners.length > 0) {
+            setBanners(heroBanners);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching live banners:', err);
+      }
+    };
+    fetchLiveBanners();
+  }, [apiBaseUrl]);
 
   // Auto-slide effect every 4 seconds
   useEffect(() => {
@@ -40,7 +62,7 @@ export default function HomePage() {
   return (
     <div className="space-y-0 animate-fade-in overflow-hidden pb-0 bg-white text-[#01295A]">
       
-      {/* 1. DYNAMIC 4-PHOTO BANNER SLIDER (Zero gap, exact image sizing) */}
+      {/* 1. DYNAMIC PHOTO BANNER SLIDER (Auto-synced with Super Admin Banners) */}
       <section className="w-full bg-black m-0 p-0 leading-none">
         <div className="w-full relative m-0 p-0 overflow-hidden">
           {banners.map((banner, index) => (
