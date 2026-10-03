@@ -10,6 +10,7 @@ import AnalyticsSection from './components/AnalyticsSection';
 import RecognitionSection from './components/RecognitionSection';
 import FranchiseSection from './components/FranchiseSection';
 import StudentRegisterModal from './components/StudentRegisterModal';
+import ScholarshipPrizesDisplay from './components/ScholarshipPrizesDisplay';
 
 export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
