@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
-export default function MultiGridBannerSection() {
+export default function MultiGridBannerSection({ type = 'slider' }) {
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -25,89 +25,125 @@ export default function MultiGridBannerSection() {
     fetchBanners();
   }, [apiBaseUrl]);
 
-  // Auto-slide effect for the main promotional slider
+  // Auto-slide effect for the main slider
   useEffect(() => {
     if (banners.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % banners.length);
-    }, 5000);
+    }, 4500);
     return () => clearInterval(timer);
   }, [banners.length]);
 
   if (banners.length === 0) return null;
 
-  const currentBanner = banners[currentIndex];
-
-  return (
-    <section className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-8">
-      {/* 1. PROFESSIONAL AUTO-SLIDING PROMOTIONAL BANNER CAROUSEL */}
-      <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-200 bg-[#01295A] group">
-        <div className="relative aspect-[21/9] sm:aspect-[3.5/1] w-full overflow-hidden">
-          <img 
-            src={currentBanner.imageUrl} 
-            alt={currentBanner.title} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-6 md:p-8 text-white">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="bg-[#FE7C02] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Featured Spotlight
-              </span>
+  // 1. TOP PROFESSIONAL SLIDER
+  if (type === 'slider') {
+    const currentBanner = banners[currentIndex];
+    return (
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-200 bg-[#01295A] group">
+          <div className="relative aspect-[21/9] sm:aspect-[3.8/1] w-full overflow-hidden">
+            <img 
+              src={currentBanner.imageUrl} 
+              alt={currentBanner.title} 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-6 md:p-8 text-white">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-[#FE7C02] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Featured Spotlight
+                </span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-black tracking-tight">{currentBanner.title}</h2>
             </div>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight">{currentBanner.title}</h2>
+          </div>
+
+          {banners.length > 1 && (
+            <>
+              <button 
+                onClick={() => setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1))}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-xs transition cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setCurrentIndex((prev) => (prev + 1) % banners.length)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-xs transition cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              <div className="absolute bottom-3 right-6 flex space-x-1.5 z-10">
+                {banners.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-[#FE7C02] w-5' : 'bg-white/50 w-1.5'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // 2. INTERLEAVED SECTION AD SPOT (Appears after every 3 sections)
+  if (type === 'interleaved') {
+    const banner = banners[currentIndex % banners.length];
+    return (
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+        <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+          <a href={banner.targetLink || '#'} target="_blank" rel="noreferrer" className="w-full sm:w-1/3 aspect-video rounded-2xl overflow-hidden bg-slate-200 block shrink-0 shadow-inner">
+            <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover hover:scale-105 transition duration-300" />
+          </a>
+          <div className="space-y-2 w-full text-center sm:text-left">
+            <span className="text-[10px] font-black uppercase bg-[#FE7C02]/10 text-[#FE7C02] px-3 py-1 rounded-full border border-[#FE7C02]/30">
+              Sponsored Advertisement Spot
+            </span>
+            <h3 className="text-lg font-black text-[#01295A]">{banner.title}</h3>
+            <p className="text-xs text-slate-500 font-medium">Explore premium educational resources and institutional opportunities across Maharashtra.</p>
           </div>
         </div>
+      </section>
+    );
+  }
 
-        {/* Carousel Navigation Arrows */}
-        {banners.length > 1 && (
-          <>
-            <button 
-              onClick={() => setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1))}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-xs transition cursor-pointer"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => setCurrentIndex((prev) => (prev + 1) % banners.length)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-xs transition cursor-pointer"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            {/* Indicator Dots */}
-            <div className="absolute bottom-3 right-6 flex space-x-1.5 z-10">
-              {banners.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-[#FE7C02] w-5' : 'bg-white/50 w-1.5'}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
+  // 3. BOTTOM SMOOTH RIGHT-TO-LEFT MARQUEE CARDS
+  return (
+    <section className="w-full bg-slate-50 border-t border-slate-200 py-8 overflow-hidden relative">
+      <style jsx>{`
+        @keyframes scrollRightToLeft {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee-rtl {
+          display: flex;
+          width: max-content;
+          animation: scrollRightToLeft 30s linear infinite;
+        }
+        .marquee-rtl-container:hover .animate-marquee-rtl {
+          animation-play-state: paused;
+        }
+      `}</style>
+      
+      <div className="max-w-7xl mx-auto px-4 md:px-6 mb-4 flex items-center justify-between">
+        <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">Official Partners & Spotlights</h3>
       </div>
 
-      {/* 2. DISTRIBUTED SPONSOR / POST CARDS (Grid display for remaining items) */}
-      {banners.length > 1 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-2">
-          {banners.map((banner, idx) => (
-            <div key={banner._id || idx} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden group hover:shadow-md transition duration-300 flex flex-col justify-between">
-              <a href={banner.targetLink || '#'} target="_blank" rel="noreferrer" className="block relative aspect-video w-full overflow-hidden bg-slate-100">
-                <img 
-                  src={banner.imageUrl} 
-                  alt={banner.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
-                />
+      <div className="marquee-rtl-container relative flex items-center overflow-hidden">
+        <div className="animate-marquee-rtl flex items-center gap-5">
+          {[...banners, ...banners, ...banners].map((banner, idx) => (
+            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-3 w-72 shrink-0 shadow-sm space-y-2 group hover:border-[#FE7C02] transition">
+              <a href={banner.targetLink || '#'} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-xl overflow-hidden bg-slate-100">
+                <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
               </a>
-              <div className="p-4 space-y-1">
-                <h4 className="text-xs font-black text-[#01295A] truncate">{banner.title}</h4>
-                <span className="text-[10px] text-[#FE7C02] font-bold uppercase tracking-wider block">Official Partner Post</span>
-              </div>
+              <div className="font-black text-xs text-[#01295A] truncate">{banner.title}</div>
             </div>
           ))}
         </div>
-      )}
+      </div>
     </section>
   );
 }

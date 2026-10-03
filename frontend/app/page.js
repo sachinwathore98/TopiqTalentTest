@@ -90,41 +90,43 @@ export default function HomePage() {
         <HeroSection onOpenStudentModal={handleOpenRegister} />
       </section>
 
-      {/* 2. PROFESSIONAL MULTI-GRID & SLIDER BANNER CAROUSEL */}
-      <MultiGridBannerSection />
+      {/* 2. TOP PROFESSIONAL SLIDER BANNER CAROUSEL */}
+      <MultiGridBannerSection type="slider" />
 
-      {/* 3. BRANDING ADV SLIDERS & SCHOLARSHIP HIGHLIGHTS */}
-      <BrandingMarqueeBanner onOpenStudentModal={handleOpenRegister} />
-
-      {/* 4. ABOUT TOPIQ TALENT TEST */}
+      {/* SECTION BLOCK 1 (Sections 1, 2, 3) */}
       <section id="about" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AboutSection />
       </section>
 
-      {/* 5. LEARNING GROUPS */}
       <section id="groups" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <LearningGroupsSection />
       </section>
 
-      {/* 6. SMART EXAM SYSTEM */}
       <section id="format" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <ExamFormatSection />
       </section>
 
-      {/* 7. PERFORMANCE ANALYTICS */}
+      {/* SPONSORED AD SPOT AFTER EVERY 3 SECTIONS */}
+      <MultiGridBannerSection type="interleaved" />
+
+      {/* SECTION BLOCK 2 (Sections 4, 5, 6) */}
       <section id="analytics" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AnalyticsSection />
       </section>
 
-      {/* 8. RECOGNITION & SCHOLARSHIPS */}
       <section id="rewards" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <RecognitionSection />
       </section>
 
-      {/* 9. FRANCHISE BUSINESS MODEL */}
       <section id="franchise" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <FranchiseSection />
       </section>
+
+      {/* 3. BRANDING ADV SLIDERS */}
+      <BrandingMarqueeBanner onOpenStudentModal={handleOpenRegister} />
+
+      {/* 4. BOTTOM SMOOTH RIGHT-TO-LEFT MARQUEE */}
+      <MultiGridBannerSection type="marquee" />
 
       {/* REGISTRATION MODAL TRIGGERED FROM HOMEPAGE BUTTONS */}
       <StudentRegisterModal
