@@ -89,9 +89,9 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
     );
   }
 
-  // 2. BOTTOM SMOOTH RIGHT-TO-LEFT MOVING MARQUEE
+  // 2. SMOOTH RIGHT-TO-LEFT MOVING MARQUEE (Used for bottom & between sections)
   return (
-    <section className="w-full bg-slate-50 border-t border-slate-200 py-8 overflow-hidden relative">
+    <section className="w-full bg-slate-50 border-y border-slate-200 py-6 overflow-hidden relative my-4">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes scrollRightToLeft {
           0% { transform: translateX(0); }
@@ -107,7 +107,7 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
         }
       `}} />
       
-      <div className="max-w-7xl mx-auto px-4 md:px-6 mb-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 mb-3 flex items-center justify-between">
         <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">Official Partners & Spotlights</h3>
       </div>
 

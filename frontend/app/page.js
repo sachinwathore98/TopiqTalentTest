@@ -90,7 +90,7 @@ export default function HomePage() {
       {/* 2. TOP PROFESSIONAL SLIDER BANNER CAROUSEL */}
       <MultiGridBannerSection type="slider" />
 
-      {/* HOMEPAGE SECTIONS */}
+      {/* SECTIONS 1, 2, 3 */}
       <section id="about" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AboutSection />
       </section>
@@ -103,6 +103,10 @@ export default function HomePage() {
         <ExamFormatSection />
       </section>
 
+      {/* PARTNER MARQUEE AFTER EVERY 3 SECTIONS */}
+      <MultiGridBannerSection type="marquee" />
+
+      {/* SECTIONS 4, 5, 6 */}
       <section id="analytics" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AnalyticsSection />
       </section>
@@ -115,13 +119,13 @@ export default function HomePage() {
         <FranchiseSection />
       </section>
 
-      {/* 3. BRANDING ADV SLIDERS */}
+      {/* BRANDING ADV SLIDERS */}
       <BrandingMarqueeBanner onOpenStudentModal={handleOpenRegister} />
 
-      {/* 4. BOTTOM SMOOTH RIGHT-TO-LEFT MARQUEE */}
+      {/* BOTTOM MARQUEE */}
       <MultiGridBannerSection type="marquee" />
 
-      {/* REGISTRATION MODAL TRIGGERED FROM HOMEPAGE BUTTONS */}
+      {/* REGISTRATION MODAL */}
       <StudentRegisterModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
