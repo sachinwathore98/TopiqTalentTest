@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Youtube, Facebook, Instagram, Linkedin, Send, Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
@@ -29,19 +30,29 @@ export default function Footer() {
           <p className="text-xs text-[#C0C0C0] leading-relaxed font-medium">
             TOPIQ TALENT TEST (TTT) is an educational initiative by Balmitra Kids Private Limited to promote daily competitive learning and scholarship recognition across Maharashtra.
           </p>
-          <p className="text-xs font-bold text-[#FE7C02] italic">"Every Talent Deserves Recognition."</p>
+          <p className="text-xs font-bold text-[#FE7C02] italic">&quot;Every Talent Deserves Recognition.&quot;</p>
         </div>
 
-        {/* QUICK LINKS (SLIDES IN FROM LEFT) */}
-        <div className="animate-fade-in-left delay-100">
-          <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-white/10 pb-2 inline-block">Quick Links</h4>
-          <ul className="space-y-2.5 text-xs text-[#C0C0C0]">
-            <li><a href="/about" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">About Balmitra Kids</a></li>
-            <li><a href="/groups" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Learning Groups (A - E)</a></li>
-            <li><a href="/format" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Smart Exam System</a></li>
-            <li><a href="/rewards" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">State Scholarships</a></li>
-            <li><a href="/franchise" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Franchise Business Model</a></li>
-          </ul>
+        {/* QUICK LINKS & LEGAL (SLIDES IN FROM LEFT) */}
+        <div className="animate-fade-in-left delay-100 space-y-6">
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3 border-b border-white/10 pb-2 inline-block">Quick Links</h4>
+            <ul className="space-y-2 text-xs text-[#C0C0C0]">
+              <li><Link href="/about" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">About Balmitra Kids</Link></li>
+              <li><Link href="/groups" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Learning Groups (A - E)</Link></li>
+              <li><Link href="/format" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Smart Exam System</Link></li>
+              <li><Link href="/rewards" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">State Scholarships</Link></li>
+              <li><Link href="/franchise" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Franchise Business Model</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-2 border-b border-white/10 pb-2 inline-block">Legal & Compliance</h4>
+            <ul className="space-y-2 text-xs text-[#C0C0C0]">
+              <li><Link href="/privacy-policy" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-[#FE7C02] hover:translate-x-1 inline-block transition-all duration-200">Terms & Conditions</Link></li>
+            </ul>
+          </div>
         </div>
 
         {/* OFFICIAL CONTACT DETAILS (SLIDES IN FROM RIGHT) */}
@@ -99,9 +110,13 @@ export default function Footer() {
 
       </div>
 
-      {/* FOOTER COPYRIGHT (FADES UP) */}
-      <div className="max-w-7xl mx-auto px-4 border-t border-white/15 pt-8 text-center text-xs text-[#C0C0C0] font-medium animate-fade-in-up delay-200 relative z-10">
-        © 2026 Balmitra Kids Private Limited. All rights reserved.
+      {/* FOOTER COPYRIGHT & LEGAL LINKS (FADES UP) */}
+      <div className="max-w-7xl mx-auto px-4 border-t border-white/15 pt-8 text-center text-xs text-[#C0C0C0] font-medium animate-fade-in-up delay-200 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>© 2026 Balmitra Kids Private Limited. All rights reserved.</div>
+        <div className="flex space-x-6">
+          <Link href="/privacy-policy" className="hover:text-white transition">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-white transition">Terms & Conditions</Link>
+        </div>
       </div>
     </footer>
   );
