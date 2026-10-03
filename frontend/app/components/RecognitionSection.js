@@ -1,19 +1,17 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trophy, Award, Sparkles, ShieldCheck } from 'lucide-react';
 import ScholarshipPrizesDisplay from './ScholarshipPrizesDisplay';
 
 const MILESTONES = [
-  { title: "Every 10 Days Milestone", desc: "Trophies, Special Medals & Merit Certificates awarded for top 60 district rankers every 10 days.", icon: Trophy },
-  { title: "100-Day Grand Completion", desc: "Official State Merit Ranker Certificate & Grand Memento for completing all 100 days successfully.", icon: Award },
-  { title: "Daily Digital Marksheet", desc: "Instant downloadable scorecards with speed, accuracy, and strength-weakness analytics.", icon: ShieldCheck }
+  { title: "Every 10 Days Milestone", desc: "Trophies, Special Medals & Merit Certificates awarded for top performers every 10 days.", icon: Trophy },
+  { title: "100-Day Grand Completion", desc: "Official State Merit Ranker Certificate & Grand Memento for completing all 100 days.", icon: Award },
+  { title: "Digital Marksheet & Report", desc: "Instant downloadable scorecards with speed, accuracy, and strength-weakness analytics.", icon: ShieldCheck }
 ];
 
 export default function RecognitionSection() {
   return (
     <section id="rewards" className="py-12 px-4 max-w-7xl mx-auto space-y-10 bg-white text-[#01295A]">
-      
-      {/* SECTION HEADER */}
       <div className="text-center max-w-3xl mx-auto space-y-2 animate-fade-in-down">
         <span className="text-xs font-black text-[#FE7C02] uppercase tracking-widest block">
           RECOGNITION STRUCTURE
@@ -22,22 +20,17 @@ export default function RecognitionSection() {
           Awards, Certificates & Scholarships
         </h2>
         <p className="text-slate-600 text-sm md:text-base leading-relaxed font-medium">
-          Honoring consistency, rigorous testing temperament, and academic excellence across Maharashtra[cite: 13].
+          Honoring consistency, rigorous testing temperament, and academic excellence across Maharashtra.
         </p>
       </div>
 
-      {/* STATE EXCELLENCE SCHOLARSHIPS CONTAINER */}
       <ScholarshipPrizesDisplay />
 
-      {/* MILESTONE REWARDS GRID */}
       <div className="grid md:grid-cols-3 gap-6">
         {MILESTONES.map((m, idx) => {
           const Icon = m.icon;
           return (
-            <div 
-              key={idx} 
-              className="bg-slate-50 border border-[#C0C0C0]/60 p-6 md:p-8 rounded-3xl shadow-md hover:border-[#FE7C02] hover:-translate-y-1.5 transition duration-300 space-y-4 flex flex-col justify-between"
-            >
+            <div key={idx} className="bg-slate-50 border border-[#C0C0C0]/60 p-6 md:p-8 rounded-3xl shadow-md hover:border-[#FE7C02] transition duration-300 space-y-4 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 bg-[#01295A] text-[#FE7C02] rounded-2xl flex items-center justify-center mb-4 shadow-xs">
                   <Icon className="w-6 h-6" />
@@ -49,7 +42,6 @@ export default function RecognitionSection() {
           );
         })}
       </div>
-
     </section>
   );
 }

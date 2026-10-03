@@ -1,20 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  GraduationCap, 
-  Sparkles, 
-  Award, 
-  Trophy, 
-  CheckCircle2, 
-  Zap, 
-  Target,
-  Medal,
-  ShieldCheck,
-  TrendingUp,
-  Brain,
-  Users,
-  Flame
+  GraduationCap, Sparkles, Award, Trophy, CheckCircle2, 
+  Zap, Target, Medal, ShieldCheck, TrendingUp, Brain, Users, Flame
 } from 'lucide-react';
 
 const LEFT_TARGETS = [
@@ -33,18 +22,40 @@ const RIGHT_BENEFITS = [
   { title: "100-Day Grand Memo", subtitle: "Consolidated Report", desc: "Complete strength, weakness & speed analytics", icon: Medal }
 ];
 
-const STATE_SCHOLARSHIPS = [
-  { rankText: "Rank 1–10", cashText: "₹11,111", badge: "🥇 Rank 1-10", rewards: "🏆 Certificate + Memento + Cash" },
-  { rankText: "Rank 11–25", cashText: "₹9,999", badge: "🥈 Rank 11-25", rewards: "🏆 Certificate + Memento + Cash" },
-  { rankText: "Rank 26–60", cashText: "₹7,777", badge: "🥉 Rank 26-60", rewards: "🏆 Certificate + Memento + Cash" },
-  { rankText: "Rank 61–100", cashText: "₹5,555", badge: "🏅 Rank 61-100", rewards: "🏆 Certificate + Memento + Cash" }
-];
-
 export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
+  const [scholarships, setScholarships] = useState([
+    { rankText: "Rank 1–10", cashText: "₹11,111", badge: "🥇 Rank 1-10", rewards: "🏆 Certificate + Memento + Cash" },
+    { rankText: "Rank 11–25", cashText: "₹9,999", badge: "🥈 Rank 11-25", rewards: "🏆 Certificate + Memento + Cash" },
+    { rankText: "Rank 26–60", cashText: "₹7,777", badge: "🥉 Rank 26-60", rewards: "🏆 Certificate + Memento + Cash" },
+    { rankText: "Rank 61–100", cashText: "₹5,555", badge: "🏅 Rank 61-100", rewards: "🏆 Certificate + Memento + Cash" }
+  ]);
+
+  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  const cleanBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+
+  useEffect(() => {
+    const fetchLiveScholarships = async () => {
+      try {
+        const res = await fetch(`${cleanBaseUrl}/api/superadmin/scholarships`);
+        const data = await res.json();
+        if (data.success && data.prizes) {
+          const formatted = data.prizes.map((p, idx) => ({
+            rankText: p.rankTier,
+            cashText: `₹${p.cashAmount?.toLocaleString('en-IN')}`,
+            badge: idx === 0 ? "🥇 Rank 1-10" : idx === 1 ? "🥈 Rank 11-25" : idx === 2 ? "🥉 Rank 26-60" : "🏅 Rank 61-100",
+            rewards: "🏆 Certificate + Memento + Cash"
+          }));
+          setScholarships(formatted);
+        }
+      } catch (err) {
+        console.error('Error fetching marquee live scholarships:', err);
+      }
+    };
+    fetchLiveScholarships();
+  }, [cleanBaseUrl]);
+
   return (
     <div className="w-full bg-slate-50 border-b border-[#C0C0C0]/50 py-6 px-4 md:px-6 space-y-6 overflow-hidden relative text-[#01295A]">
-      
-      {/* MARQUEE KEYFRAMES */}
       <style jsx>{`
         @keyframes marquee {
           0% { transform: translateX(0%); }
@@ -66,14 +77,12 @@ export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
         }
       `}</style>
 
-      {/* TOP ROW: TWO COLUMNS */}
       <div className="grid lg:grid-cols-2 gap-6 items-stretch">
-        
-        {/* LEFT COLUMN: EXAM FOR WHOM */}
-        <div className="bg-white border border-[#C0C0C0]/60 rounded-3xl p-4 shadow-md relative overflow-hidden flex flex-col justify-between space-y-3 animate-fade-in-left hover:shadow-xl transition duration-500">
+        {/* LEFT COLUMN */}
+        <div className="bg-white border border-[#C0C0C0]/60 rounded-3xl p-4 shadow-md relative overflow-hidden flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 px-1">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#FE7C02]/10 text-[#FE7C02] rounded-xl border border-[#FE7C02]/30 shadow-xs">
+              <div className="p-2 bg-[#FE7C02]/10 text-[#FE7C02] rounded-xl border border-[#FE7C02]/30">
                 <GraduationCap className="w-4 h-4" />
               </div>
               <div>
@@ -91,10 +100,7 @@ export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
               {[...LEFT_TARGETS, ...LEFT_TARGETS, ...LEFT_TARGETS].map((card, idx) => {
                 const Icon = card.icon;
                 return (
-                  <div 
-                    key={idx} 
-                    className="bg-slate-50 border border-[#C0C0C0]/50 hover:border-[#FE7C02] hover:bg-white p-3.5 rounded-2xl w-64 shrink-0 transition-all duration-300 shadow-xs hover:shadow-md flex items-start gap-3 hover:-translate-y-0.5"
-                  >
+                  <div key={idx} className="bg-slate-50 border border-[#C0C0C0]/50 hover:border-[#FE7C02] hover:bg-white p-3.5 rounded-2xl w-64 shrink-0 transition-all duration-300 shadow-xs flex items-start gap-3">
                     <div className="p-2 rounded-xl border border-[#FE7C02]/40 bg-[#FE7C02]/10 text-[#FE7C02] shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
@@ -110,11 +116,11 @@ export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: KEY BENEFITS */}
-        <div className="bg-white border border-[#C0C0C0]/60 rounded-3xl p-4 shadow-md relative overflow-hidden flex flex-col justify-between space-y-3 animate-fade-in-right hover:shadow-xl transition duration-500">
+        {/* RIGHT COLUMN */}
+        <div className="bg-white border border-[#C0C0C0]/60 rounded-3xl p-4 shadow-md relative overflow-hidden flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 px-1">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#01295A]/10 text-[#01295A] rounded-xl border border-[#01295A]/20 shadow-xs">
+              <div className="p-2 bg-[#01295A]/10 text-[#01295A] rounded-xl border border-[#01295A]/20">
                 <Zap className="w-4 h-4 text-[#01295A]" />
               </div>
               <div>
@@ -132,10 +138,7 @@ export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
               {[...RIGHT_BENEFITS, ...RIGHT_BENEFITS, ...RIGHT_BENEFITS].map((card, idx) => {
                 const Icon = card.icon;
                 return (
-                  <div 
-                    key={idx} 
-                    className="bg-slate-50 border border-[#C0C0C0]/50 hover:border-[#FE7C02] hover:bg-white p-3.5 rounded-2xl w-64 shrink-0 transition-all duration-300 shadow-xs hover:shadow-md flex items-start gap-3 hover:-translate-y-0.5"
-                  >
+                  <div key={idx} className="bg-slate-50 border border-[#C0C0C0]/50 hover:border-[#FE7C02] hover:bg-white p-3.5 rounded-2xl w-64 shrink-0 transition-all duration-300 shadow-xs flex items-start gap-3">
                     <div className="p-2 rounded-xl border border-[#01295A]/20 bg-[#01295A]/10 text-[#01295A] shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
@@ -150,13 +153,10 @@ export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* BOTTOM SECTION: SCHOLARSHIPS BANNER */}
-      <div className="bg-[#01295A] text-white border border-[#FE7C02]/40 rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden space-y-6 animate-zoom-in delay-200">
-        
-        {/* SECTION HEADER */}
+      {/* BOTTOM SECTION: DYNAMIC SCHOLARSHIPS BANNER */}
+      <div className="bg-[#01295A] text-white border border-[#FE7C02]/40 rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/15 pb-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-[#FE7C02] text-white rounded-2xl shadow-lg font-black">
@@ -175,24 +175,19 @@ export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
             </div>
           </div>
 
-          {/* WORKING REGISTRATION OPEN BUTTON */}
           <button
             type="button"
             onClick={onOpenStudentModal}
-            className="inline-flex items-center gap-2 bg-[#FE7C02] text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-md shrink-0 self-start sm:self-auto hover:bg-[#E06B00] transition active:scale-95 hover:scale-105 duration-300 cursor-pointer"
+            className="inline-flex items-center gap-2 bg-[#FE7C02] text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-md shrink-0 self-start sm:self-auto hover:bg-[#E06B00] transition cursor-pointer"
           >
             <Flame className="w-4 h-4 fill-white" />
             <span>Registration Open</span>
           </button>
         </div>
 
-        {/* 4 SCHOLARSHIP TIER CARDS */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {STATE_SCHOLARSHIPS.map((item, idx) => (
-            <div 
-              key={idx} 
-              className="bg-white/10 border border-white/20 hover:border-[#FE7C02] p-5 rounded-2xl transition-all duration-300 space-y-3 hover:-translate-y-1 shadow-lg group flex flex-col justify-between animate-fade-in-up"
-            >
+          {scholarships.map((item, idx) => (
+            <div key={idx} className="bg-white/10 border border-white/20 hover:border-[#FE7C02] p-5 rounded-2xl transition-all duration-300 space-y-3 shadow-lg flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-white bg-white/10 px-3 py-1 rounded-full border border-white/15">
                   {item.badge}
@@ -215,9 +210,7 @@ export default function BrandingMarqueeBanner({ onOpenStudentModal }) {
             </div>
           ))}
         </div>
-
       </div>
-
     </div>
   );
 }
