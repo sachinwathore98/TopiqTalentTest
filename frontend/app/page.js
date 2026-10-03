@@ -10,6 +10,7 @@ import AnalyticsSection from './components/AnalyticsSection';
 import RecognitionSection from './components/RecognitionSection';
 import FranchiseSection from './components/FranchiseSection';
 import StudentRegisterModal from './components/StudentRegisterModal';
+import { X } from 'lucide-react';
 
 export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -19,26 +20,36 @@ export default function HomePage() {
     '/banners/3.png',
     '/banners/4.png'
   ]);
+  const [popupBanners, setPopupBanners] = useState([]);
+  const [festiveBanners, setFestiveBanners] = useState([]);
+  const [showPopup, setShowPopup] = useState(true);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
-  // Fetch dynamic banners/ads uploaded from Super Admin dashboard
+  // Fetch dynamic banners/ads uploaded from Super Admin dashboard for all positions
   useEffect(() => {
     const fetchLiveBanners = async () => {
       try {
         const res = await fetch(`${apiBaseUrl}/api/superadmin/banners`);
         const data = await res.json();
         if (data.success && data.banners && data.banners.length > 0) {
-          // Filter banners designated for the hero slider position
+          // 1. Hero Banners
           const heroBanners = data.banners
             .filter(b => b.position === 'hero' && b.isActive !== false)
             .map(b => b.imageUrl);
-          
           if (heroBanners.length > 0) {
             setBanners(heroBanners);
           }
+
+          // 2. Popup Banners
+          const popups = data.banners.filter(b => b.position === 'popup' && b.isActive !== false);
+          setPopupBanners(popups);
+
+          // 3. Festive / Flash Offer Banners
+          const festive = data.banners.filter(b => b.position === 'festive_offer' && b.isActive !== false);
+          setFestiveBanners(festive);
         }
       } catch (err) {
         console.error('Error fetching live banners:', err);
@@ -62,6 +73,40 @@ export default function HomePage() {
   return (
     <div className="space-y-0 animate-fade-in overflow-hidden pb-0 bg-white text-[#01295A]">
       
+      {/* POP-UP ANNOUNCEMENT MODAL RENDERER */}
+      {popupBanners.length > 0 && showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-4 relative shadow-2xl border border-slate-200 overflow-hidden">
+            <button 
+              onClick={() => setShowPopup(false)} 
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/60 hover:bg-black text-white transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {popupBanners.map((popup, idx) => (
+              <div key={idx} className="space-y-3">
+                <a href={popup.targetLink || '#'} target="_blank" rel="noreferrer" className="block relative rounded-2xl overflow-hidden aspect-video shadow-inner">
+                  <img src={popup.imageUrl} alt={popup.title} className="w-full h-full object-cover" />
+                </a>
+                <div className="font-black text-sm text-[#01295A] text-center">{popup.title}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* FESTIVE / FLASH OFFER BANNER RENDERER */}
+      {festiveBanners.length > 0 && (
+        <div className="w-full bg-[#FE7C02] text-white py-2 px-4 text-center font-black text-xs md:text-sm shadow-md flex items-center justify-center gap-3">
+          {festiveBanners.map((festive, idx) => (
+            <a key={idx} href={festive.targetLink || '#'} className="hover:underline flex items-center gap-2">
+              <span>🔥 {festive.title}</span>
+              <img src={festive.imageUrl} alt="Offer" className="h-6 w-auto object-contain rounded inline-block mx-1" />
+            </a>
+          ))}
+        </div>
+      )}
+
       {/* 1. DYNAMIC PHOTO BANNER SLIDER (Auto-synced with Super Admin Banners) */}
       <section className="w-full bg-black m-0 p-0 leading-none">
         <div className="w-full relative m-0 p-0 overflow-hidden">
