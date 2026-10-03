@@ -188,6 +188,21 @@ router.post('/banners', verifySuperAdmin, async (req, res) => {
   }
 });
 
+router.put('/banners/:id', verifySuperAdmin, async (req, res) => {
+  try {
+    const { title, imageUrl, targetLink, position } = req.body;
+    const updatedBanner = await Banner.findByIdAndUpdate(
+      req.params.id,
+      { title, imageUrl, targetLink: targetLink || '#', position: position || 'hero' },
+      { new: true }
+    );
+    return res.status(200).json({ success: true, message: 'Advertisement updated successfully!', updatedBanner });
+  } catch (err) {
+    console.error('Error updating banner:', err);
+    return res.status(500).json({ success: false, message: 'Error updating banner.' });
+  }
+});
+
 router.delete('/banners/:id', verifySuperAdmin, async (req, res) => {
   try {
     await Banner.findByIdAndDelete(req.params.id);

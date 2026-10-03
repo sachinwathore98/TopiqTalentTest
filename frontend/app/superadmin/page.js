@@ -31,7 +31,7 @@ export default function SuperAdminCommandCenter() {
   const [editingUser, setEditingUser] = useState(null);
   const [userEditForm, setUserEditForm] = useState({ name: '', email: '', role: 'franchise', gstNumber: '' });
 
-  const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', targetLink: '', position: 'hero' });
+  const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', targetLink: '', position: 'hero', editingId: null });
   const [provisionForm, setProvisionForm] = useState({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
   const [message, setMessage] = useState(null);
 
@@ -120,15 +120,24 @@ export default function SuperAdminCommandCenter() {
   const handleAddBanner = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
-    const res = await fetch(`${apiBaseUrl}/api/superadmin/banners`, {
-      method: 'POST',
+    const isEditing = !!bannerForm.editingId;
+    const endpoint = isEditing ? `${apiBaseUrl}/api/superadmin/banners/${bannerForm.editingId}` : `${apiBaseUrl}/api/superadmin/banners`;
+    const method = isEditing ? 'PUT' : 'POST';
+
+    const res = await fetch(endpoint, {
+      method,
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(bannerForm)
+      body: JSON.stringify({
+        title: bannerForm.title,
+        imageUrl: bannerForm.imageUrl,
+        targetLink: bannerForm.targetLink,
+        position: bannerForm.position
+      })
     });
     const data = await res.json();
     if (data.success) {
       setMessage({ type: 'success', text: data.message });
-      setBannerForm({ title: '', imageUrl: '', targetLink: '', position: 'hero' });
+      setBannerForm({ title: '', imageUrl: '', targetLink: '', position: 'hero', editingId: null });
       fetchAllDashboardData();
     }
   };
@@ -405,73 +414,123 @@ export default function SuperAdminCommandCenter() {
 
         {activeTab === 'banners' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl max-w-xl">
-              <h3 className="text-base font-black text-[#01295A] mb-1">Upload Website Advertisements & Banners</h3>
-              <p className="text-xs text-slate-500 font-semibold mb-4">Publish static images, promotional flyers, or festive offers directly across portals.</p>
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl max-w-2xl">
+              <h3 className="text-base font-black text-[#01295A] mb-1">
+                {bannerForm.editingId ? 'Edit Advertisement / Banner' : 'Upload Website Advertisements & Banners'}
+              </h3>
+              <p className="text-xs text-slate-500 font-semibold mb-4">
+                {bannerForm.editingId ? 'Modify active promotional flyer or banner details.' : 'Publish static images, promotional flyers, or festive offers directly across portals.'}
+              </p>
               
-              <form onSubmit={handleAddBanner} className="space-y-3">
+              <form onSubmit={handleAddBanner} className="space-y-3.5">
                 <div>
                   <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Banner Title *</label>
                   <input 
                     type="text" placeholder="e.g. Maharashtra Edition Launch Banner" required 
                     value={bannerForm.title} onChange={e => setBannerForm({ ...bannerForm, title: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
                   />
                 </div>
+
                 <div>
                   <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Image URL (Cloudinary / Direct Link) *</label>
                   <input 
                     type="url" placeholder="https://res.cloudinary.com/.../image.jpg" required 
                     value={bannerForm.imageUrl} onChange={e => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono"
+                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono outline-none focus:ring-2 focus:ring-[#FE7C02]"
                   />
+                  {bannerForm.imageUrl && (
+                    <div className="mt-2 relative h-28 w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                      <img src={bannerForm.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=Invalid+Image+URL'; }} />
+                      <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-2 py-0.5 rounded font-mono">Live Preview</span>
+                    </div>
+                  )}
                 </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Display Position *</label>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Display Position & Website Location *</label>
                     <select 
                       value={bannerForm.position} onChange={e => setBannerForm({ ...bannerForm, position: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer"
+                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer outline-none"
                     >
-                      <option value="hero">Hero Slider</option>
-                      <option value="festive_offer">Festive / Flash Offer</option>
-                      <option value="popup">Pop-up Announcement</option>
-                      <option value="sidebar_ad">Sidebar Ad</option>
-                      <option value="footer_banner">Footer Banner</option>
+                      <option value="hero">Hero Slider (Main Homepage Banner Carousel)</option>
+                      <option value="festive_offer">Festive / Flash Offer (Top Promotional Banner)</option>
+                      <option value="popup">Pop-up Announcement Modal (Home visitor pop-up)</option>
+                      <option value="sidebar_ad">Sidebar Advertisement (Student Portal & Blog)</option>
+                      <option value="footer_banner">Footer Banner (Bottom of website pages)</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Target Link</label>
+                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Target Link (Optional)</label>
                     <input 
                       type="text" placeholder="/register" 
                       value={bannerForm.targetLink} onChange={e => setBannerForm({ ...bannerForm, targetLink: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
                     />
                   </div>
                 </div>
-                <button type="submit" className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow-md transition">Publish Advertisement Live</button>
+
+                <div className="flex gap-2 pt-2">
+                  {bannerForm.editingId && (
+                    <button 
+                      type="button" 
+                      onClick={() => setBannerForm({ title: '', imageUrl: '', targetLink: '', position: 'hero', editingId: null })}
+                      className="w-1/3 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black rounded-xl text-xs cursor-pointer transition"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                  <button 
+                    type="submit" 
+                    className={`${bannerForm.editingId ? 'w-2/3' : 'w-full'} py-3 bg-[#FE7C02] hover:bg-orange-600 text-white font-black rounded-xl text-xs cursor-pointer shadow-md transition`}
+                  >
+                    {bannerForm.editingId ? 'Update Advertisement Live' : 'Publish Advertisement Live'}
+                  </button>
+                </div>
               </form>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {banners.map(b => (
-                <div key={b._id} className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-2 flex flex-col justify-between">
+                <div key={b._id} className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-3 flex flex-col justify-between">
                   <div className="space-y-2">
-                    <img src={b.imageUrl} alt={b.title} className="w-full h-32 object-cover rounded-xl border border-slate-100" />
-                    <div className="font-black text-xs text-[#01295A] truncate">{b.title}</div>
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">Position: {b.position}</div>
+                    <div className="relative h-44 rounded-2xl overflow-hidden border border-slate-100 bg-slate-100 shadow-inner">
+                      <img src={b.imageUrl} alt={b.title} className="w-full h-full object-cover" />
+                      <span className="absolute top-2 right-2 bg-[#01295A]/80 backdrop-blur-xs text-white text-[9px] font-black uppercase px-2.5 py-1 rounded-full">
+                        {b.position}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-0.5">
+                      <div className="font-black text-sm text-[#01295A] truncate">{b.title}</div>
+                      <div className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 inline-block">
+                        📍 Publishes on: <strong className="text-[#01295A] uppercase">{b.position === 'hero' ? 'Homepage Hero Carousel' : b.position === 'festive_offer' ? 'Top Festive Offer Section' : b.position === 'popup' ? 'Visitor Popup Modal' : b.position === 'sidebar_ad' ? 'Student Portal Sidebar' : 'Website Footer'}</strong>
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-400 truncate pt-1">Link: {b.targetLink || 'None'}</div>
+                    </div>
                   </div>
-                  <button 
-                    onClick={() => fetch(`${apiBaseUrl}/api/superadmin/banners/${b._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(fetchAllDashboardData)} 
-                    className="w-full py-2 bg-rose-50 text-rose-700 font-bold rounded-xl text-xs cursor-pointer transition hover:bg-rose-100"
-                  >
-                    Delete Advertisement
-                  </button>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                    <button 
+                      onClick={() => setBannerForm({ title: b.title, imageUrl: b.imageUrl, targetLink: b.targetLink || '', position: b.position || 'hero', editingId: b._id })}
+                      className="py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs cursor-pointer transition inline-flex items-center justify-center gap-1"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    <button 
+                      onClick={() => fetch(`${apiBaseUrl}/api/superadmin/banners/${b._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(fetchAllDashboardData)} 
+                      className="py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs cursor-pointer transition"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
               {banners.length === 0 && (
-                <div className="col-span-3 text-center py-12 text-slate-400 text-xs font-bold uppercase bg-white rounded-3xl border border-slate-200">
-                  No advertisements or banners uploaded yet.
+                <div className="col-span-3 text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 text-xs font-bold uppercase">
+                  No active banners or advertisements uploaded yet.
                 </div>
               )}
             </div>
@@ -725,7 +784,7 @@ export default function SuperAdminCommandCenter() {
                   <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Role *</label>
                   <select 
                     value={userEditForm.role} 
-                    onChange={e => setUserEditForm({ ...userEditForm, role: e.target.value })}
+                    onChange={e => setUserEditForm({ ...userEditForm, role: userEditForm.role })}
                     className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer uppercase"
                   >
                     <option value="super_admin">Super Admin</option>
