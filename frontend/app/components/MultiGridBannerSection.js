@@ -110,31 +110,32 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
     );
   }
 
-  // 3. BOTTOM SMOOTH RIGHT-TO-LEFT MARQUEE CARDS
+  // 3. BOTTOM SMOOTH RIGHT-TO-LEFT MOVING MARQUEE
   return (
     <section className="w-full bg-slate-50 border-t border-slate-200 py-8 overflow-hidden relative">
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{__html: `
         @keyframes scrollRightToLeft {
-          0% { transform: translateX(0%); }
+          0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
         .animate-marquee-rtl {
           display: flex;
           width: max-content;
-          animation: scrollRightToLeft 30s linear infinite;
+          animation: scrollRightToLeft 25s linear infinite;
         }
         .marquee-rtl-container:hover .animate-marquee-rtl {
           animation-play-state: paused;
         }
-      `}</style>
+      `}} />
       
       <div className="max-w-7xl mx-auto px-4 md:px-6 mb-4 flex items-center justify-between">
         <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">Official Partners & Spotlights</h3>
       </div>
 
-      <div className="marquee-rtl-container relative flex items-center overflow-hidden">
+      <div className="marquee-rtl-container relative flex items-center overflow-hidden w-full">
         <div className="animate-marquee-rtl flex items-center gap-5">
-          {[...banners, ...banners, ...banners].map((banner, idx) => (
+          {/* Quadruplicate array to ensure seamless infinite looping */}
+          {[...banners, ...banners, ...banners, ...banners].map((banner, idx) => (
             <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-3 w-72 shrink-0 shadow-sm space-y-2 group hover:border-[#FE7C02] transition">
               <a href={banner.targetLink || '#'} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-xl overflow-hidden bg-slate-100">
                 <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
