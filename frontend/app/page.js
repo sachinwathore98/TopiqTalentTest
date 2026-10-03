@@ -22,18 +22,15 @@ export default function HomePage() {
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
-  // Fetch dynamic popups and festive offers uploaded from Super Admin dashboard
   useEffect(() => {
     const fetchLiveBanners = async () => {
       try {
         const res = await fetch(`${apiBaseUrl}/api/superadmin/banners`);
         const data = await res.json();
         if (data.success && data.banners && data.banners.length > 0) {
-          // 1. Popup Banners
           const popups = data.banners.filter(b => b.position === 'popup' && b.isActive !== false);
           setPopupBanners(popups);
 
-          // 2. Festive / Flash Offer Banners
           const festive = data.banners.filter(b => b.position === 'festive_offer' && b.isActive !== false);
           setFestiveBanners(festive);
         }
@@ -93,7 +90,7 @@ export default function HomePage() {
       {/* 2. TOP PROFESSIONAL SLIDER BANNER CAROUSEL */}
       <MultiGridBannerSection type="slider" />
 
-      {/* SECTION BLOCK 1 (Sections 1, 2, 3) */}
+      {/* HOMEPAGE SECTIONS */}
       <section id="about" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AboutSection />
       </section>
@@ -106,10 +103,6 @@ export default function HomePage() {
         <ExamFormatSection />
       </section>
 
-      {/* SPONSORED AD SPOT AFTER EVERY 3 SECTIONS */}
-      <MultiGridBannerSection type="interleaved" />
-
-      {/* SECTION BLOCK 2 (Sections 4, 5, 6) */}
       <section id="analytics" className="scroll-mt-20 my-0 py-0 px-4 md:px-6">
         <AnalyticsSection />
       </section>

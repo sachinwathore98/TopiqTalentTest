@@ -89,28 +89,7 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
     );
   }
 
-  // 2. INTERLEAVED SECTION AD SPOT (Appears after every 3 sections)
-  if (type === 'interleaved') {
-    const banner = banners[currentIndex % banners.length];
-    return (
-      <section className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-        <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4 shadow-sm flex flex-col sm:flex-row items-center gap-6">
-          <a href={banner.targetLink || '#'} target="_blank" rel="noreferrer" className="w-full sm:w-1/3 aspect-video rounded-2xl overflow-hidden bg-slate-200 block shrink-0 shadow-inner">
-            <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover hover:scale-105 transition duration-300" />
-          </a>
-          <div className="space-y-2 w-full text-center sm:text-left">
-            <span className="text-[10px] font-black uppercase bg-[#FE7C02]/10 text-[#FE7C02] px-3 py-1 rounded-full border border-[#FE7C02]/30">
-              Sponsored Advertisement Spot
-            </span>
-            <h3 className="text-lg font-black text-[#01295A]">{banner.title}</h3>
-            <p className="text-xs text-slate-500 font-medium">Explore premium educational resources and institutional opportunities across Maharashtra.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // 3. BOTTOM SMOOTH RIGHT-TO-LEFT MOVING MARQUEE
+  // 2. BOTTOM SMOOTH RIGHT-TO-LEFT MOVING MARQUEE
   return (
     <section className="w-full bg-slate-50 border-t border-slate-200 py-8 overflow-hidden relative">
       <style dangerouslySetInnerHTML={{__html: `
@@ -134,7 +113,6 @@ export default function MultiGridBannerSection({ type = 'slider' }) {
 
       <div className="marquee-rtl-container relative flex items-center overflow-hidden w-full">
         <div className="animate-marquee-rtl flex items-center gap-5">
-          {/* Quadruplicate array to ensure seamless infinite looping */}
           {[...banners, ...banners, ...banners, ...banners].map((banner, idx) => (
             <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-3 w-72 shrink-0 shadow-sm space-y-2 group hover:border-[#FE7C02] transition">
               <a href={banner.targetLink || '#'} target="_blank" rel="noreferrer" className="block relative aspect-video rounded-xl overflow-hidden bg-slate-100">
