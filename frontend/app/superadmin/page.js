@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Users, DollarSign, Megaphone, FileText, Trophy,
-  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Edit3, X, GraduationCap, Building2, Briefcase 
+  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Edit3, X, GraduationCap, Building2, Briefcase, Save 
 } from 'lucide-react';
 import TestFeesControl from './components/TestFeesControl';
 
@@ -24,13 +24,9 @@ export default function SuperAdminCommandCenter() {
   const [usersList, setUsersList] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
 
-  // Scholarship Tiers Editable State
-  const [scholarshipTiers, setScholarshipTiers] = useState([
-    { rank: 'Rank 1–10', cash: 11111, label: 'Gold Tier Winner' },
-    { rank: 'Rank 11–25', cash: 9999, label: 'Silver Tier Winner' },
-    { rank: 'Rank 26–60', cash: 7777, label: 'Bronze Tier Winner' },
-    { rank: 'Rank 61–100', cash: 5555, label: 'Merit Tier Winner' }
-  ]);
+  // Database-Synced Scholarship Tiers State
+  const [scholarshipTiers, setScholarshipTiers] = useState([]);
+  const [updatingRank, setUpdatingRank] = useState(null);
 
   const [editingUser, setEditingUser] = useState(null);
   const [userEditForm, setUserEditForm] = useState({ name: '', email: '', role: 'franchise', gstNumber: '' });
@@ -50,6 +46,7 @@ export default function SuperAdminCommandCenter() {
       return;
     }
     fetchAllDashboardData();
+    fetchScholarships();
   }, [router]);
 
   const fetchAllDashboardData = async () => {
@@ -74,6 +71,49 @@ export default function SuperAdminCommandCenter() {
       console.error('Error loading dashboard data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchScholarships = async () => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/scholarships`);
+      const data = await res.json();
+      if (data.success && data.prizes) {
+        setScholarshipTiers(data.prizes);
+      }
+    } catch (err) {
+      console.error('Error fetching scholarships:', err);
+    }
+  };
+
+  const handleSaveScholarshipTier = async (tier) => {
+    setUpdatingRank(tier.rankTier);
+    setMessage(null);
+    const token = localStorage.getItem('token');
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/scholarships`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rankTier: tier.rankTier,
+          cashAmount: Number(tier.cashAmount)
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage({ type: 'success', text: `Successfully updated cash prize for ${tier.rankTier}!` });
+        fetchScholarships();
+      } else {
+        throw new Error(data.message || 'Failed to update scholarship tier.');
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Server connection error.' });
+    } finally {
+      setUpdatingRank(null);
     }
   };
 
@@ -318,43 +358,48 @@ export default function SuperAdminCommandCenter() {
         )}
 
         {activeTab === 'scholarships' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6 max-w-3xl">
+          <div className="space-y-6">
             <div className="border-b border-slate-200 pb-4">
               <h2 className="text-xl font-black text-[#01295A]">State-Level Scholarship Cash Prizes Control</h2>
-              <p className="text-xs text-slate-500 font-semibold">Review and update official rank-wise cash prize allocations for the Top 100 students in each class.</p>
+              <p className="text-xs text-slate-500 font-semibold">Update official rank-wise cash prize allocations for the Top 100 students in each class. Changes persist to the database instantly.</p>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              {scholarshipTiers.map((tier, idx) => (
-                <div key={idx} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-black uppercase bg-[#01295A] text-white px-2.5 py-1 rounded-lg">
-                      {tier.rank}
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-400">{tier.label}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {scholarshipTiers.map((tier) => (
+                <div key={tier.rankTier} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black uppercase bg-[#01295A] text-white px-3 py-1 rounded-full">
+                        {tier.rankTier}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400">{tier.label}</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cash Prize Amount (₹)</label>
+                      <input 
+                        type="number"
+                        value={tier.cashAmount}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setScholarshipTiers(prev => prev.map(t => t.rankTier === tier.rankTier ? { ...t, cashAmount: val } : t));
+                        }}
+                        className="w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cash Prize Amount (₹)</label>
-                    <input 
-                      type="number"
-                      value={tier.cash}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        setScholarshipTiers(prev => prev.map((t, i) => i === idx ? { ...t, cash: val } : t));
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-[#FE7C02]"
-                    />
-                  </div>
+
+                  <button 
+                    onClick={() => handleSaveScholarshipTier(tier)}
+                    disabled={updatingRank === tier.rankTier}
+                    className="w-full py-2.5 bg-[#FE7C02] hover:bg-orange-600 text-white font-black rounded-xl text-xs cursor-pointer shadow-md transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{updatingRank === tier.rankTier ? 'Saving...' : 'Save & Sync'}</span>
+                  </button>
                 </div>
               ))}
             </div>
-
-            <button 
-              onClick={() => setMessage({ type: 'success', text: 'Scholarship cash prize tiers synced successfully across student portals!' })}
-              className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow-md transition"
-            >
-              Save & Sync Scholarship Prizes Live
-            </button>
           </div>
         )}
 

@@ -4,6 +4,7 @@ const User = require('../models/User');
 const ExamConfig = require('../models/ExamConfig');
 const Banner = require('../models/Banner');
 const Enquiry = require('../models/Enquiry');
+const ScholarshipConfig = require('../models/ScholarshipConfig');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -64,7 +65,7 @@ router.get('/metrics', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 2. EXAM FEES (With 15-Day Increment & Dual Pricing Support)
+// 2. EXAM FEES
 router.get('/fees', async (req, res) => {
   try {
     const existingFees = await ExamConfig.find({});
@@ -123,7 +124,42 @@ router.post('/fees', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 3. BANNERS & ADVERTISEMENTS MANAGEMENT
+// 3. SCHOLARSHIP & CASH PRIZES CONTROL
+router.get('/scholarships', async (req, res) => {
+  try {
+    let prizes = await ScholarshipConfig.find({});
+    if (prizes.length === 0) {
+      const defaults = [
+        { rankTier: 'Rank 1–10', cashAmount: 11111, label: 'Gold Tier Winner' },
+        { rankTier: 'Rank 11–25', cashAmount: 9999, label: 'Silver Tier Winner' },
+        { rankTier: 'Rank 26–60', cashAmount: 7777, label: 'Bronze Tier Winner' },
+        { rankTier: 'Rank 61–100', cashAmount: 5555, label: 'Merit Tier Winner' }
+      ];
+      prizes = await ScholarshipConfig.insertMany(defaults);
+    }
+    return res.status(200).json({ success: true, prizes });
+  } catch (err) {
+    console.error('Error fetching scholarship prizes:', err);
+    return res.status(500).json({ success: false, message: 'Error fetching scholarship prizes.' });
+  }
+});
+
+router.post('/scholarships', verifySuperAdmin, async (req, res) => {
+  try {
+    const { rankTier, cashAmount } = req.body;
+    const updated = await ScholarshipConfig.findOneAndUpdate(
+      { rankTier },
+      { cashAmount: Number(cashAmount) },
+      { upsert: true, new: true, returnDocument: 'after' }
+    );
+    return res.status(200).json({ success: true, message: `Updated cash prize for ${rankTier}!`, updated });
+  } catch (err) {
+    console.error('Error updating scholarship prize:', err);
+    return res.status(500).json({ success: false, message: 'Error updating scholarship prizes.' });
+  }
+});
+
+// 4. BANNERS & ADVERTISEMENTS MANAGEMENT
 router.get('/banners', async (req, res) => {
   try {
     const banners = await Banner.find({}).sort({ createdAt: -1 });
@@ -161,7 +197,7 @@ router.delete('/banners/:id', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 4. USERS DIRECTORY
+// 5. USERS DIRECTORY
 router.get('/users-directory', verifySuperAdmin, async (req, res) => {
   try {
     const users = await User.find({}).select('-password').sort({ createdAt: -1 });
@@ -181,7 +217,7 @@ router.put('/users/:id', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 5. WEBSITE LEADS & ENQUIRIES
+// 6. WEBSITE LEADS & ENQUIRIES
 router.get('/enquiries', verifySuperAdmin, async (req, res) => {
   try {
     const rawEnquiries = await Enquiry.find({}).sort({ createdAt: -1 });
@@ -214,7 +250,7 @@ router.put('/enquiries/:id', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 6. PROVISION ACCOUNT
+// 7. PROVISION ACCOUNT
 router.post('/provision', verifySuperAdmin, async (req, res) => {
   try {
     const { name, email, password, targetRole, gstNumber } = req.body;
