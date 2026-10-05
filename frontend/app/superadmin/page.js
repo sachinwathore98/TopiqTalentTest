@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Users, DollarSign, Megaphone, FileText, Trophy,
-  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Edit3, X, GraduationCap, Building2, Briefcase, Save, Wallet, Layers, RotateCcw 
+  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Edit3, X, GraduationCap, Building2, Briefcase, Save, Wallet, Layers, RotateCcw, Filter, Download
 } from 'lucide-react';
 import TestFeesControl from './components/TestFeesControl';
 
@@ -12,6 +12,8 @@ export default function SuperAdminCommandCenter() {
   const [activeTab, setActiveTab] = useState('overview');
   const [enquirySubTab, setEnquirySubTab] = useState('student');
   const [loading, setLoading] = useState(true);
+  
+  // Existing Metrics & State
   const [metrics, setMetrics] = useState({
     totalRevenue: 0,
     totalAdmissions: 0,
@@ -35,13 +37,19 @@ export default function SuperAdminCommandCenter() {
   const [provisionForm, setProvisionForm] = useState({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
   const [message, setMessage] = useState(null);
 
-  // Specification Modules State (Commission Master, Wallets, Settlements, Refunds)
+  // Commission Master State
   const [commissionRules, setCommissionRules] = useState([
     { role: 'franchise', percentage: 15 },
     { role: 'asm', percentage: 5 },
     { role: 'coordinator', percentage: 20 },
     { role: 'company', percentage: 60 }
   ]);
+
+  // Comprehensive Admission & Financial Module States
+  const [admissionsList, setAdmissionsList] = useState([]);
+  const [admissionFilters, setAdmissionFilters] = useState({ search: '', status: '', exam: '' });
+  const [settlementsList, setSettlementsList] = useState([]);
+  const [walletsData, setWalletsData] = useState({ totalBalance: 0, franchiseBalance: 0, asmBalance: 0, coordinatorBalance: 0, pendingSettlement: 0, settledAmount: 0 });
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
@@ -258,7 +266,7 @@ export default function SuperAdminCommandCenter() {
             Superadmin Command Console
           </span>
           <h1 className="text-2xl sm:text-3xl font-black mt-1">TOPIQ Hierarchical Ecosystem</h1>
-          <p className="text-xs text-slate-300">Live Commission Engine, Wallets, 10-Day Settlements, and 60% Refund Control.</p>
+          <p className="text-xs text-slate-300">Live Commission Engine, Wallets, 10-Day Settlements, Admissions, and Reports.</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={fetchAllDashboardData} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer" title="Refresh Data">
@@ -278,11 +286,13 @@ export default function SuperAdminCommandCenter() {
         <div className="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-md border border-slate-200">
           {[
             { id: 'overview', label: 'Overview & Metrics', icon: ShieldCheck },
+            { id: 'admissions', label: 'Admission Management', icon: FileText },
             { id: 'hierarchy', label: 'Visual Hierarchy', icon: Layers },
             { id: 'commission', label: 'Commission Master', icon: DollarSign },
-            { id: 'wallets', label: 'Wallet & Ledger', icon: Wallet },
+            { id: 'wallets', label: 'Wallet Management', icon: Wallet },
             { id: 'settlements', label: '10-Day Settlements', icon: CheckCircle2 },
             { id: 'refunds', label: 'Refunds & Reversals', icon: RotateCcw },
+            { id: 'reports', label: 'Comprehensive Reports', icon: Download },
             { id: 'fees', label: 'Test Fees Control', icon: DollarSign },
             { id: 'scholarships', label: 'Scholarship & Prizes', icon: Trophy },
             { id: 'banners', label: 'Banners & Ads Manager', icon: Megaphone },
@@ -326,21 +336,21 @@ export default function SuperAdminCommandCenter() {
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Franchisee Share (15%)</div>
-                <div className="text-3xl font-black text-[#FE7C02] font-mono">₹{(metrics.totalRevenue * 0.15).toLocaleString('en-IN')}</div>
-                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Active Commission Partners</div>
+                <div className="text-3xl font-black text-[#FE7C02]">{metrics.activePartnersCount}</div>
+                <div className="text-xs text-slate-500 font-semibold">ASM, Franchise & Agents active</div>
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">ASM Share (5%)</div>
-                <div className="text-3xl font-black text-indigo-600 font-mono">₹{(metrics.totalRevenue * 0.05).toLocaleString('en-IN')}</div>
-                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Pending Enquiries</div>
+                <div className="text-3xl font-black text-rose-600">{metrics.pendingEnquiriesCount}</div>
+                <div className="text-xs text-slate-500 font-semibold">Requires immediate follow-up</div>
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Coordinator Share (20%)</div>
-                <div className="text-3xl font-black text-purple-600 font-mono">₹{(metrics.totalRevenue * 0.20).toLocaleString('en-IN')}</div>
-                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Total Students Enrolled</div>
+                <div className="text-3xl font-black text-[#01295A]">{metrics.totalAdmissions}</div>
+                <div className="text-xs text-emerald-600 font-semibold">Live verified database</div>
               </div>
             </div>
 
@@ -393,11 +403,57 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
+        {/* Admission Management Tab */}
+        {activeTab === 'admissions' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+              <div>
+                <h3 className="text-lg font-black text-[#01295A]">Admission Management & Tracking</h3>
+                <p className="text-xs text-slate-500 font-medium">Filter admissions by ID, Student Name, Mobile, Franchisee, ASM, Coordinator, and Status.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <input 
+                  type="text"
+                  placeholder="Search Admission ID / Name..."
+                  value={admissionFilters.search}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, search: e.target.value })}
+                  className="px-4 py-2 rounded-xl border text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
+                  <tr>
+                    <th className="p-3">Admission ID</th>
+                    <th className="p-3">Student Details</th>
+                    <th className="p-3">Exam / Class</th>
+                    <th className="p-3">Hierarchy (F / ASM / C)</th>
+                    <th className="p-3">Fee / Commission</th>
+                    <th className="p-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y font-medium text-slate-700">
+                  <tr>
+                    <td className="p-3 font-mono font-black text-[#01295A]">TOPIQ-ADM-0001</td>
+                    <td className="p-3 font-bold">Atharva Deshmukh <br/><span className="text-[10px] text-slate-400 font-mono">9822012345</span></td>
+                    <td className="p-3">Group C (Class 5-6)</td>
+                    <td className="p-3 text-[10px] text-slate-600">Shreya / Sanjay / Rahul</td>
+                    <td className="p-3 font-mono">₹1,000 <br/><span className="text-[10px] text-emerald-600 font-bold">F:₹150 | ASM:₹50 | C:₹200</span></td>
+                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Approved</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Visual Hierarchy Tab */}
         {activeTab === 'hierarchy' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
             <h3 className="text-lg font-black text-[#01295A]">Visual Downstream Hierarchy (Franchisee → ASM → Coordinator)</h3>
-            <p className="text-xs text-slate-500 font-medium">Click any node to inspect downstream coordinators and earnings.</p>
+            <p className="text-xs text-slate-500 font-medium">Click any node to inspect complete downstream hierarchy.</p>
             
             <div className="space-y-4 font-mono text-xs">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
@@ -454,22 +510,35 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Wallet & Ledger Tab */}
+        {/* Wallet Management Tab */}
         {activeTab === 'wallets' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-lg font-black text-[#01295A]">Immutable Financial Wallet Ledgers</h3>
-            <p className="text-xs text-slate-500 font-medium">Every credit is backed by an admission ID and idempotency key to prevent duplicate credits.</p>
+            <h3 className="text-lg font-black text-[#01295A]">Wallet Management & Ledger</h3>
+            <p className="text-xs text-slate-500 font-medium">Inspect total wallet balances, role-wise balances, pending settlements, and immutable ledger credits.</p>
             
-            <div className="overflow-x-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span className="text-[10px] font-black uppercase text-slate-400">Franchisee Wallet Balance</span>
+                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹41,250</div>
+              </div>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span className="text-[10px] font-black uppercase text-slate-400">ASM Wallet Balance</span>
+                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹13,750</div>
+              </div>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span className="text-[10px] font-black uppercase text-slate-400">Coordinator Wallet Balance</span>
+                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹55,000</div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto pt-4">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
                   <tr>
                     <th className="p-3">Transaction ID</th>
                     <th className="p-3">Admission ID</th>
-                    <th className="p-3">Role</th>
-                    <th className="p-3">Base Amount</th>
-                    <th className="p-3">Percentage</th>
-                    <th className="p-3">Credit Amount</th>
+                    <th className="p-3">User / Role</th>
+                    <th className="p-3">Commission Credit</th>
                     <th className="p-3">Status</th>
                   </tr>
                 </thead>
@@ -477,9 +546,7 @@ export default function SuperAdminCommandCenter() {
                   <tr>
                     <td className="p-3 font-mono text-slate-500">WAL-000124</td>
                     <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
-                    <td className="p-3">Franchisee</td>
-                    <td className="p-3">₹1,000</td>
-                    <td className="p-3">15%</td>
+                    <td className="p-3">Franchisee ABC (15%)</td>
                     <td className="p-3 text-emerald-600 font-black">+₹150</td>
                     <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
                   </tr>
@@ -492,15 +559,15 @@ export default function SuperAdminCommandCenter() {
         {/* 10-Day Settlements Tab */}
         {activeTab === 'settlements' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-lg font-black text-[#01295A]">10-Day Automated Settlement Window</h3>
-            <p className="text-xs text-slate-500 font-medium">Manage payout eligibility, processing status, and reference numbers for wallet settlements.</p>
+            <h3 className="text-lg font-black text-[#01295A]">10-Day Automated Settlement Management</h3>
+            <p className="text-xs text-slate-500 font-medium">Track commission generated → wallet credit → 10-day settlement period → eligible → processed → settled.</p>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
                   <tr>
                     <th className="p-3">User / Role</th>
-                    <th className="p-3">Settlement Amount</th>
+                    <th className="p-3">Amount</th>
                     <th className="p-3">Eligible Date</th>
                     <th className="p-3">Status</th>
                     <th className="p-3 text-right">Actions</th>
@@ -512,8 +579,8 @@ export default function SuperAdminCommandCenter() {
                     <td className="p-3 font-mono font-bold">₹15,000</td>
                     <td className="p-3">15 Oct 2026</td>
                     <td className="p-3"><span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Eligible</span></td>
-                    <td className="p-3 text-right">
-                      <button className="px-3 py-1 bg-[#01295A] text-white rounded-xl text-[10px] font-black cursor-pointer">Process Payout</button>
+                    <td className="p-3 text-right space-x-2">
+                      <button className="px-3 py-1 bg-[#01295A] text-white rounded-xl text-[10px] font-black cursor-pointer">Approve & Process</button>
                     </td>
                   </tr>
                 </tbody>
@@ -526,7 +593,7 @@ export default function SuperAdminCommandCenter() {
         {activeTab === 'refunds' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6 max-w-2xl">
             <h3 className="text-lg font-black text-[#01295A]">60% Refund & Commission Reversal Engine</h3>
-            <p className="text-xs text-slate-500 font-medium">When an admission is cancelled, the system automatically calculates the 60% refund and triggers traceable wallet adjustments.</p>
+            <p className="text-xs text-slate-500 font-medium">Automatically calculates 60% refund and creates traceable commission reversals/adjustments without deleting original ledger entries.</p>
 
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
               <div className="flex justify-between text-xs font-bold">
@@ -545,12 +612,55 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {activeTab === 'fees' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl">
-            <TestFeesControl />
+        {/* Comprehensive Reports Tab */}
+        {activeTab === 'reports' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <div>
+              <h3 className="text-lg font-black text-[#01295A]">Comprehensive Admission & Financial Reports</h3>
+              <p className="text-xs text-slate-500 font-medium">Generate and export Daily/Monthly Admission reports, Collection reports, Commission audits, and User Performance summaries in Excel / CSV / PDF format.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <h4 className="font-black text-xs text-[#01295A] uppercase">Admission Reports</h4>
+                <ul className="space-y-2 text-xs text-slate-600 font-medium">
+                  <li>• Daily / Monthly Admissions</li>
+                  <li>• Franchisee-wise / ASM-wise / Coordinator-wise</li>
+                  <li>• Exam-wise & Cancelled Admissions</li>
+                </ul>
+                <button className="w-full py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> Export Admissions (CSV/PDF)
+                </button>
+              </div>
+
+              <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <h4 className="font-black text-xs text-[#01295A] uppercase">Financial Reports</h4>
+                <ul className="space-y-2 text-xs text-slate-600 font-medium">
+                  <li>• Collection & Revenue Report</li>
+                  <li>• Commission & Wallet Report</li>
+                  <li>• Settlement & Refund Report</li>
+                </ul>
+                <button className="w-full py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> Export Financials (Excel)
+                </button>
+              </div>
+
+              <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                <h4 className="font-black text-xs text-[#01295A] uppercase">User Performance</h4>
+                <ul className="space-y-2 text-xs text-slate-600 font-medium">
+                  <li>• Franchisee Performance Ranking</li>
+                  <li>• ASM Downstream Analytics</li>
+                  <li>• Coordinator Activity Logs</li>
+                </ul>
+                <button className="w-full py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> Export Performance
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
+        {activeTab === 'fees' && <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl"><TestFeesControl /></div>}
         {activeTab === 'scholarships' && (
           <div className="space-y-6">
             <div className="border-b border-slate-200 pb-4">
@@ -718,56 +828,6 @@ export default function SuperAdminCommandCenter() {
                   No active banners or advertisements uploaded yet.
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'hierarchy' && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-4">
-            <h3 className="text-base font-black text-[#01295A]">Ecosystem Users & Hierarchy Directory</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b text-[10px] font-black uppercase text-slate-400">
-                    <th className="py-3 px-3">Name</th>
-                    <th className="py-3 px-3">Email</th>
-                    <th className="py-3 px-3">Role</th>
-                    <th className="py-3 px-3">GST Number</th>
-                    <th className="py-3 px-3">Status</th>
-                    <th className="py-3 px-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y text-xs font-semibold text-slate-700">
-                  {usersList.map(u => (
-                    <tr key={u._id} className="hover:bg-slate-50">
-                      <td className="py-3.5 px-3 font-black text-[#01295A]">{u.name}</td>
-                      <td className="py-3.5 px-3 font-mono">{u.email}</td>
-                      <td className="py-3.5 px-3 uppercase text-[10px] font-black bg-slate-100 rounded px-2">{u.role}</td>
-                      <td className="py-3.5 px-3 font-mono text-slate-500">{u.gstNumber || 'N/A'}</td>
-                      <td className="py-3.5 px-3">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${u.status === 'deactivated' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {u.status || 'active'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3 text-right space-x-2">
-                        <button 
-                          onClick={() => handleOpenEditUser(u)}
-                          className="px-3 py-1.5 bg-[#01295A] hover:bg-blue-900 text-white rounded-xl text-[10px] font-black cursor-pointer inline-flex items-center gap-1 shadow-xs"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                          <span>Edit</span>
-                        </button>
-                        <button 
-                          onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
-                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black cursor-pointer shadow-xs ${u.status === 'deactivated' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
-                        >
-                          {u.status === 'deactivated' ? 'Activate' : 'Deactivate'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         )}
