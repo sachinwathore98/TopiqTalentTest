@@ -9,24 +9,50 @@ exports.getFranchiseDashboard = async (req, res) => {
   try {
     const franchiseId = req.franchiseScope || req.user?.id || req.user?._id;
     
-    const asms = await User.find({ role: 'asm', franchiseId }).select('-password');
-    const asmIds = asms.map(a => a._id);
-    const coordinators = await User.find({ role: 'coordinator', asmId: { $in: asmIds } }).select('-password');
+    // Find ASMs linked to this franchise (either by franchiseId field or created under this franchise)
+    const asms = await User.find({ 
+      role: 'asm', 
+      $or: [
+        { franchiseId: franchiseId },
+        { franchiseId: franchiseId?.toString() }
+      ]
+    }).select('-password');
 
-    const totalAdmissions = await Admission.countDocuments({ franchiseId });
+    const asmIds = asms.map(a => a._id);
+    const coordinators = await User.find({ 
+      role: 'coordinator', 
+      $or: [
+        { asmId: { $in: asmIds } },
+        { franchiseId: franchiseId }
+      ]
+    }).select('-password');
+
+    const totalAdmissions = await Admission.countDocuments({ 
+      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }] 
+    });
+
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const todaysAdmissions = await Admission.countDocuments({ franchiseId, createdAt: { $gte: todayStart } });
+    const todaysAdmissions = await Admission.countDocuments({ 
+      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }], 
+      createdAt: { $gte: todayStart } 
+    });
     
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
-    const monthlyAdmissions = await Admission.countDocuments({ franchiseId, createdAt: { $gte: monthStart } });
+    const monthlyAdmissions = await Admission.countDocuments({ 
+      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }], 
+      createdAt: { $gte: monthStart } 
+    });
 
-    const commissions = await CommissionTransaction.find({ franchiseeId: franchiseId }).sort({ createdAt: -1 });
+    const commissions = await CommissionTransaction.find({ 
+      $or: [{ franchiseeId: franchiseId }, { franchiseId: franchiseId }] 
+    }).sort({ createdAt: -1 });
+
     const availableWallet = commissions
       .filter(c => c.status === 'Credited')
-      .reduce((sum, c) => sum + c.commissionAmount, 0);
+      .reduce((sum, c) => sum + (c.commissionAmount || c.credit || 0), 0);
 
     const pendingSettlement = 15000;
     const settledAmount = 26250;
@@ -81,7 +107,7 @@ exports.provisionMember = async (req, res) => {
       password: hashedPassword,
       role: targetRole,
       phone: phone || '',
-      franchiseId: targetRole === 'asm' ? franchiseId : undefined,
+      franchiseId: franchiseId, // Ensure franchiseId is stored on all downstream team members
       asmId: targetRole === 'coordinator' ? asmId : undefined,
       status: 'active'
     });
