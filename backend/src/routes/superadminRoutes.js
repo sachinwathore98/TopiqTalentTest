@@ -8,6 +8,16 @@ const ScholarshipConfig = require('../models/ScholarshipConfig');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const { 
+  getMetrics, 
+  getAllAdmissions, 
+  getAllUsersHierarchy, 
+  provisionHierarchicalAccount, 
+  updateUser, 
+  toggleUserStatus, 
+  deleteUser 
+} = require('../controllers/superadminController');
+
 // 11 Consolidated Class Groups aligned with TOPIQ Talent Test specifications
 const classesList = [
   'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
@@ -31,41 +41,12 @@ const verifySuperAdmin = async (req, res, next) => {
 };
 
 // 1. METRICS & REVENUE SPLITS
-router.get('/metrics', verifySuperAdmin, async (req, res) => {
-  try {
-    const students = await User.find({ role: 'student' }).populate('referredBy');
-    const partners = await User.find({ role: { $in: ['asm', 'franchise', 'agent'] } });
-    const pendingEnquiriesCount = await Enquiry.countDocuments({ status: { $in: ['Pending', 'Follow-up Required'] } });
+router.get('/metrics', verifySuperAdmin, getMetrics);
 
-    let totalRevenue = 0;
-    const revenueByFranchise = {};
-    const revenueByASM = {};
-    const revenueByAgent = {};
+// 2. ADMISSIONS MANAGEMENT ROUTE
+router.get('/admissions', verifySuperAdmin, getAllAdmissions);
 
-    students.forEach(student => {
-      const fee = student.registrationFee || 1100;
-      totalRevenue += fee;
-      if (student.franchiseId) revenueByFranchise[student.franchiseId] = (revenueByFranchise[student.franchiseId] || 0) + fee;
-      if (student.asmId) revenueByASM[student.asmId] = (revenueByASM[student.asmId] || 0) + fee;
-      if (student.agentId) revenueByAgent[student.agentId] = (revenueByAgent[student.agentId] || 0) + fee;
-    });
-
-    return res.status(200).json({
-      success: true,
-      metrics: {
-        totalRevenue,
-        totalAdmissions: students.length,
-        activePartnersCount: partners.length,
-        pendingEnquiriesCount,
-        breakdown: { revenueByFranchise, revenueByASM, revenueByAgent }
-      }
-    });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Failed to compute metrics.' });
-  }
-});
-
-// 2. EXAM FEES
+// 3. EXAM FEES
 router.get('/fees', async (req, res) => {
   try {
     const existingFees = await ExamConfig.find({});
@@ -124,7 +105,7 @@ router.post('/fees', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 3. SCHOLARSHIP & CASH PRIZES CONTROL
+// 4. SCHOLARSHIP & CASH PRIZES CONTROL
 router.get('/scholarships', async (req, res) => {
   try {
     let prizes = await ScholarshipConfig.find({});
@@ -159,7 +140,7 @@ router.post('/scholarships', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 4. BANNERS & ADVERTISEMENTS MANAGEMENT
+// 5. BANNERS & ADVERTISEMENTS MANAGEMENT
 router.get('/banners', async (req, res) => {
   try {
     const banners = await Banner.find({}).sort({ createdAt: -1 });
@@ -212,27 +193,15 @@ router.delete('/banners/:id', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 5. USERS DIRECTORY
-router.get('/users-directory', verifySuperAdmin, async (req, res) => {
-  try {
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
-    return res.status(200).json({ success: true, users });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Error fetching users.' });
-  }
-});
+// 6. USERS DIRECTORY & HIERARCHY MANAGEMENT
+router.get('/users-directory', verifySuperAdmin, getAllUsersHierarchy);
+router.get('/hierarchy-users', verifySuperAdmin, getAllUsersHierarchy);
 
-router.put('/users/:id', verifySuperAdmin, async (req, res) => {
-  try {
-    const { name, email, status, role, gstNumber } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, { name, email, status, role, gstNumber }, { new: true }).select('-password');
-    return res.status(200).json({ success: true, message: 'User updated!', updatedUser });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Error updating user.' });
-  }
-});
+router.put('/users/:userId', verifySuperAdmin, updateUser);
+router.put('/users/:userId/status', verifySuperAdmin, toggleUserStatus);
+router.delete('/users/:userId', verifySuperAdmin, deleteUser);
 
-// 6. WEBSITE LEADS & ENQUIRIES
+// 7. WEBSITE LEADS & ENQUIRIES
 router.get('/enquiries', verifySuperAdmin, async (req, res) => {
   try {
     const rawEnquiries = await Enquiry.find({}).sort({ createdAt: -1 });
@@ -265,20 +234,7 @@ router.put('/enquiries/:id', verifySuperAdmin, async (req, res) => {
   }
 });
 
-// 7. PROVISION ACCOUNT
-router.post('/provision', verifySuperAdmin, async (req, res) => {
-  try {
-    const { name, email, password, targetRole, gstNumber } = req.body;
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existing) return res.status(400).json({ success: false, message: 'Email already exists.' });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ name, email: email.toLowerCase().trim(), password: hashedPassword, role: targetRole, gstNumber: gstNumber || '', status: 'active', walletBalance: 0 });
-    await newUser.save();
-    return res.status(201).json({ success: true, message: `Provisioned ${targetRole} for ${name}!` });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server error during provisioning.' });
-  }
-});
+// 8. PROVISION ACCOUNT
+router.post('/provision', verifySuperAdmin, provisionHierarchicalAccount);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const User = require('../models/User');
-const Admission = require('../models/Admission');
+let Admission;
+try { Admission = require('../models/Admission'); } catch(e) { Admission = null; }
 const Banner = require('../models/Banner');
 const Enquiry = require('../models/Enquiry');
 const ScholarshipPrize = require('../models/ScholarshipPrize');
@@ -9,7 +10,7 @@ const bcrypt = require('bcryptjs');
 exports.getMetrics = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
-    const admissions = await Admission.find({});
+    const admissions = Admission ? await Admission.find({}) : [];
     const enquiries = await Enquiry.find({});
 
     const totalRevenue = admissions.reduce((sum, a) => sum + (a.admissionAmount || 1000), 0);
@@ -49,7 +50,18 @@ exports.getMetrics = async (req, res) => {
   }
 };
 
-// 2. Get All Users with Hierarchy Tree structure
+// 2. Get All Admissions
+exports.getAllAdmissions = async (req, res) => {
+  try {
+    const admissions = Admission ? await Admission.find({}).sort({ createdAt: -1 }) : [];
+    return res.status(200).json({ success: true, admissions });
+  } catch (err) {
+    console.error('Error fetching admissions:', err);
+    return res.status(500).json({ success: false, admissions: [] });
+  }
+};
+
+// 3. Get All Users with Hierarchy Tree structure
 exports.getAllUsersHierarchy = async (req, res) => {
   try {
     const users = await User.find({}).select('-password').sort({ createdAt: -1 });
@@ -86,7 +98,7 @@ exports.getAllUsersHierarchy = async (req, res) => {
   }
 };
 
-// 3. Provision Hierarchical Account (SuperAdmin)
+// 4. Provision Hierarchical Account (SuperAdmin)
 exports.provisionHierarchicalAccount = async (req, res) => {
   try {
     const { name, email, password, targetRole, role, franchiseId, asmId, phone, city, state, gstNumber } = req.body;
@@ -130,7 +142,7 @@ exports.provisionHierarchicalAccount = async (req, res) => {
   }
 };
 
-// 4. Edit User Details
+// 5. Edit User Details
 exports.updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -161,7 +173,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// 5. Toggle User Status (Active / Deactivated)
+// 6. Toggle User Status (Active / Deactivated)
 exports.toggleUserStatus = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -182,7 +194,7 @@ exports.toggleUserStatus = async (req, res) => {
   }
 };
 
-// 6. Delete User
+// 7. Delete User
 exports.deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
