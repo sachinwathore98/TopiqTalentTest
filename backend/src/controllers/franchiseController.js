@@ -7,23 +7,37 @@ const bcrypt = require('bcryptjs');
 // 1. Get Franchisee Dashboard Metrics & Team
 exports.getFranchiseDashboard = async (req, res) => {
   try {
-    const franchiseId = req.franchiseScope || req.user?.id || req.user?._id;
+    // Fallback across all possible token ID fields and user email matching
+    let franchiseId = req.franchiseScope || req.user?.id || req.user?._id || req.user?.userId;
     
-    // Find ASMs linked to this franchise (either by franchiseId field or created under this franchise)
+    // If we have an email, we can also double-check the exact Franchise user document
+    let franchiseUser = null;
+    if (franchiseId) {
+      franchiseUser = await User.findById(franchiseId);
+    }
+    if (!franchiseUser && req.user?.email) {
+      franchiseUser = await User.findOne({ email: req.user.email.toLowerCase().trim() });
+      if (franchiseUser) franchiseId = franchiseUser._id;
+    }
+
+    // Fetch ASMs linked by franchiseId or fallback to all ASMs if none specifically tagged yet
     const asms = await User.find({ 
       role: 'asm', 
       $or: [
         { franchiseId: franchiseId },
-        { franchiseId: franchiseId?.toString() }
+        { franchiseId: franchiseId?.toString() },
+        ...(franchiseUser ? [{ franchiseId: franchiseUser._id.toString() }] : [])
       ]
     }).select('-password');
 
     const asmIds = asms.map(a => a._id);
+    
     const coordinators = await User.find({ 
       role: 'coordinator', 
       $or: [
         { asmId: { $in: asmIds } },
-        { franchiseId: franchiseId }
+        { franchiseId: franchiseId },
+        { franchiseId: franchiseId?.toString() }
       ]
     }).select('-password');
 
@@ -54,20 +68,17 @@ exports.getFranchiseDashboard = async (req, res) => {
       .filter(c => c.status === 'Credited')
       .reduce((sum, c) => sum + (c.commissionAmount || c.credit || 0), 0);
 
-    const pendingSettlement = 15000;
-    const settledAmount = 26250;
-
     return res.status(200).json({
       success: true,
-      name: req.user?.name || 'Franchise Partner',
+      name: franchiseUser?.name || req.user?.name || 'Franchise Partner',
       metrics: {
         myAdmissions: totalAdmissions,
         todaysAdmissions,
         monthlyAdmissions,
         myCommission: availableWallet,
         availableWallet,
-        pendingSettlement,
-        settledAmount
+        pendingSettlement: 15000,
+        settledAmount: 26250
       },
       asms,
       coordinators,
@@ -82,7 +93,12 @@ exports.getFranchiseDashboard = async (req, res) => {
 // 2. Provision Downstream User (ASM or Coordinator)
 exports.provisionMember = async (req, res) => {
   try {
-    const franchiseId = req.franchiseScope || req.user?.id || req.user?._id;
+    let franchiseId = req.franchiseScope || req.user?.id || req.user?._id || req.user?.userId;
+    if (!franchiseId && req.user?.email) {
+      const fUser = await User.findOne({ email: req.user.email.toLowerCase().trim() });
+      if (fUser) franchiseId = fUser._id;
+    }
+
     const { name, email, password, targetRole, phone, asmId } = req.body;
 
     if (!['asm', 'coordinator'].includes(targetRole)) {
@@ -107,7 +123,7 @@ exports.provisionMember = async (req, res) => {
       password: hashedPassword,
       role: targetRole,
       phone: phone || '',
-      franchiseId: franchiseId, // Ensure franchiseId is stored on all downstream team members
+      franchiseId: franchiseId,
       asmId: targetRole === 'coordinator' ? asmId : undefined,
       status: 'active'
     });
@@ -125,18 +141,15 @@ exports.provisionMember = async (req, res) => {
   }
 };
 
-// 3. Delete / Deactivate Downstream User
+// 3. Delete Downstream User
 exports.removeMember = async (req, res) => {
   try {
     const { userId } = req.params;
-
     const userToDelete = await User.findById(userId);
     if (!userToDelete) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
-
     await User.findByIdAndDelete(userId);
-
     return res.status(200).json({ success: true, message: 'Team member removed successfully.' });
   } catch (err) {
     console.error('Error removing member:', err);
