@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Enquiry = require('../models/Enquiry');
 const { getFranchiseDashboard, provisionMember, removeMember } = require('../controllers/franchiseController');
-const authMiddleware = require('../middleware/auth'); // Existing JWT authentication middleware
-const authorizeFranchiseHierarchy = require('../middleware/hierarchyAuth'); // Hierarchy scoping middleware
+
+// Correct relative path lookup from src/routes/ to src/middleware/ and src/middlewares/
+const authMiddleware = require('../middleware/auth') || require('../middlewares/auth');
+const authorizeFranchiseHierarchy = require('../middleware/hierarchyAuth') || require('../middlewares/hierarchyAuth');
 
 // 1. Public Franchise Enquiry Submission Route
 router.post('/enquire', async (req, res) => {
