@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Enquiry = require('../models/Enquiry');
-// Keep your existing Brevo or email transporter imports here if any
+const { getFranchiseDashboard, provisionMember, removeMember } = require('../controllers/franchiseController');
+const authMiddleware = require('../middleware/auth'); // Existing JWT authentication middleware
+const authorizeFranchiseHierarchy = require('../middleware/hierarchyAuth'); // Hierarchy scoping middleware
 
+// 1. Public Franchise Enquiry Submission Route
 router.post('/enquire', async (req, res) => {
   try {
     const { owner_name, name, phone, email, pincode, city, district, state, current_business, investment_capacity, preferred_location, requirements } = req.body;
@@ -10,7 +13,6 @@ router.post('/enquire', async (req, res) => {
     const fullName = owner_name || name || 'Franchise Applicant';
     const detailedMessage = `Business: ${current_business || 'N/A'} | Investment: ${investment_capacity || 'N/A'} | Location: ${preferred_location || 'N/A'} | Notes: ${requirements || 'None'}`;
 
-    // 1. Save to universal Enquiry collection for Super Admin dashboard visibility
     const newEnquiry = new Enquiry({
       fullName,
       phone: phone || '',
@@ -25,13 +27,16 @@ router.post('/enquire', async (req, res) => {
     });
     await newEnquiry.save();
 
-    // (Your existing email trigger logic goes here...)
-
     return res.status(201).json({ success: true, message: 'Franchise enquiry submitted successfully!' });
   } catch (err) {
     console.error('Franchise route error:', err);
     return res.status(500).json({ success: false, message: 'Server error saving franchise enquiry.' });
   }
 });
+
+// 2. Secured Franchise Dashboard & Hierarchy Management Routes
+router.get('/dashboard', authMiddleware, authorizeFranchiseHierarchy, getFranchiseDashboard);
+router.post('/provision-member', authMiddleware, authorizeFranchiseHierarchy, provisionMember);
+router.delete('/members/:userId', authMiddleware, authorizeFranchiseHierarchy, removeMember);
 
 module.exports = router;

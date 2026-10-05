@@ -1,4 +1,3 @@
-// backend/controllers/franchiseController.js
 const User = require('../models/User');
 const Admission = require('../models/Admission');
 const WalletLedger = require('../models/WalletLedger');
@@ -9,12 +8,10 @@ exports.getFranchiseDashboard = async (req, res) => {
   try {
     const franchiseId = req.franchiseScope;
     
-    // Fetch downstream ASMs and Coordinators belonging strictly to this franchise
     const asms = await User.find({ role: 'asm', franchiseId }).select('-password');
     const asmIds = asms.map(a => a._id);
     const coordinators = await User.find({ role: 'coordinator', asmId: { $in: asmIds } }).select('-password');
 
-    // Admissions metrics
     const totalAdmissions = await Admission.countDocuments({ franchiseId });
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -25,13 +22,12 @@ exports.getFranchiseDashboard = async (req, res) => {
     monthStart.setHours(0, 0, 0, 0);
     const monthlyAdmissions = await Admission.countDocuments({ franchiseId, createdAt: { $gte: monthStart } });
 
-    // Wallet & Commission Ledger
     const commissions = await CommissionTransaction.find({ franchiseeId: franchiseId }).sort({ createdAt: -1 });
     const availableWallet = commissions
       .filter(c => c.status === 'Credited')
       .reduce((sum, c) => sum + c.commissionAmount, 0);
 
-    const pendingSettlement = 15000; // Calculated from active settlement requests
+    const pendingSettlement = 15000;
     const settledAmount = 26250;
 
     return res.status(200).json({
@@ -78,7 +74,7 @@ exports.provisionMember = async (req, res) => {
     const newUser = new User({
       name,
       email,
-      password, // Note: hash password using existing user model pre-save hook
+      password,
       role: targetRole,
       phone,
       franchiseId: targetRole === 'asm' ? franchiseId : undefined,
@@ -109,7 +105,6 @@ exports.removeMember = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    // Security check: ensure user belongs to this franchise hierarchy
     if (userToDelete.franchiseId?.toString() !== franchiseId.toString() && 
         userToDelete.asmId?.toString() !== franchiseId.toString()) {
       return res.status(403).json({ success: false, message: 'Unauthorized: User is outside your hierarchy.' });

@@ -36,17 +36,16 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/student', studentRoutes);
-app.use('/api/franchise', franchiseRoutes);
+app.use('/api/franchise', franchiseRoutes); // 👈 Correctly mapped to franchise routes & dashboard API
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/agents', agentRoutes);
-app.use('/api/payment', paymentRoutes); // Configured singular route prefix
-app.use('/api/wallet', walletRoutes); // Configured singular route prefix
+app.use('/api/payment', paymentRoutes);
+app.use('/api/wallet', walletRoutes);
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/enquiries', enquiryRoutes);
-app.use('/api/franchise', enquiryRoutes);
 app.use('/api/agents', enquiryRoutes);
 
 // Health Check Root Route
