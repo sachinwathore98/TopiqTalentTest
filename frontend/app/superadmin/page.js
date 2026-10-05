@@ -670,23 +670,66 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Wallet Management Tab */}
+        {/* Wallet Management Tab with Hierarchy Filters & Live Data Sync */}
         {activeTab === 'wallets' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-lg font-black text-[#01295A]">Wallet Management & Ledger</h3>
-            <p className="text-xs text-slate-500 font-medium">Inspect total wallet balances, role-wise balances, pending settlements, and immutable ledger credits.</p>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b pb-4">
+              <div>
+                <h3 className="text-lg font-black text-[#01295A]">Wallet Management & Ledger</h3>
+                <p className="text-xs text-slate-500 font-medium">Inspect total wallet balances, role-wise balances, and filter immutable ledger transactions by hierarchy.</p>
+              </div>
+
+              {/* Hierarchy Filter Dropdowns for Wallets */}
+              <div className="flex flex-wrap gap-2.5 w-full lg:w-auto">
+                {/* Live Franchisee Dropdown */}
+                <select 
+                  value={admissionFilters.franchise || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, franchise: e.target.value })}
+                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
+                >
+                  <option value="">All Franchisees</option>
+                  {usersList.filter(u => u.role === 'franchise').map(f => (
+                    <option key={f._id} value={f._id}>{f.name}</option>
+                  ))}
+                </select>
+
+                {/* Live ASM Dropdown */}
+                <select 
+                  value={admissionFilters.asm || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, asm: e.target.value })}
+                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
+                >
+                  <option value="">All ASMs</option>
+                  {usersList.filter(u => u.role === 'asm').map(a => (
+                    <option key={a._id} value={a._id}>{a.name}</option>
+                  ))}
+                </select>
+
+                {/* Live Coordinator Dropdown */}
+                <select 
+                  value={admissionFilters.coordinator || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, coordinator: e.target.value })}
+                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
+                >
+                  <option value="">All Coordinators</option>
+                  {usersList.filter(u => u.role === 'coordinator').map(c => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                <span className="text-[10px] font-black uppercase text-slate-400">Franchisee Wallet Balance</span>
+                <span className="text-[10px] font-black uppercase text-slate-400">Franchisee Wallet Balance (15%)</span>
                 <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹41,250</div>
               </div>
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                <span className="text-[10px] font-black uppercase text-slate-400">ASM Wallet Balance</span>
+                <span className="text-[10px] font-black uppercase text-slate-400">ASM Wallet Balance (5%)</span>
                 <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹13,750</div>
               </div>
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                <span className="text-[10px] font-black uppercase text-slate-400">Coordinator Wallet Balance</span>
+                <span className="text-[10px] font-black uppercase text-slate-400">Coordinator Wallet Balance (20%)</span>
                 <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹55,000</div>
               </div>
             </div>
