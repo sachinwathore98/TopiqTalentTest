@@ -35,7 +35,7 @@ export default function SuperAdminCommandCenter() {
   const [provisionForm, setProvisionForm] = useState({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
   const [message, setMessage] = useState(null);
 
-  // New Commission Master & Financial States (Added safely without altering existing functions)
+  // Specification Modules State (Commission Master, Wallets, Settlements, Refunds)
   const [commissionRules, setCommissionRules] = useState([
     { role: 'franchise', percentage: 15 },
     { role: 'asm', percentage: 5 },
@@ -257,8 +257,8 @@ export default function SuperAdminCommandCenter() {
           <span className="text-[10px] font-black bg-[#FE7C02] text-white px-3 py-1 rounded-full uppercase tracking-wider">
             Superadmin Command Console
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black mt-1">TOPIQ Talent Ecosystem</h1>
-          <p className="text-xs text-slate-300">Maharashtra Edition - Revenue distribution, dynamic fee tiers, and ad banner control.</p>
+          <h1 className="text-2xl sm:text-3xl font-black mt-1">TOPIQ Hierarchical Ecosystem</h1>
+          <p className="text-xs text-slate-300">Live Commission Engine, Wallets, 10-Day Settlements, and 60% Refund Control.</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={fetchAllDashboardData} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer" title="Refresh Data">
@@ -278,14 +278,14 @@ export default function SuperAdminCommandCenter() {
         <div className="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-md border border-slate-200">
           {[
             { id: 'overview', label: 'Overview & Metrics', icon: ShieldCheck },
-            { id: 'fees', label: 'Test Fees Control', icon: DollarSign },
-            { id: 'scholarships', label: 'Scholarship & Prizes', icon: Trophy },
-            { id: 'banners', label: 'Banners & Ads Manager', icon: Megaphone },
-            { id: 'hierarchy', label: 'Hierarchy & Users', icon: Users },
+            { id: 'hierarchy', label: 'Visual Hierarchy', icon: Layers },
             { id: 'commission', label: 'Commission Master', icon: DollarSign },
             { id: 'wallets', label: 'Wallet & Ledger', icon: Wallet },
             { id: 'settlements', label: '10-Day Settlements', icon: CheckCircle2 },
             { id: 'refunds', label: 'Refunds & Reversals', icon: RotateCcw },
+            { id: 'fees', label: 'Test Fees Control', icon: DollarSign },
+            { id: 'scholarships', label: 'Scholarship & Prizes', icon: Trophy },
+            { id: 'banners', label: 'Banners & Ads Manager', icon: Megaphone },
             { id: 'enquiries', label: 'Website Leads', icon: FileText },
             { id: 'provision', label: 'Provision Account', icon: UserPlus },
           ].map(tab => {
@@ -326,21 +326,21 @@ export default function SuperAdminCommandCenter() {
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Active Commission Partners</div>
-                <div className="text-3xl font-black text-[#FE7C02]">{metrics.activePartnersCount}</div>
-                <div className="text-xs text-slate-500 font-semibold">ASM, Franchise & Agents active</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Franchisee Share (15%)</div>
+                <div className="text-3xl font-black text-[#FE7C02] font-mono">₹{(metrics.totalRevenue * 0.15).toLocaleString('en-IN')}</div>
+                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Pending Enquiries</div>
-                <div className="text-3xl font-black text-rose-600">{metrics.pendingEnquiriesCount}</div>
-                <div className="text-xs text-slate-500 font-semibold">Requires immediate follow-up</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">ASM Share (5%)</div>
+                <div className="text-3xl font-black text-indigo-600 font-mono">₹{(metrics.totalRevenue * 0.05).toLocaleString('en-IN')}</div>
+                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Total Students Enrolled</div>
-                <div className="text-3xl font-black text-[#01295A]">{metrics.totalAdmissions}</div>
-                <div className="text-xs text-emerald-600 font-semibold">Live verified database</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Coordinator Share (20%)</div>
+                <div className="text-3xl font-black text-purple-600 font-mono">₹{(metrics.totalRevenue * 0.20).toLocaleString('en-IN')}</div>
+                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
               </div>
             </div>
 
@@ -388,6 +388,158 @@ export default function SuperAdminCommandCenter() {
                     <p className="text-xs text-slate-400 text-center py-4">No Agent admissions logged yet.</p>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Visual Hierarchy Tab */}
+        {activeTab === 'hierarchy' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <h3 className="text-lg font-black text-[#01295A]">Visual Downstream Hierarchy (Franchisee → ASM → Coordinator)</h3>
+            <p className="text-xs text-slate-500 font-medium">Click any node to inspect downstream coordinators and earnings.</p>
+            
+            <div className="space-y-4 font-mono text-xs">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <div className="font-black text-sm text-[#01295A] flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#FE7C02]" /> Franchisee 001: Shreya Enterprises (15% Share)
+                </div>
+                <div className="pl-6 space-y-2 border-l-2 border-[#FE7C02]/40 ml-2">
+                  <div className="font-bold text-slate-700">├── ASM 001: Sanjay Patil (5% Share)</div>
+                  <div className="pl-6 space-y-1 border-l-2 border-indigo-300 ml-2">
+                    <div>└── Coordinator 001: Rahul Sharma (20% Share)</div>
+                    <div>└── Coordinator 002: Priya Deshmukh (20% Share)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Commission Master Tab */}
+        {activeTab === 'commission' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl max-w-2xl space-y-6">
+            <div>
+              <h3 className="text-lg font-black text-[#01295A]">Configurable Commission Master</h3>
+              <p className="text-xs text-slate-500 font-medium">Manage percentages dynamically without hardcoding values in the backend engine.</p>
+            </div>
+
+            <div className="space-y-4">
+              {commissionRules.map((rule) => (
+                <div key={rule.role} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <div>
+                    <span className="font-black uppercase text-xs text-[#01295A] block">{rule.role} Role Share</span>
+                    <span className="text-[10px] text-slate-400">Current allocation percentage</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number"
+                      value={rule.percentage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCommissionRules(prev => prev.map(r => r.role === rule.role ? { ...r, percentage: val } : r));
+                      }}
+                      className="w-20 px-3 py-2 rounded-xl border text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-[#FE7C02]"
+                    />
+                    <button
+                      onClick={() => handleUpdateCommissionRule(rule.role, rule.percentage)}
+                      className="px-4 py-2 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow hover:bg-orange-600 transition"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Wallet & Ledger Tab */}
+        {activeTab === 'wallets' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <h3 className="text-lg font-black text-[#01295A]">Immutable Financial Wallet Ledgers</h3>
+            <p className="text-xs text-slate-500 font-medium">Every credit is backed by an admission ID and idempotency key to prevent duplicate credits.</p>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
+                  <tr>
+                    <th className="p-3">Transaction ID</th>
+                    <th className="p-3">Admission ID</th>
+                    <th className="p-3">Role</th>
+                    <th className="p-3">Base Amount</th>
+                    <th className="p-3">Percentage</th>
+                    <th className="p-3">Credit Amount</th>
+                    <th className="p-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y font-medium text-slate-700">
+                  <tr>
+                    <td className="p-3 font-mono text-slate-500">WAL-000124</td>
+                    <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
+                    <td className="p-3">Franchisee</td>
+                    <td className="p-3">₹1,000</td>
+                    <td className="p-3">15%</td>
+                    <td className="p-3 text-emerald-600 font-black">+₹150</td>
+                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* 10-Day Settlements Tab */}
+        {activeTab === 'settlements' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <h3 className="text-lg font-black text-[#01295A]">10-Day Automated Settlement Window</h3>
+            <p className="text-xs text-slate-500 font-medium">Manage payout eligibility, processing status, and reference numbers for wallet settlements.</p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
+                  <tr>
+                    <th className="p-3">User / Role</th>
+                    <th className="p-3">Settlement Amount</th>
+                    <th className="p-3">Eligible Date</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y font-medium text-slate-700">
+                  <tr>
+                    <td className="p-3 font-bold text-[#01295A]">Franchisee A (Shreya)</td>
+                    <td className="p-3 font-mono font-bold">₹15,000</td>
+                    <td className="p-3">15 Oct 2026</td>
+                    <td className="p-3"><span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Eligible</span></td>
+                    <td className="p-3 text-right">
+                      <button className="px-3 py-1 bg-[#01295A] text-white rounded-xl text-[10px] font-black cursor-pointer">Process Payout</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Refunds & Reversals Tab */}
+        {activeTab === 'refunds' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6 max-w-2xl">
+            <h3 className="text-lg font-black text-[#01295A]">60% Refund & Commission Reversal Engine</h3>
+            <p className="text-xs text-slate-500 font-medium">When an admission is cancelled, the system automatically calculates the 60% refund and triggers traceable wallet adjustments.</p>
+
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div className="flex justify-between text-xs font-bold">
+                <span className="text-slate-500">Sample Admission Amount:</span>
+                <span className="font-mono">₹1,000</span>
+              </div>
+              <div className="flex justify-between text-xs font-bold">
+                <span className="text-slate-500">Configured Refund Rule:</span>
+                <span className="font-mono text-rose-600">60%</span>
+              </div>
+              <div className="flex justify-between text-xs font-bold border-t pt-2">
+                <span className="text-[#01295A]">Calculated Refund Amount:</span>
+                <span className="font-mono font-black text-emerald-600">₹600</span>
               </div>
             </div>
           </div>
@@ -616,135 +768,6 @@ export default function SuperAdminCommandCenter() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-        )}
-
-        {/* New Commission Master Tab */}
-        {activeTab === 'commission' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl max-w-2xl space-y-6">
-            <div>
-              <h3 className="text-lg font-black text-[#01295A]">Configurable Commission Master</h3>
-              <p className="text-xs text-slate-500 font-medium">Manage percentages dynamically without hardcoding values in the backend engine.</p>
-            </div>
-
-            <div className="space-y-4">
-              {commissionRules.map((rule) => (
-                <div key={rule.role} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <div>
-                    <span className="font-black uppercase text-xs text-[#01295A] block">{rule.role} Role Share</span>
-                    <span className="text-[10px] text-slate-400">Current allocation percentage</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="number"
-                      value={rule.percentage}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCommissionRules(prev => prev.map(r => r.role === rule.role ? { ...r, percentage: val } : r));
-                      }}
-                      className="w-20 px-3 py-2 rounded-xl border text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-[#FE7C02]"
-                    />
-                    <button
-                      onClick={() => handleUpdateCommissionRule(rule.role, rule.percentage)}
-                      className="px-4 py-2 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow hover:bg-orange-600 transition"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* New Wallet Ledger Tab */}
-        {activeTab === 'wallets' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-lg font-black text-[#01295A]">Immutable Financial Wallet Ledgers</h3>
-            <p className="text-xs text-slate-500 font-medium">Every credit is backed by an admission ID and idempotency key to prevent duplicate credits.</p>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
-                  <tr>
-                    <th className="p-3">Transaction ID</th>
-                    <th className="p-3">Admission ID</th>
-                    <th className="p-3">Role</th>
-                    <th className="p-3">Base Amount</th>
-                    <th className="p-3">Percentage</th>
-                    <th className="p-3">Credit Amount</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y font-medium text-slate-700">
-                  <tr>
-                    <td className="p-3 font-mono text-slate-500">WAL-000124</td>
-                    <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
-                    <td className="p-3">Franchisee</td>
-                    <td className="p-3">₹1,000</td>
-                    <td className="p-3">15%</td>
-                    <td className="p-3 text-emerald-600 font-black">+₹150</td>
-                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* New 10-Day Settlements Tab */}
-        {activeTab === 'settlements' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-lg font-black text-[#01295A]">10-Day Automated Settlement Window</h3>
-            <p className="text-xs text-slate-500 font-medium">Manage payout eligibility, processing status, and reference numbers for wallet settlements.</p>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
-                  <tr>
-                    <th className="p-3">User / Role</th>
-                    <th className="p-3">Settlement Amount</th>
-                    <th className="p-3">Eligible Date</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y font-medium text-slate-700">
-                  <tr>
-                    <td className="p-3 font-bold text-[#01295A]">Franchisee A (Shreya)</td>
-                    <td className="p-3 font-mono font-bold">₹15,000</td>
-                    <td className="p-3">15 Oct 2026</td>
-                    <td className="p-3"><span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Eligible</span></td>
-                    <td className="p-3 text-right">
-                      <button className="px-3 py-1 bg-[#01295A] text-white rounded-xl text-[10px] font-black cursor-pointer">Process Payout</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* New Refunds & Reversals Tab */}
-        {activeTab === 'refunds' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6 max-w-2xl">
-            <h3 className="text-lg font-black text-[#01295A]">60% Refund & Commission Reversal Engine</h3>
-            <p className="text-xs text-slate-500 font-medium">When an admission is cancelled, the system automatically calculates the 60% refund and triggers traceable wallet adjustments.</p>
-
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-500">Sample Admission Amount:</span>
-                <span className="font-mono">₹1,000</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-slate-500">Configured Refund Rule:</span>
-                <span className="font-mono text-rose-600">60%</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold border-t pt-2">
-                <span className="text-[#01295A]">Calculated Refund Amount:</span>
-                <span className="font-mono font-black text-emerald-600">₹600</span>
-              </div>
             </div>
           </div>
         )}
