@@ -45,9 +45,9 @@ export default function SuperAdminCommandCenter() {
     { role: 'company', percentage: 60 }
   ]);
 
-  // Comprehensive Admission & Financial Module States
+  // Comprehensive Admission & Financial Module States with Live Sync
   const [admissionsList, setAdmissionsList] = useState([]);
-  const [admissionFilters, setAdmissionFilters] = useState({ search: '', status: '', exam: '' });
+  const [admissionFilters, setAdmissionFilters] = useState({ search: '', franchise: '', asm: '', coordinator: '' });
   const [settlementsList, setSettlementsList] = useState([]);
   const [walletsData, setWalletsData] = useState({ totalBalance: 0, franchiseBalance: 0, asmBalance: 0, coordinatorBalance: 0, pendingSettlement: 0, settledAmount: 0 });
 
@@ -71,17 +71,19 @@ export default function SuperAdminCommandCenter() {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      const [mRes, bRes, uRes, eRes] = await Promise.all([
+      const [mRes, bRes, uRes, eRes, admRes] = await Promise.all([
         fetch(`${apiBaseUrl}/api/superadmin/metrics`, { headers }).then(r => r.json()),
         fetch(`${apiBaseUrl}/api/superadmin/banners`).then(r => r.json()),
         fetch(`${apiBaseUrl}/api/superadmin/users-directory`, { headers }).then(r => r.json()),
-        fetch(`${apiBaseUrl}/api/superadmin/enquiries`, { headers }).then(r => r.json())
+        fetch(`${apiBaseUrl}/api/superadmin/enquiries`, { headers }).then(r => r.json()),
+        fetch(`${apiBaseUrl}/api/superadmin/admissions`, { headers }).then(r => r.json()).catch(() => ({ success: false, admissions: [] }))
       ]);
 
       if (mRes.success) setMetrics(mRes.metrics);
       if (bRes.success) setBanners(bRes.banners);
       if (uRes.success) setUsersList(uRes.users);
       if (eRes.success) setEnquiries(eRes.enquiries);
+      if (admRes.success) setAdmissionsList(admRes.admissions || []);
 
     } catch (err) {
       console.error('Error loading dashboard data:', err);
@@ -403,16 +405,16 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Admission Management Tab */}
+        {/* Admission Management Tab with Live Database Dropdowns */}
         {activeTab === 'admissions' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b pb-4">
               <div>
                 <h3 className="text-lg font-black text-[#01295A]">Admission Management & Tracking</h3>
-                <p className="text-xs text-slate-500 font-medium">Filter admissions by ID, Student Name, Franchisee, ASM, Coordinator, and Status.</p>
+                <p className="text-xs text-slate-500 font-medium">Filter live admissions dynamically by Franchisee, ASM, Coordinator, and Student ID.</p>
               </div>
 
-              {/* Hierarchy Filter Dropdowns & Search */}
+              {/* Dynamic Live Hierarchy Filter Dropdowns & Search */}
               <div className="flex flex-wrap gap-2.5 w-full lg:w-auto">
                 <input 
                   type="text"
@@ -422,35 +424,40 @@ export default function SuperAdminCommandCenter() {
                   className="px-3.5 py-2 rounded-xl border text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02] font-semibold text-[#01295A]"
                 />
                 
-                {/* Franchisee Filter Dropdown */}
+                {/* Live Franchisee Dropdown */}
                 <select 
                   value={admissionFilters.franchise || ''}
                   onChange={e => setAdmissionFilters({ ...admissionFilters, franchise: e.target.value })}
                   className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
                 >
                   <option value="">All Franchisees</option>
-                  <option value="Shreya">Shreya Enterprises</option>
+                  {usersList.filter(u => u.role === 'franchise').map(f => (
+                    <option key={f._id} value={f._id}>{f.name}</option>
+                  ))}
                 </select>
 
-                {/* ASM Filter Dropdown */}
+                {/* Live ASM Dropdown */}
                 <select 
                   value={admissionFilters.asm || ''}
                   onChange={e => setAdmissionFilters({ ...admissionFilters, asm: e.target.value })}
                   className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
                 >
                   <option value="">All ASMs</option>
-                  <option value="Sanjay">Sanjay Patil</option>
+                  {usersList.filter(u => u.role === 'asm').map(a => (
+                    <option key={a._id} value={a._id}>{a.name}</option>
+                  ))}
                 </select>
 
-                {/* Coordinator Filter Dropdown */}
+                {/* Live Coordinator Dropdown */}
                 <select 
                   value={admissionFilters.coordinator || ''}
                   onChange={e => setAdmissionFilters({ ...admissionFilters, coordinator: e.target.value })}
                   className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
                 >
                   <option value="">All Coordinators</option>
-                  <option value="Rahul">Rahul Sharma</option>
-                  <option value="Priya">Priya Deshmukh</option>
+                  {usersList.filter(u => u.role === 'coordinator').map(c => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -471,35 +478,36 @@ export default function SuperAdminCommandCenter() {
                 <tbody className="divide-y font-medium text-slate-700">
                   {admissionsList
                     .filter(adm => {
-                      const matchesSearch = !admissionFilters.search || 
+                      const searchMatch = !admissionFilters.search || 
                         adm.admissionId?.toLowerCase().includes(admissionFilters.search.toLowerCase()) || 
-                        adm.studentName?.toLowerCase().includes(admissionFilters.search.toLowerCase());
+                        adm.studentName?.toLowerCase().includes(admissionFilters.search.toLowerCase()) ||
+                        adm.mobile?.includes(admissionFilters.search);
                       
-                      const matchesFranchise = !admissionFilters.franchise || adm.franchiseName?.includes(admissionFilters.franchise);
-                      const matchesAsm = !admissionFilters.asm || adm.asmName?.includes(admissionFilters.asm);
-                      const matchesCoord = !admissionFilters.coordinator || adm.coordinatorName?.includes(admissionFilters.coordinator);
+                      const franchiseMatch = !admissionFilters.franchise || adm.franchiseId === admissionFilters.franchise || adm.franchiseId?.toString() === admissionFilters.franchise;
+                      const asmMatch = !admissionFilters.asm || adm.asmId === admissionFilters.asm || adm.asmId?.toString() === admissionFilters.asm;
+                      const coordMatch = !admissionFilters.coordinator || adm.coordinatorId === admissionFilters.coordinator || adm.coordinatorId?.toString() === admissionFilters.coordinator;
 
-                      return matchesSearch && matchesFranchise && matchesAsm && matchesCoord;
+                      return searchMatch && franchiseMatch && asmMatch && coordMatch;
                     })
                     .map((adm, idx) => (
                       <tr key={adm._id || idx} className="hover:bg-slate-50 transition">
-                        <td className="p-3 font-mono font-black text-[#01295A]">{adm.admissionId || 'TOPIQ-ADM-0001'}</td>
-                        <td className="p-3 font-bold">{adm.studentName || 'Atharva Deshmukh'} <br/><span className="text-[10px] text-slate-400 font-mono">{adm.mobile || '9822012345'}</span></td>
-                        <td className="p-3">{adm.examCategory || 'Group C (Class 5-6)'}</td>
+                        <td className="p-3 font-mono font-black text-[#01295A]">{adm.admissionId}</td>
+                        <td className="p-3 font-bold">{adm.studentName} <br/><span className="text-[10px] text-slate-400 font-mono">{adm.mobile}</span></td>
+                        <td className="p-3">{adm.examCategory}</td>
                         <td className="p-3 text-[11px] font-semibold text-slate-700">
-                          <span className="text-[#FE7C02] font-bold">Franchise:</span> {adm.franchiseName || 'Shreya'}<br/>
-                          <span className="text-indigo-600 font-bold">ASM:</span> {adm.asmName || 'Sanjay'}<br/>
-                          <span className="text-purple-600 font-bold">Coordinator:</span> {adm.coordinatorName || 'Rahul'}
+                          <span className="text-[#FE7C02] font-bold">Franchise:</span> {adm.franchiseName || 'N/A'}<br/>
+                          <span className="text-indigo-600 font-bold">ASM:</span> {adm.asmName || 'N/A'}<br/>
+                          <span className="text-purple-600 font-bold">Coordinator:</span> {adm.coordinatorName || 'N/A'}
                         </td>
-                        <td className="p-3 font-mono">₹{adm.admissionAmount || '1,000'} <br/><span className="text-[10px] text-emerald-600 font-bold">F:₹150 | ASM:₹50 | C:₹200</span></td>
+                        <td className="p-3 font-mono">₹{adm.admissionAmount} <br/><span className="text-[10px] text-emerald-600 font-bold">F:₹{adm.franchiseCommission || 150} | ASM:₹{adm.asmCommission || 50} | C:₹{adm.coordinatorCommission || 200}</span></td>
                         <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">{adm.admissionStatus || 'Approved'}</span></td>
                       </tr>
                     ))}
 
                   {admissionsList.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="text-center py-8 text-slate-400 font-bold uppercase text-[11px]">
-                        No admissions matching the selected hierarchy filters.
+                      <td colSpan="6" className="text-center py-12 text-slate-400 font-bold uppercase text-[11px]">
+                        No admissions registered in the database yet.
                       </td>
                     </tr>
                   )}
@@ -509,138 +517,13 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Visual Hierarchy & Management Tab */}
-        {activeTab === 'hierarchy' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
-              <div>
-                <h3 className="text-lg font-black text-[#01295A]">Visual Downstream Hierarchy & Node Editor</h3>
-                <p className="text-xs text-slate-500 font-medium">Inspect downstream links, reassign ASMs or Coordinators, and sync changes live to the database.</p>
-              </div>
-              <button 
-                onClick={fetchAllDashboardData}
-                className="px-4 py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer inline-flex items-center gap-1.5 shadow"
-              >
-                <RefreshCw className="w-3.5 h-3.5" /> Sync Live Tree
-              </button>
-            </div>
-
-            {/* Live Hierarchy Tree with Edit Controls */}
-            <div className="space-y-4">
-              {usersList.filter(u => u.role === 'franchise').map(franchise => (
-                <div key={franchise._id} className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-[#FE7C02]" />
-                      <div>
-                        <h4 className="font-black text-sm text-[#01295A]">{franchise.name}</h4>
-                        <span className="text-[10px] text-slate-400 font-mono">Franchise ID: {franchise._id.slice(-6)} | 15% Share</span>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => handleOpenEditUser(franchise)}
-                      className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-[10px] font-black cursor-pointer inline-flex items-center gap-1"
-                    >
-                      <Edit3 className="w-3 h-3" /> Edit Franchise Node
-                    </button>
-                  </div>
-
-                  {/* Downstream ASMs under this Franchise */}
-                  <div className="pl-6 space-y-3 border-l-2 border-[#FE7C02]/40 ml-2">
-                    {usersList
-                      .filter(u => u.role === 'asm' && (u.franchiseId === franchise._id || u.franchiseId?.toString() === franchise._id.toString()))
-                      .map(asm => (
-                        <div key={asm._id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold text-xs text-slate-800">ASM: {asm.name} (5% Share)</span>
-                            <button 
-                              onClick={() => handleOpenEditUser(asm)}
-                              className="text-[10px] text-[#FE7C02] font-black hover:underline inline-flex items-center gap-1"
-                            >
-                              <Edit3 className="w-3 h-3" /> Reassign ASM
-                            </button>
-                          </div>
-
-                          {/* Coordinators under this ASM */}
-                          <div className="pl-4 space-y-1 border-l-2 border-indigo-200 ml-1 text-xs">
-                            {usersList
-                              .filter(u => u.role === 'coordinator' && (u.asmId === asm._id || u.asmId?.toString() === asm._id.toString()))
-                              .map(coord => (
-                                <div key={coord._id} className="flex justify-between items-center py-1 text-slate-600 font-medium">
-                                  <span>└─ Coordinator: {coord.name} (20% Share)</span>
-                                  <button 
-                                    onClick={() => handleOpenEditUser(coord)}
-                                    className="text-[10px] text-indigo-600 font-bold hover:underline"
-                                  >
-                                    Edit
-                                  </button>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      ))}
-
-                    {usersList.filter(u => u.role === 'asm' && (u.franchiseId === franchise._id || u.franchiseId?.toString() === franchise._id.toString())).length === 0 && (
-                      <p className="text-xs text-slate-400 italic">No ASMs assigned to this franchise yet.</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {usersList.filter(u => u.role === 'franchise').length === 0 && (
-                <div className="text-center py-12 text-slate-400 text-xs font-bold uppercase">
-                  No franchise nodes registered in the database. Use 'Provision Account' to add partners.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Commission Master Tab */}
-        {activeTab === 'commission' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl max-w-2xl space-y-6">
-            <div>
-              <h3 className="text-lg font-black text-[#01295A]">Configurable Commission Master</h3>
-              <p className="text-xs text-slate-500 font-medium">Manage percentages dynamically without hardcoding values in the backend engine.</p>
-            </div>
-
-            <div className="space-y-4">
-              {commissionRules.map((rule) => (
-                <div key={rule.role} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <div>
-                    <span className="font-black uppercase text-xs text-[#01295A] block">{rule.role} Role Share</span>
-                    <span className="text-[10px] text-slate-400">Current allocation percentage</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="number"
-                      value={rule.percentage}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCommissionRules(prev => prev.map(r => r.role === rule.role ? { ...r, percentage: val } : r));
-                      }}
-                      className="w-20 px-3 py-2 rounded-xl border text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-[#FE7C02]"
-                    />
-                    <button
-                      onClick={() => handleUpdateCommissionRule(rule.role, rule.percentage)}
-                      className="px-4 py-2 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow hover:bg-orange-600 transition"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* CRM Distribution & Hierarchy Explorer Tab */}
+        {/* CRM-Style Distribution & Hierarchy Explorer Tab */}
         {activeTab === 'hierarchy' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
               <div>
                 <h3 className="text-lg font-black text-[#01295A]">CRM Distribution & Hierarchy Tree</h3>
-                <p className="text-xs text-slate-500 font-medium">Inspect downstream performance, total collections, and member mapping: Franchisee (15%) $\rightarrow$ ASM (5%) $\rightarrow$ Coordinator (20%)[cite: 9, 12, 13].</p>
+                <p className="text-xs text-slate-500 font-medium">Inspect downstream performance, collections, and live mapping: Franchisee (15%) $\rightarrow$ ASM (5%) $\rightarrow$ Coordinator (20%)[cite: 9, 12, 13].</p>
               </div>
               <button 
                 onClick={fetchAllDashboardData}
@@ -670,7 +553,6 @@ export default function SuperAdminCommandCenter() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-emerald-600 font-mono bg-emerald-50 px-3 py-1.5 rounded-xl">Wallet: ₹15,450</span>
                       <button 
                         onClick={() => handleOpenEditUser(franchise)}
                         className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black cursor-pointer"
@@ -746,6 +628,90 @@ export default function SuperAdminCommandCenter() {
                   No franchise distribution nodes registered. Use the 'Provision Account' tab to add partners.
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Commission Master Tab */}
+        {activeTab === 'commission' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl max-w-2xl space-y-6">
+            <div>
+              <h3 className="text-lg font-black text-[#01295A]">Configurable Commission Master</h3>
+              <p className="text-xs text-slate-500 font-medium">Manage percentages dynamically without hardcoding values in the backend engine.</p>
+            </div>
+
+            <div className="space-y-4">
+              {commissionRules.map((rule) => (
+                <div key={rule.role} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <div>
+                    <span className="font-black uppercase text-xs text-[#01295A] block">{rule.role} Role Share</span>
+                    <span className="text-[10px] text-slate-400">Current allocation percentage</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number"
+                      value={rule.percentage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCommissionRules(prev => prev.map(r => r.role === rule.role ? { ...r, percentage: val } : r));
+                      }}
+                      className="w-20 px-3 py-2 rounded-xl border text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-[#FE7C02]"
+                    />
+                    <button
+                      onClick={() => handleUpdateCommissionRule(rule.role, rule.percentage)}
+                      className="px-4 py-2 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow hover:bg-orange-600 transition"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Wallet Management Tab */}
+        {activeTab === 'wallets' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <h3 className="text-lg font-black text-[#01295A]">Wallet Management & Ledger</h3>
+            <p className="text-xs text-slate-500 font-medium">Inspect total wallet balances, role-wise balances, pending settlements, and immutable ledger credits.</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span className="text-[10px] font-black uppercase text-slate-400">Franchisee Wallet Balance</span>
+                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹41,250</div>
+              </div>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span className="text-[10px] font-black uppercase text-slate-400">ASM Wallet Balance</span>
+                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹13,750</div>
+              </div>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                <span className="text-[10px] font-black uppercase text-slate-400">Coordinator Wallet Balance</span>
+                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹55,000</div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto pt-4">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
+                  <tr>
+                    <th className="p-3">Transaction ID</th>
+                    <th className="p-3">Admission ID</th>
+                    <th className="p-3">User / Role</th>
+                    <th className="p-3">Commission Credit</th>
+                    <th className="p-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y font-medium text-slate-700">
+                  <tr>
+                    <td className="p-3 font-mono text-slate-500">WAL-000124</td>
+                    <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
+                    <td className="p-3">Franchisee ABC (15%)</td>
+                    <td className="p-3 text-emerald-600 font-black">+₹150</td>
+                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -990,7 +956,7 @@ export default function SuperAdminCommandCenter() {
                         {b.position}
                       </span>
                     </div>
-                    
+                     
                     <div className="space-y-0.5">
                       <div className="font-black text-sm text-[#01295A] truncate">{b.title}</div>
                       <div className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 inline-block">
@@ -1033,7 +999,7 @@ export default function SuperAdminCommandCenter() {
                 <h3 className="text-lg font-black text-[#01295A]">Live Website & Partnership Enquiries</h3>
                 <p className="text-xs text-slate-500 font-semibold">Review complete form submissions from students, franchises, and agents.</p>
               </div>
-              
+               
               <div className="flex gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
                 {[
                   { id: 'student', label: 'Students Enquiry', icon: GraduationCap },
