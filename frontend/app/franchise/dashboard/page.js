@@ -1,302 +1,399 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Building2, Users, Wallet, FileText, CheckCircle2, RefreshCw, LogOut, ArrowUpRight, Filter, DollarSign 
-} from 'lucide-react';
+import { Building2, Users, Wallet, ShieldCheck, ArrowUpRight, Layers, RefreshCw, LogOut, FileText, DollarSign } from 'lucide-react';
 
-export default function FranchiseeDashboard() {
+export default function FranchiseDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  
-  // Franchisee Isolated State
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [scope, setScope] = useState('franchise');
+  const [loading, setLoading] = useState(false);
+  const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '' });
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Franchisee & Downstream Hierarchy State
   const [franchiseData, setFranchiseData] = useState({
-    name: '',
-    email: '',
-    gstNumber: '',
-    metrics: { admissionsCount: 0, todayAdmissions: 0, monthlyAdmissions: 0 },
-    wallet: { availableBalance: 0, pendingSettlement: 0, settledAmount: 0 },
-    asms: [],
-    coordinators: [],
-    admissions: [],
-    commissions: []
+    name: 'Shreya Enterprises',
+    metrics: { admissionsCount: 248, availableBalance: 41250, pendingSettlement: 12400 },
+    asms: [
+      { name: 'Sanjay Patil', tier: '5%', coordinators: ['Rahul Sharma', 'Priya Deshmukh'] }
+    ],
+    commissions: [
+      { admissionId: 'TOPIQ-ADM-001', amount: 1000, percentage: '15%', credit: 150, status: 'Credited' },
+      { admissionId: 'TOPIQ-ADM-002', amount: 2000, percentage: '15%', credit: 300, status: 'Credited' },
+      { admissionId: 'TOPIQ-ADM-003', amount: 1500, percentage: '15%', credit: 225, status: 'Pending' }
+    ]
   });
 
-  const [filters, setFilters] = useState({ asm: '', coordinator: '', status: '', exam: '' });
-
-  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
-  const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
-    if (!token || !['super_admin', 'admin', 'franchise'].includes(role)) {
+    if (!token || !['super_admin', 'admin', 'franchise', 'franchise_owner'].includes(role)) {
       router.push('/login');
       return;
     }
-    fetchFranchiseeData();
-  }, [router]);
+    fetchLeaderboard(scope);
+    fetchAgents();
+    fetchFranchiseMetrics();
+  }, [scope, router]);
 
-  const fetchFranchiseeData = async () => {
+  const fetchFranchiseMetrics = async () => {
     const token = localStorage.getItem('token');
-    setLoading(true);
     try {
       const res = await fetch(`${apiBaseUrl}/api/franchise/dashboard`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        setFranchiseData(data);
+        setFranchiseData(prev => ({ ...prev, ...data }));
       }
     } catch (err) {
-      console.error('Error fetching franchisee dashboard:', err);
+      console.error('Error fetching franchise metrics:', err);
+    }
+  };
+
+  const fetchLeaderboard = async (selectedScope) => {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/leaderboard?scope=${selectedScope}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setLeaderboard(data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching leaderboard:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchAgents = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/agents/list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAgents(data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching agents:', err);
+    }
+  };
+
+  const handleCreateStudent = async (e) => {
+    e.preventDefault();
+    setSuccessMsg('');
+    setErrorMsg('');
+    const token = localStorage.getItem('token');
+    const franchiseId = localStorage.getItem('franchiseId');
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/users/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...studentForm,
+          targetRole: 'student',
+          franchiseId: franchiseId || null
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to enroll student.');
+
+      setSuccessMsg(`Student ${studentForm.name} enrolled successfully!`);
+      setStudentForm({ name: '', email: '', password: '' });
+      fetchFranchiseMetrics();
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-100 text-[#01295A] pb-12">
-      {/* Top Banner */}
-      <div className="bg-[#01295A] text-white px-6 py-6 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <span className="text-[10px] font-black bg-[#FE7C02] text-white px-3 py-1 rounded-full uppercase tracking-wider">
-            Franchisee Portal (15% Commission Tier)
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-black mt-1">{franchiseData.name || 'Shreya Enterprises — Franchise Dashboard'}</h1>
-          <p className="text-xs text-slate-300">Manage downstream ASMs, Coordinators, automatic 15% wallet credits, and hierarchical admissions.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={fetchFranchiseeData} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer" title="Refresh Data">
-            <RefreshCw className="w-5 h-5" />
-          </button>
+    <div className="min-h-screen bg-slate-50 text-[#01295A] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="bg-[#FE7C02] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">Franchise & Commission Portal</span>
+              <span className="text-xs text-slate-400 font-medium">15% Tier Active</span>
+            </div>
+            <h1 className="text-xl md:text-2xl font-black tracking-tight">{franchiseData.name} — Operations Dashboard</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Manage downstream ASMs, Coordinators, automatic 15% franchise commissions, and wallet settlements.</p>
+          </div>
           <button
             onClick={() => { localStorage.clear(); router.push('/login'); }}
-            className="text-xs px-4 py-3 bg-rose-500 hover:bg-rose-600 text-white font-black rounded-xl transition cursor-pointer shadow-md flex items-center gap-2"
+            className="text-xs px-4 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition cursor-pointer"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
+            Logout
           </button>
         </div>
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-4 mt-6">
-        <div className="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-md border border-slate-200">
-          {[
-            { id: 'overview', label: 'My Overview & Wallet', icon: Wallet },
-            { id: 'admissions', label: 'Hierarchy Admissions', icon: FileText },
-            { id: 'asms', label: 'My ASMs & Coordinators', icon: Users },
-            { id: 'commissions', label: 'Commission History', icon: DollarSign },
-          ].map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition cursor-pointer ${
-                  activeTab === tab.id ? 'bg-[#01295A] text-white shadow' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        {/* Quick Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-xs font-black uppercase tracking-wider">Downstream Admissions</span>
+              <Users className="w-5 h-5 text-[#FE7C02]" />
+            </div>
+            <div className="text-3xl font-black">{franchiseData.metrics.admissionsCount}</div>
+            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">+12% from last month</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-xs font-black uppercase tracking-wider">Total 15% Franchise Earnings</span>
+              <Wallet className="w-5 h-5 text-[#FE7C02]" />
+            </div>
+            <div className="text-3xl font-black font-mono">₹{franchiseData.metrics.availableBalance.toLocaleString('en-IN')}</div>
+            <p className="text-xs text-slate-400 font-medium">Auto-credited upon payment success</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-xs font-black uppercase tracking-wider">10-Day Wallet Settlement</span>
+              <Building2 className="w-5 h-5 text-[#FE7C02]" />
+            </div>
+            <div className="text-3xl font-black font-mono">₹{franchiseData.metrics.pendingSettlement.toLocaleString('en-IN')}</div>
+            <p className="text-xs text-[#FE7C02] font-bold">Processing for next payout</p>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 mt-6 space-y-6">
-        
-        {/* Tab 1: Overview & Wallet */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Total Admissions (Hierarchy)</div>
-                <div className="text-3xl font-black text-[#01295A]">{franchiseData.metrics.admissionsCount || 120}</div>
-                <div className="text-xs text-emerald-600 font-semibold">+14 this month</div>
-              </div>
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setActiveTab('leaderboard')}
+            className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm ${
+              activeTab === 'leaderboard' ? 'bg-[#01295A] text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Rankings & Leaderboard
+          </button>
+          <button
+            onClick={() => setActiveTab('agents')}
+            className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm ${
+              activeTab === 'agents' ? 'bg-[#01295A] text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Downstream ASMs & Team
+          </button>
+          <button
+            onClick={() => setActiveTab('commissions')}
+            className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm ${
+              activeTab === 'commissions' ? 'bg-[#01295A] text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Commission History
+          </button>
+          <button
+            onClick={() => setActiveTab('admissions')}
+            className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm ${
+              activeTab === 'admissions' ? 'bg-[#01295A] text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Offline Student Admissions
+          </button>
+        </div>
 
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Available Wallet Balance</div>
-                <div className="text-3xl font-black text-emerald-600 font-mono">₹{franchiseData.wallet.availableBalance.toLocaleString('en-IN') || '41,250'}</div>
-                <div className="text-xs text-slate-500 font-semibold">15% automatic credit active</div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Pending Settlement (10-Day Window)</div>
-                <div className="text-3xl font-black text-[#FE7C02] font-mono">₹{franchiseData.wallet.pendingSettlement.toLocaleString('en-IN') || '15,000'}</div>
-                <div className="text-xs text-slate-500 font-semibold">Ready for payout processing</div>
-              </div>
-            </div>
-
-            {/* Quick Summary of Downstream Team */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-3">
-                <h3 className="text-sm font-black text-[#01295A] uppercase border-b pb-2">Assigned ASMs</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl text-xs font-bold">
-                    <span>Sanjay Patil (ASM 001)</span>
-                    <span className="text-indigo-600">3 Coordinators</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-3">
-                <h3 className="text-sm font-black text-[#01295A] uppercase border-b pb-2">Wallet Ledger Calculation Rule</h3>
-                <div className="p-3 bg-slate-50 rounded-xl text-xs font-semibold space-y-1 text-slate-700">
-                  <div className="flex justify-between"><span>Sample Admission:</span> <strong className="font-mono">₹1,000</strong></div>
-                  <div className="flex justify-between"><span>Franchisee Share (15%):</span> <strong className="font-mono text-emerald-600">+₹150 Credit</strong></div>
-                  <div className="text-[10px] text-slate-400 pt-1">Automatic credit applied upon verified admission payment.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Hierarchy Admissions */}
-        {activeTab === 'admissions' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b pb-4">
-              <div>
-                <h3 className="text-lg font-black text-[#01295A]">Hierarchy Admission Tracking</h3>
-                <p className="text-xs text-slate-500 font-medium">Filter admissions generated downstream under your assigned ASMs and Coordinators.</p>
-              </div>
-
-              {/* Filters */}
-              <div className="flex flex-wrap gap-2.5 w-full lg:w-auto">
-                <select 
-                  value={filters.asm}
-                  onChange={e => setFilters({ ...filters, asm: e.target.value })}
-                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
+        {/* Tab Content: Leaderboard */}
+        {activeTab === 'leaderboard' && (
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Performance Leaderboard</h2>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-black uppercase text-slate-500 tracking-wider">Scope:</span>
+                <select
+                  value={scope}
+                  onChange={(e) => setScope(e.target.value)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 focus:outline-none focus:border-[#FE7C02] cursor-pointer text-[#01295A]"
                 >
-                  <option value="">All ASMs</option>
-                  <option value="Sanjay">Sanjay Patil</option>
-                </select>
-
-                <select 
-                  value={filters.coordinator}
-                  onChange={e => setFilters({ ...filters, coordinator: e.target.value })}
-                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
-                >
-                  <option value="">All Coordinators</option>
-                  <option value="Rahul">Rahul Sharma</option>
-                  <option value="Priya">Priya Deshmukh</option>
+                  <option value="franchise">Franchise-wise</option>
+                  <option value="city">City-wise</option>
+                  <option value="district">District-wise</option>
+                  <option value="state">Maharashtra-wide</option>
                 </select>
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
-                  <tr>
-                    <th className="p-3">Admission ID</th>
-                    <th className="p-3">Student Name</th>
-                    <th className="p-3">Exam Category</th>
-                    <th className="p-3">ASM / Coordinator</th>
-                    <th className="p-3">Commission (15%)</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y font-medium text-slate-700">
-                  <tr>
-                    <td className="p-3 font-mono font-black text-[#01295A]">TOPIQ-ADM-0001</td>
-                    <td className="p-3 font-bold">Atharva Deshmukh <br/><span className="text-[10px] text-slate-400 font-mono">9822012345</span></td>
-                    <td className="p-3">Group C (Class 5-6)</td>
-                    <td className="p-3 text-slate-600">Sanjay Patil / Rahul Sharma</td>
-                    <td className="p-3 font-mono text-emerald-600 font-black">₹150</td>
-                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Approved</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {loading ? (
+              <p className="text-xs font-bold text-slate-500 text-center py-10">Loading leaderboard...</p>
+            ) : leaderboard.length === 0 ? (
+              <p className="text-xs font-bold text-slate-500 text-center py-10">No ranking records found for this scope yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="bg-slate-50 uppercase text-slate-500 font-black border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-4">Rank</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">Score</th>
+                      <th className="py-3 px-4">Accuracy</th>
+                      <th className="py-3 px-4">Correct / Wrong</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {leaderboard.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 transition">
+                        <td className="py-3.5 px-4 font-black text-[#01295A]">#{item.rank || idx + 1}</td>
+                        <td className="py-3.5 px-4 font-bold text-[#01295A]">{item.student?.name || item.name}</td>
+                        <td className="py-3.5 px-4 font-black text-emerald-600">{item.score} Marks</td>
+                        <td className="py-3.5 px-4 font-bold">{item.accuracy ? `${item.accuracy}%` : 'N/A'}</td>
+                        <td className="py-3.5 px-4 text-slate-500 font-bold">{item.correctCount !== undefined ? `${item.correctCount} / ${item.wrongCount}` : 'Detailed view'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Tab 3: My ASMs & Coordinators */}
-        {activeTab === 'asms' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+        {/* Tab Content: Downstream ASMs & Team */}
+        {activeTab === 'agents' && (
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div>
-              <h3 className="text-lg font-black text-[#01295A]">Assigned ASMs & Downstream Coordinators</h3>
-              <p className="text-xs text-slate-500 font-medium">View performance and downstream network assigned to your franchise.</p>
+              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">My Assigned ASMs & Downstream Coordinators</h2>
+              <p className="text-xs text-slate-500 font-medium mt-1">Inspect performance and hierarchical network under your franchise.</p>
             </div>
 
             <div className="space-y-4">
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                <div className="flex justify-between items-center border-b pb-3">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-indigo-600" />
-                    <div>
-                      <h4 className="font-black text-sm text-[#01295A]">Sanjay Patil (ASM 001)</h4>
-                      <span className="text-[10px] text-slate-400 font-mono">5% Commission Tier | 45 Admissions</span>
+              {franchiseData.asms.map((asm, idx) => (
+                <div key={idx} className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                  <div className="flex justify-between items-center border-b pb-3">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-indigo-600" />
+                      <div>
+                        <h4 className="font-black text-sm text-[#01295A]">{asm.name} (ASM)</h4>
+                        <span className="text-[10px] text-slate-400 font-mono">5% Commission Tier</span>
+                      </div>
                     </div>
+                    <span className="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-[10px] font-bold">Active</span>
                   </div>
-                  <span className="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-[10px] font-bold">Active</span>
-                </div>
 
-                <div className="pl-6 space-y-2">
-                  <span className="text-[10px] font-black uppercase text-slate-400 block">Downstream Coordinators (20% Tier):</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
-                      Rahul Sharma <span className="text-[10px] text-slate-400 block font-normal">24 Admissions</span>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
-                      Priya Deshmukh <span className="text-[10px] text-slate-400 block font-normal">21 Admissions</span>
+                  <div className="pl-6 space-y-2">
+                    <span className="text-[10px] font-black uppercase text-slate-400 block">Downstream Coordinators (20% Tier):</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {asm.coordinators.map((coord, cIdx) => (
+                        <div key={cIdx} className="bg-white p-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
+                          {coord} <span className="text-[10px] text-slate-400 block font-normal">Active Coordinator Node</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Tab 4: Commission History */}
+        {/* Tab Content: Commission History */}
         {activeTab === 'commissions' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div>
-              <h3 className="text-lg font-black text-[#01295A]">Franchisee Commission History</h3>
-              <p className="text-xs text-slate-500 font-medium">Immutable record of automatic 15% commission credits generated from hierarchy admissions.</p>
+              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Franchisee Commission History</h2>
+              <p className="text-xs text-slate-500 font-medium mt-1">Immutable record of automatic 15% commission credits generated from hierarchy admissions.</p>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 uppercase text-slate-500 font-black border-b border-slate-200">
                   <tr>
-                    <th className="p-3">Admission ID</th>
-                    <th className="p-3">Admission Amount</th>
-                    <th className="p-3">Percentage</th>
-                    <th className="p-3">Commission Credit</th>
-                    <th className="p-3">Status</th>
+                    <th className="py-3 px-4">Admission ID</th>
+                    <th className="py-3 px-4">Admission Amount</th>
+                    <th className="py-3 px-4">Percentage</th>
+                    <th className="py-3 px-4">Commission Credit</th>
+                    <th className="py-3 px-4">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y font-medium text-slate-700">
-                  <tr>
-                    <td className="p-3 font-mono font-black text-[#01295A]">TOPIQ-ADM-001</td>
-                    <td className="p-3 font-mono">₹1,000</td>
-                    <td className="p-3">15%</td>
-                    <td className="p-3 text-emerald-600 font-black">+₹150</td>
-                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-mono font-black text-[#01295A]">TOPIQ-ADM-002</td>
-                    <td className="p-3 font-mono">₹2,000</td>
-                    <td className="p-3">15%</td>
-                    <td className="p-3 text-emerald-600 font-black">+₹300</td>
-                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-mono font-black text-[#01295A]">TOPIQ-ADM-003</td>
-                    <td className="p-3 font-mono">₹1,500</td>
-                    <td className="p-3">15%</td>
-                    <td className="p-3 text-amber-600 font-black">+₹225</td>
-                    <td className="p-3"><span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Pending</span></td>
-                  </tr>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {franchiseData.commissions.map((comm, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 transition">
+                      <td className="py-3.5 px-4 font-mono font-black text-[#01295A]">{comm.admissionId}</td>
+                      <td className="py-3.5 px-4 font-mono">₹{comm.amount}</td>
+                      <td className="py-3.5 px-4">{comm.percentage}</td>
+                      <td className={`py-3.5 px-4 font-mono font-black ${comm.status === 'Credited' ? 'text-emerald-600' : 'text-amber-600'}`}>+₹{comm.credit}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${comm.status === 'Credited' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {comm.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Tab Content: Offline Admissions */}
+        {activeTab === 'admissions' && (
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-xl">
+            <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider mb-2">Enroll Local Student</h2>
+            <p className="text-xs text-slate-500 font-medium mb-6">Create secure portal credentials for offline student enrollments under your franchise.</p>
+
+            {successMsg && <div className="mb-4 p-3 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200">{successMsg}</div>}
+            {errorMsg && <div className="mb-4 p-3 bg-red-50 text-red-800 text-xs font-bold rounded-xl border border-red-200">{errorMsg}</div>}
+
+            <form onSubmit={handleCreateStudent} className="space-y-4">
+              <div>
+                <label className="block text-xs font-black uppercase text-[#01295A] tracking-wider mb-1.5">Student Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={studentForm.name}
+                  onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })}
+                  placeholder="Enter student name"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-[#01295A] focus:outline-none focus:border-[#FE7C02] transition font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase text-[#01295A] tracking-wider mb-1.5">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={studentForm.email}
+                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
+                  placeholder="Enter student email"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-[#01295A] focus:outline-none focus:border-[#FE7C02] transition font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase text-[#01295A] tracking-wider mb-1.5">Temporary Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={studentForm.password}
+                  onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })}
+                  placeholder="Set initial password"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-[#01295A] focus:outline-none focus:border-[#FE7C02] transition font-medium"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 bg-[#FE7C02] hover:bg-[#e06d02] text-white text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-lg mt-2"
+              >
+                Enroll Student Account
+              </button>
+            </form>
           </div>
         )}
 
