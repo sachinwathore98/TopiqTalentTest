@@ -634,48 +634,118 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Wallet Management Tab */}
-        {activeTab === 'wallets' && (
+        {/* CRM Distribution & Hierarchy Explorer Tab */}
+        {activeTab === 'hierarchy' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-lg font-black text-[#01295A]">Wallet Management & Ledger</h3>
-            <p className="text-xs text-slate-500 font-medium">Inspect total wallet balances, role-wise balances, pending settlements, and immutable ledger credits.</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                <span className="text-[10px] font-black uppercase text-slate-400">Franchisee Wallet Balance</span>
-                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹41,250</div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+              <div>
+                <h3 className="text-lg font-black text-[#01295A]">CRM Distribution & Hierarchy Tree</h3>
+                <p className="text-xs text-slate-500 font-medium">Inspect downstream performance, total collections, and member mapping: Franchisee (15%) $\rightarrow$ ASM (5%) $\rightarrow$ Coordinator (20%)[cite: 9, 12, 13].</p>
               </div>
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                <span className="text-[10px] font-black uppercase text-slate-400">ASM Wallet Balance</span>
-                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹13,750</div>
-              </div>
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                <span className="text-[10px] font-black uppercase text-slate-400">Coordinator Wallet Balance</span>
-                <div className="text-2xl font-black text-[#01295A] font-mono mt-1">₹55,000</div>
-              </div>
+              <button 
+                onClick={fetchAllDashboardData}
+                className="px-4 py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer inline-flex items-center gap-1.5 shadow"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Sync Live CRM Data
+              </button>
             </div>
 
-            <div className="overflow-x-auto pt-4">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
-                  <tr>
-                    <th className="p-3">Transaction ID</th>
-                    <th className="p-3">Admission ID</th>
-                    <th className="p-3">User / Role</th>
-                    <th className="p-3">Commission Credit</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y font-medium text-slate-700">
-                  <tr>
-                    <td className="p-3 font-mono text-slate-500">WAL-000124</td>
-                    <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
-                    <td className="p-3">Franchisee ABC (15%)</td>
-                    <td className="p-3 text-emerald-600 font-black">+₹150</td>
-                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
-                  </tr>
-                </tbody>
-              </table>
+            {/* CRM Tree Container */}
+            <div className="space-y-4">
+              {usersList.filter(u => u.role === 'franchise').map(franchise => (
+                <div key={franchise._id} className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 shadow-2xs">
+                  
+                  {/* Franchisee CRM Row */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-[#FE7C02] font-black">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-black text-sm text-[#01295A]">{franchise.name}</h4>
+                          <span className="bg-amber-100 text-amber-800 text-[9px] font-black uppercase px-2 py-0.5 rounded-full">Franchisee (15%)</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">{franchise.email} | GST: {franchise.gstNumber || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-emerald-600 font-mono bg-emerald-50 px-3 py-1.5 rounded-xl">Wallet: ₹15,450</span>
+                      <button 
+                        onClick={() => handleOpenEditUser(franchise)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black cursor-pointer"
+                      >
+                        Edit Node
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ASM Level under Franchisee */}
+                  <div className="pl-6 space-y-3 border-l-2 border-[#FE7C02]/40 ml-4">
+                    {usersList
+                      .filter(u => u.role === 'asm' && (u.franchiseId === franchise._id || u.franchiseId?.toString() === franchise._id.toString()))
+                      .map(asm => (
+                        <div key={asm._id} className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-2xs">
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">ASM</div>
+                              <div>
+                                <h5 className="font-bold text-xs text-[#01295A]">{asm.name} <span className="bg-indigo-100 text-indigo-800 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ml-1">5% Share</span></h5>
+                                <span className="text-[10px] text-slate-400 font-mono">{asm.email}</span>
+                              </div>
+                            </div>
+                            <button 
+                              onClick={() => handleOpenEditUser(asm)}
+                              className="text-[10px] text-[#FE7C02] font-black hover:underline"
+                            >
+                              Manage ASM
+                            </button>
+                          </div>
+
+                          {/* Coordinator Level under ASM */}
+                          <div className="pl-6 space-y-2 border-l-2 border-indigo-200 ml-2">
+                            {usersList
+                              .filter(u => u.role === 'coordinator' && (u.asmId === asm._id || u.asmId?.toString() === asm._id.toString()))
+                              .map(coord => (
+                                <div key={coord._id} className="flex justify-between items-center p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-[10px]">C</div>
+                                    <div>
+                                      <span className="font-bold text-xs text-slate-800">{coord.name}</span>
+                                      <span className="bg-purple-100 text-purple-800 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ml-2">Coordinator (20%)</span>
+                                    </div>
+                                  </div>
+                                  <button 
+                                    onClick={() => handleOpenEditUser(coord)}
+                                    className="text-[10px] text-indigo-600 font-bold hover:underline"
+                                  >
+                                    View Performance
+                                  </button>
+                                </div>
+                              ))}
+
+                            {usersList.filter(u => u.role === 'coordinator' && (u.asmId === asm._id || u.asmId?.toString() === asm._id.toString())).length === 0 && (
+                              <p className="text-[11px] text-slate-400 italic py-1">No coordinators assigned under this ASM.</p>
+                            )}
+                          </div>
+
+                        </div>
+                      ))}
+
+                    {usersList.filter(u => u.role === 'asm' && (u.franchiseId === franchise._id || u.franchiseId?.toString() === franchise._id.toString())).length === 0 && (
+                      <p className="text-xs text-slate-400 italic">No ASMs assigned to this franchise yet.</p>
+                    )}
+                  </div>
+
+                </div>
+              ))}
+
+              {usersList.filter(u => u.role === 'franchise').length === 0 && (
+                <div className="text-center py-12 text-slate-400 text-xs font-bold uppercase">
+                  No franchise distribution nodes registered. Use the 'Provision Account' tab to add partners.
+                </div>
+              )}
             </div>
           </div>
         )}
