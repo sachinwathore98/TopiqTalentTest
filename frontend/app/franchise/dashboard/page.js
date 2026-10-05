@@ -235,60 +235,84 @@ export default function FranchiseDashboard() {
 
         {/* Tab Content: My ASM & Coordinators */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
-              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">My Assigned ASMs</h2>
-              {franchiseData.asms.length === 0 ? (
-                <p className="text-xs text-slate-400 font-medium">No ASMs assigned to this franchise yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {franchiseData.asms.map((asm, idx) => (
-                    <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center">
-                      <div>
-                        <h4 className="font-bold text-xs text-[#01295A]">{asm.name} ({asm.email})</h4>
-                        <span className="text-[10px] text-slate-400 font-mono">5% Commission Tier | Status: <strong className={asm.status === 'deactivated' ? 'text-rose-600' : 'text-emerald-600'}>{asm.status || 'active'}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => handleOpenEditUser(asm)} className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer inline-flex items-center gap-1">
-                          <Edit3 className="w-3 h-3" /> Edit
-                        </button>
-                        <button onClick={() => handleDeleteUser(asm._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer" title="Delete">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+  <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+    <div>
+      <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Downstream Hierarchy Tree (ASM → Coordinators → Admissions)</h2>
+      <p className="text-xs text-slate-500 font-medium mt-1">Inspect your regional ASMs, their assigned coordinators, and total admissions generated per node.</p>
+    </div>
 
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
-              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">My Coordinators</h2>
-              {franchiseData.coordinators.length === 0 ? (
-                <p className="text-xs text-slate-400 font-medium">No coordinators registered under your hierarchy yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {franchiseData.coordinators.map((coord, idx) => (
-                    <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center">
-                      <div>
-                        <h4 className="font-bold text-xs text-[#01295A]">{coord.name} ({coord.email})</h4>
-                        <span className="text-[10px] text-slate-400 font-mono">20% Commission Tier | Status: <strong className={coord.status === 'deactivated' ? 'text-rose-600' : 'text-emerald-600'}>{coord.status || 'active'}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => handleOpenEditUser(coord)} className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer inline-flex items-center gap-1">
-                          <Edit3 className="w-3 h-3" /> Edit
-                        </button>
-                        <button onClick={() => handleDeleteUser(coord._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer" title="Delete">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+    <div className="space-y-6">
+      {(franchiseData.asmHierarchy || []).map((asm, idx) => (
+        <div key={asm._id || idx} className="p-6 bg-slate-50 border border-slate-200 rounded-3xl space-y-4 shadow-sm">
+          {/* ASM Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-4">
+            <div>
+              <span className="bg-indigo-100 text-indigo-800 text-[9px] font-black uppercase px-2.5 py-1 rounded-full">ASM Tier (5% Share)</span>
+              <h3 className="text-base font-black text-[#01295A] mt-1">{asm.name}</h3>
+              <p className="text-xs text-slate-500 font-mono">{asm.email} | Phone: {asm.phone || 'N/A'}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Admissions</span>
+                <span className="text-lg font-black text-[#FE7C02] font-mono">{asm.totalAdmissions || 0}</span>
+              </div>
+              <div className="flex items-center gap-1.5 ml-2">
+                <button onClick={() => handleOpenEditUser(asm)} className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer inline-flex items-center gap-1">
+                  <Edit3 className="w-3 h-3" /> Edit
+                </button>
+                <button onClick={() => handleDeleteUser(asm._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer" title="Delete">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Coordinators under this ASM */}
+          <div className="pl-0 sm:pl-6 space-y-3">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Coordinators under {asm.name} ({asm.coordinators?.length || 0})</h4>
+            
+            {asm.coordinators?.length === 0 ? (
+              <p className="text-xs text-slate-400 italic py-2">No coordinators registered under this ASM yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {asm.coordinators.map((coord) => (
+                  <div key={coord._id} className="p-4 bg-white border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs">
+                    <div>
+                      <span className="bg-purple-100 text-purple-800 text-[8px] font-black uppercase px-2 py-0.5 rounded-full">Coordinator (20% Share)</span>
+                      <h5 className="font-black text-xs text-[#01295A] mt-1">{coord.name}</h5>
+                      <p className="text-[10px] text-slate-400 font-mono">{coord.email} | Phone: {coord.phone || 'N/A'}</p>
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="text-right">
+                        <span className="text-[9px] font-bold uppercase text-slate-400 block">Admissions</span>
+                        <span className="text-sm font-black text-emerald-600 font-mono">{coord.admissionsCount || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => handleOpenEditUser(coord)} className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[10px] font-bold cursor-pointer">
+                          Edit
+                        </button>
+                        <button onClick={() => handleDeleteUser(coord._id)} className="p-1 bg-rose-50 text-rose-600 rounded hover:bg-rose-100 cursor-pointer" title="Delete">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {(!franchiseData.asmHierarchy || franchiseData.asmHierarchy.length === 0) && (
+        <div className="text-center py-12 text-slate-400 font-bold uppercase text-xs">
+          No ASMs or downstream hierarchy found. Create an ASM to start building your network tree.
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
         {/* Tab Content: Create / Manage Team */}
         {activeTab === 'team-management' && (
