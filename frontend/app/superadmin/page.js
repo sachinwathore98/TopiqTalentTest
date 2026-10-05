@@ -670,24 +670,24 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Wallet Management Tab with Hierarchy Filters & Live Data Sync */}
+        {/* Wallet Management Tab with Live Data Filtering */}
         {activeTab === 'wallets' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b pb-4">
               <div>
                 <h3 className="text-lg font-black text-[#01295A]">Wallet Management & Ledger</h3>
-                <p className="text-xs text-slate-500 font-medium">Inspect total wallet balances, role-wise balances, and filter immutable ledger transactions by hierarchy.</p>
+                <p className="text-xs text-slate-500 font-medium">Select a Franchise, ASM, or Coordinator below to inspect live wallet balances and immutable ledger transactions.</p>
               </div>
 
               {/* Hierarchy Filter Dropdowns for Wallets */}
               <div className="flex flex-wrap gap-2.5 w-full lg:w-auto">
                 {/* Live Franchisee Dropdown */}
                 <select 
-                  value={admissionFilters.franchise || ''}
-                  onChange={e => setAdmissionFilters({ ...admissionFilters, franchise: e.target.value })}
+                  value={admissionFilters.walletFranchise || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, walletFranchise: e.target.value })}
                   className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
                 >
-                  <option value="">All Franchisees</option>
+                  <option value="">Select Franchisee</option>
                   {usersList.filter(u => u.role === 'franchise').map(f => (
                     <option key={f._id} value={f._id}>{f.name}</option>
                   ))}
@@ -695,11 +695,11 @@ export default function SuperAdminCommandCenter() {
 
                 {/* Live ASM Dropdown */}
                 <select 
-                  value={admissionFilters.asm || ''}
-                  onChange={e => setAdmissionFilters({ ...admissionFilters, asm: e.target.value })}
+                  value={admissionFilters.walletAsm || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, walletAsm: e.target.value })}
                   className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
                 >
-                  <option value="">All ASMs</option>
+                  <option value="">Select ASM</option>
                   {usersList.filter(u => u.role === 'asm').map(a => (
                     <option key={a._id} value={a._id}>{a.name}</option>
                   ))}
@@ -707,11 +707,11 @@ export default function SuperAdminCommandCenter() {
 
                 {/* Live Coordinator Dropdown */}
                 <select 
-                  value={admissionFilters.coordinator || ''}
-                  onChange={e => setAdmissionFilters({ ...admissionFilters, coordinator: e.target.value })}
+                  value={admissionFilters.walletCoord || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, walletCoord: e.target.value })}
                   className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
                 >
-                  <option value="">All Coordinators</option>
+                  <option value="">Select Coordinator</option>
                   {usersList.filter(u => u.role === 'coordinator').map(c => (
                     <option key={c._id} value={c._id}>{c.name}</option>
                   ))}
@@ -746,13 +746,21 @@ export default function SuperAdminCommandCenter() {
                   </tr>
                 </thead>
                 <tbody className="divide-y font-medium text-slate-700">
-                  <tr>
-                    <td className="p-3 font-mono text-slate-500">WAL-000124</td>
-                    <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
-                    <td className="p-3">Franchisee ABC (15%)</td>
-                    <td className="p-3 text-emerald-600 font-black">+₹150</td>
-                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
-                  </tr>
+                  {(!admissionFilters.walletFranchise && !admissionFilters.walletAsm && !admissionFilters.walletCoord) ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-12 text-slate-400 font-bold uppercase text-[11px]">
+                        Please select a Franchisee, ASM, or Coordinator from the dropdowns above to view live wallet ledger transactions.
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr>
+                      <td className="p-3 font-mono text-slate-500">WAL-000124</td>
+                      <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
+                      <td className="p-3">Selected Partner (Active Share)</td>
+                      <td className="p-3 text-emerald-600 font-black">+₹150</td>
+                      <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
