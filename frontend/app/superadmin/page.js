@@ -406,22 +406,56 @@ export default function SuperAdminCommandCenter() {
         {/* Admission Management Tab */}
         {activeTab === 'admissions' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b pb-4">
               <div>
                 <h3 className="text-lg font-black text-[#01295A]">Admission Management & Tracking</h3>
-                <p className="text-xs text-slate-500 font-medium">Filter admissions by ID, Student Name, Mobile, Franchisee, ASM, Coordinator, and Status.</p>
+                <p className="text-xs text-slate-500 font-medium">Filter admissions by ID, Student Name, Franchisee, ASM, Coordinator, and Status.</p>
               </div>
-              <div className="flex flex-wrap gap-2">
+
+              {/* Hierarchy Filter Dropdowns & Search */}
+              <div className="flex flex-wrap gap-2.5 w-full lg:w-auto">
                 <input 
                   type="text"
                   placeholder="Search Admission ID / Name..."
                   value={admissionFilters.search}
                   onChange={e => setAdmissionFilters({ ...admissionFilters, search: e.target.value })}
-                  className="px-4 py-2 rounded-xl border text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
+                  className="px-3.5 py-2 rounded-xl border text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02] font-semibold text-[#01295A]"
                 />
+                
+                {/* Franchisee Filter Dropdown */}
+                <select 
+                  value={admissionFilters.franchise || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, franchise: e.target.value })}
+                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
+                >
+                  <option value="">All Franchisees</option>
+                  <option value="Shreya">Shreya Enterprises</option>
+                </select>
+
+                {/* ASM Filter Dropdown */}
+                <select 
+                  value={admissionFilters.asm || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, asm: e.target.value })}
+                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
+                >
+                  <option value="">All ASMs</option>
+                  <option value="Sanjay">Sanjay Patil</option>
+                </select>
+
+                {/* Coordinator Filter Dropdown */}
+                <select 
+                  value={admissionFilters.coordinator || ''}
+                  onChange={e => setAdmissionFilters({ ...admissionFilters, coordinator: e.target.value })}
+                  className="px-3 py-2 rounded-xl border text-xs bg-slate-50 font-semibold text-[#01295A] outline-none cursor-pointer"
+                >
+                  <option value="">All Coordinators</option>
+                  <option value="Rahul">Rahul Sharma</option>
+                  <option value="Priya">Priya Deshmukh</option>
+                </select>
               </div>
             </div>
 
+            {/* Admissions Table with Hierarchy Display */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
@@ -429,8 +463,8 @@ export default function SuperAdminCommandCenter() {
                     <th className="p-3">Admission ID</th>
                     <th className="p-3">Student Details</th>
                     <th className="p-3">Exam / Class</th>
-                    <th className="p-3">Hierarchy (F / ASM / C)</th>
-                    <th className="p-3">Fee / Commission</th>
+                    <th className="p-3">Hierarchy (Franchise / ASM / Coordinator)</th>
+                    <th className="p-3">Fee / Commission Splits</th>
                     <th className="p-3">Status</th>
                   </tr>
                 </thead>
@@ -439,7 +473,11 @@ export default function SuperAdminCommandCenter() {
                     <td className="p-3 font-mono font-black text-[#01295A]">TOPIQ-ADM-0001</td>
                     <td className="p-3 font-bold">Atharva Deshmukh <br/><span className="text-[10px] text-slate-400 font-mono">9822012345</span></td>
                     <td className="p-3">Group C (Class 5-6)</td>
-                    <td className="p-3 text-[10px] text-slate-600">Shreya / Sanjay / Rahul</td>
+                    <td className="p-3 text-[11px] font-semibold text-slate-700">
+                      <span className="text-[#FE7C02] font-bold">Franchise:</span> Shreya<br/>
+                      <span className="text-indigo-600 font-bold">ASM:</span> Sanjay<br/>
+                      <span className="text-purple-600 font-bold">Coordinator:</span> Rahul
+                    </td>
                     <td className="p-3 font-mono">₹1,000 <br/><span className="text-[10px] text-emerald-600 font-bold">F:₹150 | ASM:₹50 | C:₹200</span></td>
                     <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Approved</span></td>
                   </tr>
