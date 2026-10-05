@@ -3,7 +3,7 @@ let Admission;
 try { Admission = require('../models/Admission'); } catch(e) { Admission = null; }
 const Banner = require('../models/Banner');
 const Enquiry = require('../models/Enquiry');
-const ScholarshipPrize = require('../models/ScholarshipPrize');
+const ScholarshipConfig = require('../models/ScholarshipConfig'); // Fixed model import reference
 const bcrypt = require('bcryptjs');
 
 // 1. Get All Metrics & Dashboard Summary
