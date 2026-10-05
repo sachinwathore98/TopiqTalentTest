@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, UserPlus, Edit3, Trash2, X } from 'lucide-react';
+import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, Trash2 } from 'lucide-react';
 
 export default function FranchiseDashboard() {
   const router = useRouter();
@@ -11,26 +11,23 @@ export default function FranchiseDashboard() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Franchisee & Downstream Hierarchy State
   const [franchiseData, setFranchiseData] = useState({
     name: 'Shreya Enterprises',
     metrics: {
-      myAdmissions: 120,
-      todaysAdmissions: 4,
-      monthlyAdmissions: 14,
-      myCommission: 18500,
-      availableWallet: 41250,
-      pendingSettlement: 15000,
-      settledAmount: 26250
+      myAdmissions: 0,
+      todaysAdmissions: 0,
+      monthlyAdmissions: 0,
+      myCommission: 0,
+      availableWallet: 0,
+      pendingSettlement: 0,
+      settledAmount: 0
     },
     asms: [],
     coordinators: [],
     commissions: []
   });
 
-  // User Management State (Create / Edit ASM or Coordinator)
-  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', targetRole: 'asm', phone: '' });
-  const [editingUser, setEditingUser] = useState(null);
+  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', targetRole: 'asm', phone: '', asmId: '' });
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
 
@@ -53,26 +50,10 @@ export default function FranchiseDashboard() {
       });
       const data = await response.json();
       if (data.success) {
-        setFranchiseData(prev => ({
-          ...prev,
-          name: data.name || prev.name,
-          metrics: data.metrics || prev.metrics,
-          asms: data.asms || [
-            { _id: 'asm_01', name: 'Sanjay Patil', email: 'sanjay@topiq.com', role: 'asm', phone: '9822011111' }
-          ],
-          coordinators: data.coordinators || [
-            { _id: 'coord_01', name: 'Rahul Sharma', email: 'rahul@topiq.com', role: 'coordinator', phone: '9822022222', asmId: 'asm_01' },
-            { _id: 'coord_02', name: 'Priya Deshmukh', email: 'priya@topiq.com', role: 'coordinator', phone: '9822033333', asmId: 'asm_01' }
-          ],
-          commissions: data.commissions || [
-            { admissionId: 'ADM001', amount: 1000, percentage: '15%', credit: 150, status: 'Credited' },
-            { admissionId: 'ADM002', amount: 2000, percentage: '15%', credit: 300, status: 'Credited' },
-            { admissionId: 'ADM003', amount: 1500, percentage: '15%', credit: 225, status: 'Pending' }
-          ]
-        }));
+        setFranchiseData(data);
       }
     } catch (err) {
-      console.error('Error fetching franchise dashboard data:', err);
+      console.error('Error fetching franchise dashboard:', err);
     } finally {
       setLoading(false);
     }
@@ -94,7 +75,7 @@ export default function FranchiseDashboard() {
       if (!response.ok) throw new Error(data.message || 'Failed to create user.');
 
       setSuccessMsg(`Successfully created ${userForm.targetRole.toUpperCase()}: ${userForm.name}`);
-      setUserForm({ name: '', email: '', password: '', targetRole: 'asm', phone: '' });
+      setUserForm({ name: '', email: '', password: '', targetRole: 'asm', phone: '', asmId: '' });
       fetchFranchiseDashboardData();
     } catch (err) {
       setErrorMsg(err.message);
@@ -102,7 +83,7 @@ export default function FranchiseDashboard() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm('Are you sure you want to delete this downstream user?')) return;
+    if (!confirm('Are you sure you want to remove this team member?')) return;
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${apiBaseUrl}/api/franchise/members/${userId}`, {
@@ -111,11 +92,11 @@ export default function FranchiseDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg('User removed successfully.');
+        setSuccessMsg('Team member removed successfully.');
         fetchFranchiseDashboardData();
       }
     } catch (err) {
-      setErrorMsg('Error deleting user.');
+      setErrorMsg('Error removing user.');
     }
   };
 
@@ -146,9 +127,8 @@ export default function FranchiseDashboard() {
           </div>
         </div>
 
-        {/* Live Metrics Grid matching exact specifications */}
+        {/* Live Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          
           <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-1">
             <div className="text-[10px] font-black uppercase text-slate-400">My Admissions</div>
             <div className="text-2xl font-black text-[#01295A]">{franchiseData.metrics.myAdmissions}</div>
@@ -172,7 +152,6 @@ export default function FranchiseDashboard() {
             <div className="text-xl font-black text-[#01295A]">{franchiseData.asms.length} ASMs | {franchiseData.coordinators.length} Coordinators</div>
             <div className="text-[11px] text-slate-500 font-medium">Active downstream network</div>
           </div>
-
         </div>
 
         {/* Navigation Tabs */}
@@ -218,11 +197,9 @@ export default function FranchiseDashboard() {
                         <h4 className="font-bold text-xs text-[#01295A]">{asm.name} ({asm.email})</h4>
                         <span className="text-[10px] text-slate-400 font-mono">5% Commission Tier</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleDeleteUser(asm._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <button onClick={() => handleDeleteUser(asm._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -241,11 +218,9 @@ export default function FranchiseDashboard() {
                         <h4 className="font-bold text-xs text-[#01295A]">{coord.name} ({coord.email})</h4>
                         <span className="text-[10px] text-slate-400 font-mono">20% Commission Tier</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleDeleteUser(coord._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      <button onClick={() => handleDeleteUser(coord._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -311,6 +286,23 @@ export default function FranchiseDashboard() {
                   <option value="coordinator">Coordinator (20% Split)</option>
                 </select>
               </div>
+
+              {userForm.targetRole === 'coordinator' && (
+                <div>
+                  <label className="block text-xs font-black uppercase text-[#01295A] tracking-wider mb-1.5">Assign ASM *</label>
+                  <select
+                    required
+                    value={userForm.asmId}
+                    onChange={(e) => setUserForm({ ...userForm, asmId: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-[#01295A] focus:outline-none focus:border-[#FE7C02] font-bold"
+                  >
+                    <option value="">Select ASM</option>
+                    {franchiseData.asms.map(a => (
+                      <option key={a._id} value={a._id}>{a.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <button
                 type="submit"
