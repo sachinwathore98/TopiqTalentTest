@@ -209,3 +209,18 @@ exports.deleteUser = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error deleting user.' });
   }
 };
+
+exports.getFranchiseUsersDirectory = async (req, res) => {
+  try {
+    const { franchiseId } = req.params;
+    const users = await User.find({ 
+      $or: [
+        { _id: franchiseId },
+        { franchiseId: franchiseId }
+      ]
+    }).select('-password');
+    return res.status(200).json({ success: true, users });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Error fetching downstream users.' });
+  }
+};
