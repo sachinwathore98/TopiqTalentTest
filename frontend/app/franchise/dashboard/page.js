@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, Trash2 } from 'lucide-react';
+import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, Trash2, Edit3, X } from 'lucide-react';
 
 export default function FranchiseDashboard() {
   const router = useRouter();
@@ -28,6 +28,10 @@ export default function FranchiseDashboard() {
   });
 
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', targetRole: 'asm', phone: '', asmId: '' });
+  
+  // Edit User State
+  const [editingUser, setEditingUser] = useState(null);
+  const [userEditForm, setUserEditForm] = useState({ name: '', email: '', phone: '', status: 'active' });
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
@@ -83,6 +87,40 @@ export default function FranchiseDashboard() {
     }
   };
 
+  const handleOpenEditUser = (user) => {
+    setEditingUser(user);
+    setUserEditForm({
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      status: user.status || 'active'
+    });
+  };
+
+  const handleSaveUserEdit = async (e) => {
+    e.preventDefault();
+    setSuccessMsg('');
+    setErrorMsg('');
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/users/${editingUser._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(userEditForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg('Team member updated successfully!');
+        setEditingUser(null);
+        fetchFranchiseDashboardData();
+      } else {
+        throw new Error(data.message || 'Failed to update user.');
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Error updating user.');
+    }
+  };
+
   const handleDeleteUser = async (userId) => {
     if (!confirm('Are you sure you want to remove this team member?')) return;
     const token = localStorage.getItem('token');
@@ -127,6 +165,9 @@ export default function FranchiseDashboard() {
             </button>
           </div>
         </div>
+
+        {successMsg && <div className="p-4 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-2xl border border-emerald-200">{successMsg}</div>}
+        {errorMsg && <div className="p-4 bg-red-50 text-red-800 text-xs font-bold rounded-2xl border border-red-200">{errorMsg}</div>}
 
         {/* Live Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -196,11 +237,16 @@ export default function FranchiseDashboard() {
                     <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center">
                       <div>
                         <h4 className="font-bold text-xs text-[#01295A]">{asm.name} ({asm.email})</h4>
-                        <span className="text-[10px] text-slate-400 font-mono">5% Commission Tier</span>
+                        <span className="text-[10px] text-slate-400 font-mono">5% Commission Tier | Status: <strong className={asm.status === 'deactivated' ? 'text-rose-600' : 'text-emerald-600'}>{asm.status || 'active'}</strong></span>
                       </div>
-                      <button onClick={() => handleDeleteUser(asm._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => handleOpenEditUser(asm)} className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer inline-flex items-center gap-1">
+                          <Edit3 className="w-3 h-3" /> Edit
+                        </button>
+                        <button onClick={() => handleDeleteUser(asm._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -217,11 +263,16 @@ export default function FranchiseDashboard() {
                     <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center">
                       <div>
                         <h4 className="font-bold text-xs text-[#01295A]">{coord.name} ({coord.email})</h4>
-                        <span className="text-[10px] text-slate-400 font-mono">20% Commission Tier</span>
+                        <span className="text-[10px] text-slate-400 font-mono">20% Commission Tier | Status: <strong className={coord.status === 'deactivated' ? 'text-rose-600' : 'text-emerald-600'}>{coord.status || 'active'}</strong></span>
                       </div>
-                      <button onClick={() => handleDeleteUser(coord._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => handleOpenEditUser(coord)} className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer inline-flex items-center gap-1">
+                          <Edit3 className="w-3 h-3" /> Edit
+                        </button>
+                        <button onClick={() => handleDeleteUser(coord._id)} className="p-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 cursor-pointer" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -235,9 +286,6 @@ export default function FranchiseDashboard() {
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-xl">
             <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider mb-2">Provision Downstream User</h2>
             <p className="text-xs text-slate-500 font-medium mb-6">Create secure login credentials for an ASM or Coordinator under your franchise hierarchy.</p>
-
-            {successMsg && <div className="mb-4 p-3 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200">{successMsg}</div>}
-            {errorMsg && <div className="mb-4 p-3 bg-red-50 text-red-800 text-xs font-bold rounded-xl border border-red-200">{errorMsg}</div>}
 
             <form onSubmit={handleCreateDownstreamUser} className="space-y-4">
               <div>
@@ -355,6 +403,72 @@ export default function FranchiseDashboard() {
         )}
 
       </div>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 relative shadow-2xl border border-slate-200 text-[#01295A]">
+            <button 
+              onClick={() => setEditingUser(null)} 
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#01295A] transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-black mb-1">Edit Team Member</h3>
+            <p className="text-xs text-slate-500 mb-4">Modify name, email, phone, or active/deactivated status.</p>
+
+            <form onSubmit={handleSaveUserEdit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Full Name *</label>
+                <input 
+                  type="text" required value={userEditForm.name} 
+                  onChange={e => setUserEditForm({ ...userEditForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label>
+                <input 
+                  type="email" required value={userEditForm.email} 
+                  onChange={e => setUserEditForm({ ...userEditForm, email: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Phone Number</label>
+                <input 
+                  type="text" value={userEditForm.phone} 
+                  onChange={e => setUserEditForm({ ...userEditForm, phone: e.target.value })}
+                  placeholder="10-digit mobile number"
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Account Status *</label>
+                <select 
+                  value={userEditForm.status} 
+                  onChange={e => setUserEditForm({ ...userEditForm, status: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer uppercase font-bold"
+                >
+                  <option value="active">Active</option>
+                  <option value="deactivated">Deactivated</option>
+                </select>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2"
+              >
+                Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
