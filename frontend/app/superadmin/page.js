@@ -509,25 +509,89 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Visual Hierarchy Tab */}
+        {/* Visual Hierarchy & Management Tab */}
         {activeTab === 'hierarchy' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-lg font-black text-[#01295A]">Visual Downstream Hierarchy (Franchisee → ASM → Coordinator)</h3>
-            <p className="text-xs text-slate-500 font-medium">Click any node to inspect complete downstream hierarchy.</p>
-            
-            <div className="space-y-4 font-mono text-xs">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                <div className="font-black text-sm text-[#01295A] flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#FE7C02]" /> Franchisee 001: Shreya Enterprises (15% Share)
-                </div>
-                <div className="pl-6 space-y-2 border-l-2 border-[#FE7C02]/40 ml-2">
-                  <div className="font-bold text-slate-700">├── ASM 001: Sanjay Patil (5% Share)</div>
-                  <div className="pl-6 space-y-1 border-l-2 border-indigo-300 ml-2">
-                    <div>└── Coordinator 001: Rahul Sharma (20% Share)</div>
-                    <div>└── Coordinator 002: Priya Deshmukh (20% Share)</div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+              <div>
+                <h3 className="text-lg font-black text-[#01295A]">Visual Downstream Hierarchy & Node Editor</h3>
+                <p className="text-xs text-slate-500 font-medium">Inspect downstream links, reassign ASMs or Coordinators, and sync changes live to the database.</p>
+              </div>
+              <button 
+                onClick={fetchAllDashboardData}
+                className="px-4 py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer inline-flex items-center gap-1.5 shadow"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Sync Live Tree
+              </button>
+            </div>
+
+            {/* Live Hierarchy Tree with Edit Controls */}
+            <div className="space-y-4">
+              {usersList.filter(u => u.role === 'franchise').map(franchise => (
+                <div key={franchise._id} className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-[#FE7C02]" />
+                      <div>
+                        <h4 className="font-black text-sm text-[#01295A]">{franchise.name}</h4>
+                        <span className="text-[10px] text-slate-400 font-mono">Franchise ID: {franchise._id.slice(-6)} | 15% Share</span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleOpenEditUser(franchise)}
+                      className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-[10px] font-black cursor-pointer inline-flex items-center gap-1"
+                    >
+                      <Edit3 className="w-3 h-3" /> Edit Franchise Node
+                    </button>
+                  </div>
+
+                  {/* Downstream ASMs under this Franchise */}
+                  <div className="pl-6 space-y-3 border-l-2 border-[#FE7C02]/40 ml-2">
+                    {usersList
+                      .filter(u => u.role === 'asm' && (u.franchiseId === franchise._id || u.franchiseId?.toString() === franchise._id.toString()))
+                      .map(asm => (
+                        <div key={asm._id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-xs text-slate-800">ASM: {asm.name} (5% Share)</span>
+                            <button 
+                              onClick={() => handleOpenEditUser(asm)}
+                              className="text-[10px] text-[#FE7C02] font-black hover:underline inline-flex items-center gap-1"
+                            >
+                              <Edit3 className="w-3 h-3" /> Reassign ASM
+                            </button>
+                          </div>
+
+                          {/* Coordinators under this ASM */}
+                          <div className="pl-4 space-y-1 border-l-2 border-indigo-200 ml-1 text-xs">
+                            {usersList
+                              .filter(u => u.role === 'coordinator' && (u.asmId === asm._id || u.asmId?.toString() === asm._id.toString()))
+                              .map(coord => (
+                                <div key={coord._id} className="flex justify-between items-center py-1 text-slate-600 font-medium">
+                                  <span>└─ Coordinator: {coord.name} (20% Share)</span>
+                                  <button 
+                                    onClick={() => handleOpenEditUser(coord)}
+                                    className="text-[10px] text-indigo-600 font-bold hover:underline"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ))}
+
+                    {usersList.filter(u => u.role === 'asm' && (u.franchiseId === franchise._id || u.franchiseId?.toString() === franchise._id.toString())).length === 0 && (
+                      <p className="text-xs text-slate-400 italic">No ASMs assigned to this franchise yet.</p>
+                    )}
                   </div>
                 </div>
-              </div>
+              ))}
+
+              {usersList.filter(u => u.role === 'franchise').length === 0 && (
+                <div className="text-center py-12 text-slate-400 text-xs font-bold uppercase">
+                  No franchise nodes registered in the database. Use 'Provision Account' to add partners.
+                </div>
+              )}
             </div>
           </div>
         )}
