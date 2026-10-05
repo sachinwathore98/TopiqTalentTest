@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, Trash2, Edit3, X } from 'lucide-react';
+import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, Trash2, Edit3, X, CheckCircle2 } from 'lucide-react';
 
 export default function FranchiseDashboard() {
   const router = useRouter();
@@ -44,10 +44,17 @@ export default function FranchiseDashboard() {
       return;
     }
     fetchFranchiseDashboardData();
+
+    // 🔄 Live Auto-Sync Polling every 15 seconds
+    const interval = setInterval(() => {
+      fetchFranchiseDashboardData(true);
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, [router]);
 
-  const fetchFranchiseDashboardData = async () => {
-    setLoading(true);
+  const fetchFranchiseDashboardData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${apiBaseUrl}/api/franchise/dashboard`, {
@@ -58,9 +65,9 @@ export default function FranchiseDashboard() {
         setFranchiseData(data);
       }
     } catch (err) {
-      console.error('Error fetching franchise dashboard:', err);
+      console.error('Error fetching live franchise dashboard:', err);
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
@@ -143,30 +150,32 @@ export default function FranchiseDashboard() {
     <div className="min-h-screen bg-slate-50 text-[#01295A] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header */}
-        <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+        {/* Header with Live Sync Indicator */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-200 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-[#FE7C02] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">Franchise & Commission Portal</span>
-              <span className="text-xs text-slate-400 font-medium">15% Tier Active</span>
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Data Sync Active
+              </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight">{franchiseData.name} — Franchise Dashboard</h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">Manage downstream ASMs, Coordinators, automatic 15% franchise commissions, and wallet settlements.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={fetchFranchiseDashboardData} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer" title="Refresh Live Data">
-              <RefreshCw className="w-4 h-4" />
+            <button onClick={() => fetchFranchiseDashboardData()} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold" title="Refresh Live Data">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </button>
             <button
               onClick={() => { localStorage.clear(); router.push('/login'); }}
-              className="text-xs px-4 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition cursor-pointer"
+              className="text-xs px-4 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition cursor-pointer flex items-center gap-1.5"
             >
-              Logout
+              <LogOut className="w-4 h-4" /> Logout
             </button>
           </div>
         </div>
 
-        {successMsg && <div className="p-4 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-2xl border border-emerald-200">{successMsg}</div>}
+        {successMsg && <div className="p-4 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-2xl border border-emerald-200 flex items-center gap-2"><CheckCircle2 className="w-4 h-4"/>{successMsg}</div>}
         {errorMsg && <div className="p-4 bg-red-50 text-red-800 text-xs font-bold rounded-2xl border border-red-200">{errorMsg}</div>}
 
         {/* Live Metrics Grid */}
