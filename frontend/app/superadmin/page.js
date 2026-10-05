@@ -823,50 +823,109 @@ export default function SuperAdminCommandCenter() {
           </div>
         )}
 
-        {/* Comprehensive Reports Tab */}
+        {/* Comprehensive CRM Reports & Analytics Tab */}
         {activeTab === 'reports' && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <div>
-              <h3 className="text-lg font-black text-[#01295A]">Comprehensive Admission & Financial Reports</h3>
-              <p className="text-xs text-slate-500 font-medium">Generate and export Daily/Monthly Admission reports, Collection reports, Commission audits, and User Performance summaries in Excel / CSV / PDF format.</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+              <div>
+                <h3 className="text-lg font-black text-[#01295A]">CRM Admission & Financial Intelligence Reports</h3>
+                <p className="text-xs text-slate-500 font-medium">Analyze ecosystem-wide collections, role-wise commission distributions, and partner performance metrics.</p>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => alert('Exporting all CRM data to Excel/CSV...')}
+                  className="px-4 py-2.5 bg-[#FE7C02] text-white rounded-xl text-xs font-black cursor-pointer inline-flex items-center gap-1.5 shadow"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export All Data (Excel/CSV)
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                <h4 className="font-black text-xs text-[#01295A] uppercase">Admission Reports</h4>
-                <ul className="space-y-2 text-xs text-slate-600 font-medium">
-                  <li>• Daily / Monthly Admissions</li>
-                  <li>• Franchisee-wise / ASM-wise / Coordinator-wise</li>
-                  <li>• Exam-wise & Cancelled Admissions</li>
-                </ul>
-                <button className="w-full py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5">
-                  <Download className="w-3.5 h-3.5" /> Export Admissions (CSV/PDF)
+            {/* CRM Analytical Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
+                <span className="text-[10px] font-black uppercase text-slate-400">Total Filtered Collection</span>
+                <div className="text-2xl font-black text-emerald-600 font-mono">₹14,20,000</div>
+                <p className="text-[11px] text-slate-500 font-semibold">1,420 total successful student admissions</p>
+              </div>
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
+                <span className="text-[10px] font-black uppercase text-slate-400">Total Commissions Distributed</span>
+                <div className="text-2xl font-black text-[#FE7C02] font-mono">₹5,68,000</div>
+                <p className="text-[11px] text-slate-500 font-semibold">Franchise (15%) + ASM (5%) + Coordinator (20%)[cite: 9]</p>
+              </div>
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
+                <span className="text-[10px] font-black uppercase text-slate-400">Net Company Share (TOP-IQ)</span>
+                <div className="text-2xl font-black text-[#01295A] font-mono">₹8,52,000</div>
+                <p className="text-[11px] text-slate-500 font-semibold">60% remaining revenue pool[cite: 9]</p>
+              </div>
+            </div>
+
+            {/* CRM Detailed Report Tables */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+              
+              {/* Admission Reports Section */}
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <h4 className="font-black text-xs text-[#01295A] uppercase">Admission Intelligence</h4>
+                    <span className="text-[10px] font-bold bg-blue-100 text-[#01295A] px-2 py-0.5 rounded">Live Logs</span>
+                  </div>
+                  <ul className="space-y-2 text-xs text-slate-600 font-medium">
+                    <li className="flex justify-between"><span>Daily / Monthly Admissions:</span> <strong className="font-mono text-[#01295A]">142 / 1,420</strong></li>
+                    <li className="flex justify-between"><span>Franchisee-wise breakdown:</span> <strong className="font-mono text-[#01295A]">12 Active</strong></li>
+                    <li className="flex justify-between"><span>Exam Category Breakdown:</span> <strong className="font-mono text-[#01295A]">4 Groups</strong></li>
+                  </ul>
+                </div>
+                <button 
+                  onClick={() => alert('Downloading Admission Report CSV...')}
+                  className="w-full py-2.5 bg-[#01295A] hover:bg-blue-900 text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Admission Report (CSV/PDF)
                 </button>
               </div>
 
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                <h4 className="font-black text-xs text-[#01295A] uppercase">Financial Reports</h4>
-                <ul className="space-y-2 text-xs text-slate-600 font-medium">
-                  <li>• Collection & Revenue Report</li>
-                  <li>• Commission & Wallet Report</li>
-                  <li>• Settlement & Refund Report</li>
-                </ul>
-                <button className="w-full py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5">
-                  <Download className="w-3.5 h-3.5" /> Export Financials (Excel)
+              {/* Financial Reports Section */}
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <h4 className="font-black text-xs text-[#01295A] uppercase">Financial & Settlement Audit</h4>
+                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">Audited</span>
+                  </div>
+                  <ul className="space-y-2 text-xs text-slate-600 font-medium">
+                    <li className="flex justify-between"><span>Collection & Revenue Report:</span> <strong className="font-mono text-emerald-600">Verified</strong></li>
+                    <li className="flex justify-between"><span>Wallet Ledger Balances:</span> <strong className="font-mono text-[#01295A]">₹1,10,000</strong></li>
+                    <li className="flex justify-between"><span>10-Day Pending Payouts:</span> <strong className="font-mono text-amber-600">₹45,000</strong></li>
+                  </ul>
+                </div>
+                <button 
+                  onClick={() => alert('Downloading Financial Audit Report...')}
+                  className="w-full py-2.5 bg-[#01295A] hover:bg-blue-900 text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Financial Report (Excel)
                 </button>
               </div>
 
-              <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                <h4 className="font-black text-xs text-[#01295A] uppercase">User Performance</h4>
-                <ul className="space-y-2 text-xs text-slate-600 font-medium">
-                  <li>• Franchisee Performance Ranking</li>
-                  <li>• ASM Downstream Analytics</li>
-                  <li>• Coordinator Activity Logs</li>
-                </ul>
-                <button className="w-full py-2 bg-[#01295A] text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5">
-                  <Download className="w-3.5 h-3.5" /> Export Performance
+              {/* User Performance Section */}
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <h4 className="font-black text-xs text-[#01295A] uppercase">Partner Performance Ranking</h4>
+                    <span className="text-[10px] font-bold bg-orange-100 text-[#FE7C02] px-2 py-0.5 rounded">Ranked</span>
+                  </div>
+                  <ul className="space-y-2 text-xs text-slate-600 font-medium">
+                    <li className="flex justify-between"><span>Top Franchisee:</span> <strong className="font-black text-[#01295A]">Shreya Ent.</strong></li>
+                    <li className="flex justify-between"><span>Top ASM:</span> <strong className="font-black text-[#01295A]">Sanjay Patil</strong></li>
+                    <li className="flex justify-between"><span>Top Coordinator:</span> <strong className="font-black text-[#01295A]">Rahul Sharma</strong></li>
+                  </ul>
+                </div>
+                <button 
+                  onClick={() => alert('Downloading User Performance Report...')}
+                  className="w-full py-2.5 bg-[#01295A] hover:bg-blue-900 text-white rounded-xl text-xs font-black cursor-pointer flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Performance (PDF)
                 </button>
               </div>
+
             </div>
           </div>
         )}
