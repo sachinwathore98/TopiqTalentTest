@@ -45,7 +45,7 @@ export default function FranchiseDashboard() {
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`${apiBaseUrl}/api/franchise/dashboard`, {
+      const response = await fetch(`${apiBaseUrl}/franchise/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -66,7 +66,7 @@ export default function FranchiseDashboard() {
     const token = localStorage.getItem('token');
     
     try {
-      const response = await fetch(`${apiBaseUrl}/api/franchise/provision-member`, {
+      const response = await fetch(`${apiBaseUrl}/franchise/provision-member`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(userForm)
@@ -86,7 +86,7 @@ export default function FranchiseDashboard() {
     if (!confirm('Are you sure you want to remove this team member?')) return;
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${apiBaseUrl}/api/franchise/members/${userId}`, {
+      const res = await fetch(`${apiBaseUrl}/franchise/members/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
