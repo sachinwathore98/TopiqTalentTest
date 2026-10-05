@@ -417,7 +417,7 @@ export default function SuperAdminCommandCenter() {
                 <input 
                   type="text"
                   placeholder="Search Admission ID / Name..."
-                  value={admissionFilters.search}
+                  value={admissionFilters.search || ''}
                   onChange={e => setAdmissionFilters({ ...admissionFilters, search: e.target.value })}
                   className="px-3.5 py-2 rounded-xl border text-xs bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02] font-semibold text-[#01295A]"
                 />
@@ -455,7 +455,7 @@ export default function SuperAdminCommandCenter() {
               </div>
             </div>
 
-            {/* Admissions Table with Hierarchy Display */}
+            {/* Live Filtered Admissions Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
@@ -469,18 +469,40 @@ export default function SuperAdminCommandCenter() {
                   </tr>
                 </thead>
                 <tbody className="divide-y font-medium text-slate-700">
-                  <tr>
-                    <td className="p-3 font-mono font-black text-[#01295A]">TOPIQ-ADM-0001</td>
-                    <td className="p-3 font-bold">Atharva Deshmukh <br/><span className="text-[10px] text-slate-400 font-mono">9822012345</span></td>
-                    <td className="p-3">Group C (Class 5-6)</td>
-                    <td className="p-3 text-[11px] font-semibold text-slate-700">
-                      <span className="text-[#FE7C02] font-bold">Franchise:</span> Shreya<br/>
-                      <span className="text-indigo-600 font-bold">ASM:</span> Sanjay<br/>
-                      <span className="text-purple-600 font-bold">Coordinator:</span> Rahul
-                    </td>
-                    <td className="p-3 font-mono">₹1,000 <br/><span className="text-[10px] text-emerald-600 font-bold">F:₹150 | ASM:₹50 | C:₹200</span></td>
-                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Approved</span></td>
-                  </tr>
+                  {admissionsList
+                    .filter(adm => {
+                      const matchesSearch = !admissionFilters.search || 
+                        adm.admissionId?.toLowerCase().includes(admissionFilters.search.toLowerCase()) || 
+                        adm.studentName?.toLowerCase().includes(admissionFilters.search.toLowerCase());
+                      
+                      const matchesFranchise = !admissionFilters.franchise || adm.franchiseName?.includes(admissionFilters.franchise);
+                      const matchesAsm = !admissionFilters.asm || adm.asmName?.includes(admissionFilters.asm);
+                      const matchesCoord = !admissionFilters.coordinator || adm.coordinatorName?.includes(admissionFilters.coordinator);
+
+                      return matchesSearch && matchesFranchise && matchesAsm && matchesCoord;
+                    })
+                    .map((adm, idx) => (
+                      <tr key={adm._id || idx} className="hover:bg-slate-50 transition">
+                        <td className="p-3 font-mono font-black text-[#01295A]">{adm.admissionId || 'TOPIQ-ADM-0001'}</td>
+                        <td className="p-3 font-bold">{adm.studentName || 'Atharva Deshmukh'} <br/><span className="text-[10px] text-slate-400 font-mono">{adm.mobile || '9822012345'}</span></td>
+                        <td className="p-3">{adm.examCategory || 'Group C (Class 5-6)'}</td>
+                        <td className="p-3 text-[11px] font-semibold text-slate-700">
+                          <span className="text-[#FE7C02] font-bold">Franchise:</span> {adm.franchiseName || 'Shreya'}<br/>
+                          <span className="text-indigo-600 font-bold">ASM:</span> {adm.asmName || 'Sanjay'}<br/>
+                          <span className="text-purple-600 font-bold">Coordinator:</span> {adm.coordinatorName || 'Rahul'}
+                        </td>
+                        <td className="p-3 font-mono">₹{adm.admissionAmount || '1,000'} <br/><span className="text-[10px] text-emerald-600 font-bold">F:₹150 | ASM:₹50 | C:₹200</span></td>
+                        <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">{adm.admissionStatus || 'Approved'}</span></td>
+                      </tr>
+                    ))}
+
+                  {admissionsList.length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="text-center py-8 text-slate-400 font-bold uppercase text-[11px]">
+                        No admissions matching the selected hierarchy filters.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
