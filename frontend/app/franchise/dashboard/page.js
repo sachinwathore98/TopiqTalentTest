@@ -29,7 +29,8 @@ export default function FranchiseDashboard() {
 
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', targetRole: 'asm', phone: '', asmId: '' });
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
   useEffect(() => {
     const token = localStorage.getItem('token');

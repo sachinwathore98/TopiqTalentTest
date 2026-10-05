@@ -48,8 +48,11 @@ export default function LoginPage() {
         case 'admin':
           router.push('/superadmin');
           break;
-        case 'asm':
         case 'franchise':
+        case 'franchise_owner':
+          router.push('/franchise/dashboard'); // 👈 Correct route for Franchisee dashboard
+          break;
+        case 'asm':
         case 'agent':
           router.push('/partners/dashboard');
           break;
