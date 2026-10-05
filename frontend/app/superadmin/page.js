@@ -191,6 +191,26 @@ export default function SuperAdminCommandCenter() {
     fetchAllDashboardData();
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to permanently delete this user?')) return;
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: 'User permanently deleted.' });
+        fetchAllDashboardData();
+      } else {
+        throw new Error(data.message || 'Failed to delete user.');
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Error deleting user.' });
+    }
+  };
+
   const handleOpenEditUser = (user) => {
     setEditingUser(user);
     setUserEditForm({
