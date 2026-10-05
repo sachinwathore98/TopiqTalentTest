@@ -292,6 +292,7 @@ export default function SuperAdminCommandCenter() {
             { id: 'overview', label: 'Overview & Metrics', icon: ShieldCheck },
             { id: 'admissions', label: 'Admission Management', icon: FileText },
             { id: 'hierarchy', label: 'Visual Hierarchy', icon: Layers },
+            { id: 'directory', label: 'Users Directory', icon: Users }, 
             { id: 'commission', label: 'Commission Master', icon: DollarSign },
             { id: 'wallets', label: 'Wallet Management', icon: Wallet },
             { id: 'settlements', label: '10-Day Settlements', icon: CheckCircle2 },
