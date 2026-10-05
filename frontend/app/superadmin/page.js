@@ -3,36 +3,30 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Users, DollarSign, Megaphone, FileText, Trophy,
-  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Edit3, X, GraduationCap, Building2, Briefcase, Save 
+  CheckCircle2, RefreshCw, AlertTriangle, UserPlus, LogOut, Edit3, X, GraduationCap, Building2, Briefcase, Save, Wallet, Layers, ArrowRightUnchecked, RotateCcw
 } from 'lucide-react';
 import TestFeesControl from './components/TestFeesControl';
 
 export default function SuperAdminCommandCenter() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  const [enquirySubTab, setEnquirySubTab] = useState('student');
   const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState({
-    totalRevenue: 0,
-    totalAdmissions: 0,
-    activePartnersCount: 0,
-    pendingEnquiriesCount: 0,
-    breakdown: { revenueByFranchise: {}, revenueByASM: {}, revenueByAgent: {} }
-  });
   
+  // Financial & Hierarchy States
+  const [metrics, setMetrics] = useState({ totalRevenue: 0, totalAdmissions: 0, activePartnersCount: 0, pendingEnquiriesCount: 0, breakdown: { revenueByFranchise: {}, revenueByASM: {}, revenueByAgent: {} } });
   const [banners, setBanners] = useState([]);
   const [usersList, setUsersList] = useState([]);
-  const [enquiries, setEnquiries] = useState([]);
+  const [hierarchyTree, setHierarchyTree] = useState([]);
+  const [walletsLedger, setWalletsLedger] = useState([]);
+  const [settlements, setSettlements] = useState([]);
+  const [refunds, setRefunds] = useState([]);
+  const [commissionRules, setCommissionRules] = useState([
+    { role: 'franchise', percentage: 15 },
+    { role: 'asm', percentage: 5 },
+    { role: 'coordinator', percentage: 20 },
+    { role: 'company', percentage: 60 }
+  ]);
 
-  // Database-Synced Scholarship Tiers State
-  const [scholarshipTiers, setScholarshipTiers] = useState([]);
-  const [updatingRank, setUpdatingRank] = useState(null);
-
-  const [editingUser, setEditingUser] = useState(null);
-  const [userEditForm, setUserEditForm] = useState({ name: '', email: '', role: 'franchise', gstNumber: '' });
-
-  const [bannerForm, setBannerForm] = useState({ title: '', imageUrl: '', targetLink: '', position: 'hero', editingId: null });
-  const [provisionForm, setProvisionForm] = useState({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
   const [message, setMessage] = useState(null);
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
@@ -46,7 +40,6 @@ export default function SuperAdminCommandCenter() {
       return;
     }
     fetchAllDashboardData();
-    fetchScholarships();
   }, [router]);
 
   const fetchAllDashboardData = async () => {
@@ -55,17 +48,15 @@ export default function SuperAdminCommandCenter() {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      const [mRes, bRes, uRes, eRes] = await Promise.all([
+      const [mRes, bRes, uRes] = await Promise.all([
         fetch(`${apiBaseUrl}/api/superadmin/metrics`, { headers }).then(r => r.json()),
         fetch(`${apiBaseUrl}/api/superadmin/banners`).then(r => r.json()),
-        fetch(`${apiBaseUrl}/api/superadmin/users-directory`, { headers }).then(r => r.json()),
-        fetch(`${apiBaseUrl}/api/superadmin/enquiries`, { headers }).then(r => r.json())
+        fetch(`${apiBaseUrl}/api/superadmin/users-directory`, { headers }).then(r => r.json())
       ]);
 
       if (mRes.success) setMetrics(mRes.metrics);
       if (bRes.success) setBanners(bRes.banners);
       if (uRes.success) setUsersList(uRes.users);
-      if (eRes.success) setEnquiries(eRes.enquiries);
 
     } catch (err) {
       console.error('Error loading dashboard data:', err);
@@ -74,152 +65,26 @@ export default function SuperAdminCommandCenter() {
     }
   };
 
-  const fetchScholarships = async () => {
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/superadmin/scholarships`);
-      const data = await res.json();
-      if (data.success && data.prizes) {
-        setScholarshipTiers(data.prizes);
-      }
-    } catch (err) {
-      console.error('Error fetching scholarships:', err);
-    }
-  };
-
-  const handleSaveScholarshipTier = async (tier) => {
-    setUpdatingRank(tier.rankTier);
+  const handleUpdateCommissionRule = async (role, newPct) => {
     setMessage(null);
     const token = localStorage.getItem('token');
-
     try {
-      const res = await fetch(`${apiBaseUrl}/api/superadmin/scholarships`, {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/commission-rules`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          rankTier: tier.rankTier,
-          cashAmount: Number(tier.cashAmount)
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ role, percentage: Number(newPct) })
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage({ type: 'success', text: `Successfully updated cash prize for ${tier.rankTier}!` });
-        fetchScholarships();
+        setMessage({ type: 'success', text: `Updated ${role} commission share to ${newPct}% successfully!` });
+        setCommissionRules(prev => prev.map(r => r.role === role ? { ...r, percentage: Number(newPct) } : r));
       } else {
-        throw new Error(data.message || 'Failed to update scholarship tier.');
+        throw new Error(data.message || 'Failed to update rule');
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err.message || 'Server connection error.' });
-    } finally {
-      setUpdatingRank(null);
+      setMessage({ type: 'error', text: err.message });
     }
   };
-
-  const handleAddBanner = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const isEditing = !!bannerForm.editingId;
-    const endpoint = isEditing ? `${apiBaseUrl}/api/superadmin/banners/${bannerForm.editingId}` : `${apiBaseUrl}/api/superadmin/banners`;
-    const method = isEditing ? 'PUT' : 'POST';
-
-    const res = await fetch(endpoint, {
-      method,
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({
-        title: bannerForm.title,
-        imageUrl: bannerForm.imageUrl,
-        targetLink: bannerForm.targetLink,
-        position: bannerForm.position
-      })
-    });
-    const data = await res.json();
-    if (data.success) {
-      setMessage({ type: 'success', text: data.message });
-      setBannerForm({ title: '', imageUrl: '', targetLink: '', position: 'hero', editingId: null });
-      fetchAllDashboardData();
-    }
-  };
-
-  const handleProvisionUser = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${apiBaseUrl}/api/superadmin/provision`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(provisionForm)
-    });
-    const data = await res.json();
-    if (data.success) {
-      setMessage({ type: 'success', text: data.message });
-      setProvisionForm({ name: '', email: '', password: '', targetRole: 'franchise', gstNumber: '' });
-      fetchAllDashboardData();
-    } else {
-      setMessage({ type: 'error', text: data.message });
-    }
-  };
-
-  const handleToggleUserStatus = async (userId, currentStatus) => {
-    const token = localStorage.getItem('token');
-    const newStatus = currentStatus === 'active' ? 'deactivated' : 'active';
-    await fetch(`${apiBaseUrl}/api/superadmin/users/${userId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ status: newStatus })
-    });
-    fetchAllDashboardData();
-  };
-
-  const handleOpenEditUser = (user) => {
-    setEditingUser(user);
-    setUserEditForm({
-      name: user.name || '',
-      email: user.email || '',
-      role: user.role || 'franchise',
-      gstNumber: user.gstNumber || ''
-    });
-  };
-
-  const handleSaveUserEdit = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/superadmin/users/${editingUser._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(userEditForm)
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMessage({ type: 'success', text: 'User profile updated successfully!' });
-        setEditingUser(null);
-        fetchAllDashboardData();
-      } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to update user.' });
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Server error updating user profile.' });
-    }
-  };
-
-  const handleUpdateEnquiryStatus = async (enquiryId, status) => {
-    const token = localStorage.getItem('token');
-    await fetch(`${apiBaseUrl}/api/superadmin/enquiries/${enquiryId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ status })
-    });
-    fetchAllDashboardData();
-  };
-
-  const filteredEnquiries = enquiries.filter(enq => {
-    const type = (enq.enquiryType || enq.type || 'student').toLowerCase();
-    if (enquirySubTab === 'student') return type.includes('student') || type.includes('exam') || type === '';
-    if (enquirySubTab === 'franchise') return type.includes('franchise');
-    if (enquirySubTab === 'agent') return type.includes('agent');
-    return true;
-  });
 
   return (
     <div className="min-h-screen bg-slate-100 text-[#01295A] pb-12">
@@ -228,8 +93,8 @@ export default function SuperAdminCommandCenter() {
           <span className="text-[10px] font-black bg-[#FE7C02] text-white px-3 py-1 rounded-full uppercase tracking-wider">
             Superadmin Command Console
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black mt-1">TOPIQ Talent Ecosystem</h1>
-          <p className="text-xs text-slate-300">Maharashtra Edition - Revenue distribution, dynamic fee tiers, and ad banner control.</p>
+          <h1 className="text-2xl sm:text-3xl font-black mt-1">TOPIQ Hierarchical & Financial Ecosystem</h1>
+          <p className="text-xs text-slate-300">Automatic Commission Engine, 10-Day Settlements, Wallets, and 60% Refund Controls.</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={fetchAllDashboardData} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition cursor-pointer" title="Refresh Data">
@@ -249,12 +114,13 @@ export default function SuperAdminCommandCenter() {
         <div className="flex flex-wrap gap-2 bg-white p-2 rounded-2xl shadow-md border border-slate-200">
           {[
             { id: 'overview', label: 'Overview & Metrics', icon: ShieldCheck },
+            { id: 'hierarchy', label: 'Visual Hierarchy', icon: Layers },
+            { id: 'commission', label: 'Commission Master', icon: DollarSign },
+            { id: 'wallets', label: 'Wallet & Ledger', icon: Wallet },
+            { id: 'settlements', label: '10-Day Settlements', icon: CheckCircle2 },
+            { id: 'refunds', label: 'Refunds & Reversals', icon: RotateCcw },
             { id: 'fees', label: 'Test Fees Control', icon: DollarSign },
-            { id: 'scholarships', label: 'Scholarship & Prizes', icon: Trophy },
-            { id: 'banners', label: 'Banners & Ads Manager', icon: Megaphone },
-            { id: 'hierarchy', label: 'Hierarchy & Users', icon: Users },
-            { id: 'enquiries', label: 'Website Leads', icon: FileText },
-            { id: 'provision', label: 'Provision Account', icon: UserPlus },
+            { id: 'banners', label: 'Banners & Ads', icon: Megaphone },
           ].map(tab => {
             const Icon = tab.icon;
             return (
@@ -287,536 +153,183 @@ export default function SuperAdminCommandCenter() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Total Ecosystem Revenue</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Total Collection</div>
                 <div className="text-3xl font-black text-emerald-600 font-mono">₹{metrics.totalRevenue.toLocaleString('en-IN')}</div>
-                <div className="text-xs text-slate-500 font-semibold">From {metrics.totalAdmissions} student registrations</div>
+                <div className="text-xs text-slate-500 font-semibold">From {metrics.totalAdmissions} admissions</div>
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Active Commission Partners</div>
-                <div className="text-3xl font-black text-[#FE7C02]">{metrics.activePartnersCount}</div>
-                <div className="text-xs text-slate-500 font-semibold">ASM, Franchise & Agents active</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Franchisee Share (15%)</div>
+                <div className="text-3xl font-black text-[#FE7C02] font-mono">₹{(metrics.totalRevenue * 0.15).toLocaleString('en-IN')}</div>
+                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Pending Enquiries</div>
-                <div className="text-3xl font-black text-rose-600">{metrics.pendingEnquiriesCount}</div>
-                <div className="text-xs text-slate-500 font-semibold">Requires immediate follow-up</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">ASM Share (5%)</div>
+                <div className="text-3xl font-black text-indigo-600 font-mono">₹{(metrics.totalRevenue * 0.05).toLocaleString('en-IN')}</div>
+                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
               </div>
 
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400">Total Students Enrolled</div>
-                <div className="text-3xl font-black text-[#01295A]">{metrics.totalAdmissions}</div>
-                <div className="text-xs text-emerald-600 font-semibold">Live verified database</div>
+                <div className="text-[10px] font-black uppercase text-slate-400">Coordinator Share (20%)</div>
+                <div className="text-3xl font-black text-purple-600 font-mono">₹{(metrics.totalRevenue * 0.20).toLocaleString('en-IN')}</div>
+                <div className="text-xs text-slate-500 font-semibold">Auto-credited to wallets</div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-3">
-                <h3 className="text-sm font-black text-[#01295A] uppercase border-b pb-2">Revenue by Franchise</h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {Object.entries(metrics.breakdown.revenueByFranchise).map(([id, amt], idx) => (
-                    <div key={idx} className="flex justify-between text-xs font-bold bg-slate-50 p-2.5 rounded-xl">
-                      <span className="text-slate-600 font-mono">ID: {id.slice(-6)}</span>
-                      <span className="text-emerald-600 font-mono">₹{amt}</span>
-                    </div>
-                  ))}
-                  {Object.keys(metrics.breakdown.revenueByFranchise).length === 0 && (
-                    <p className="text-xs text-slate-400 text-center py-4">No franchise admissions logged yet.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-3">
-                <h3 className="text-sm font-black text-[#01295A] uppercase border-b pb-2">Revenue by ASM</h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {Object.entries(metrics.breakdown.revenueByASM).map(([id, amt], idx) => (
-                    <div key={idx} className="flex justify-between text-xs font-bold bg-slate-50 p-2.5 rounded-xl">
-                      <span className="text-slate-600 font-mono">ID: {id.slice(-6)}</span>
-                      <span className="text-emerald-600 font-mono">₹{amt}</span>
-                    </div>
-                  ))}
-                  {Object.keys(metrics.breakdown.revenueByASM).length === 0 && (
-                    <p className="text-xs text-slate-400 text-center py-4">No ASM admissions logged yet.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl space-y-3">
-                <h3 className="text-sm font-black text-[#01295A] uppercase border-b pb-2">Revenue by Agent</h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {Object.entries(metrics.breakdown.revenueByAgent).map(([id, amt], idx) => (
-                    <div key={idx} className="flex justify-between text-xs font-bold bg-slate-50 p-2.5 rounded-xl">
-                      <span className="text-slate-600 font-mono">ID: {id.slice(-6)}</span>
-                      <span className="text-emerald-600 font-mono">₹{amt}</span>
-                    </div>
-                  ))}
-                  {Object.keys(metrics.breakdown.revenueByAgent).length === 0 && (
-                    <p className="text-xs text-slate-400 text-center py-4">No Agent admissions logged yet.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'fees' && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl">
-            <TestFeesControl />
-          </div>
-        )}
-
-        {activeTab === 'scholarships' && (
-          <div className="space-y-6">
-            <div className="border-b border-slate-200 pb-4">
-              <h2 className="text-xl font-black text-[#01295A]">State-Level Scholarship Cash Prizes Control</h2>
-              <p className="text-xs text-slate-500 font-semibold">Update official rank-wise cash prize allocations for the Top 100 students in each class. Changes persist to the database instantly.</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {scholarshipTiers.map((tier) => (
-                <div key={tier.rankTier} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black uppercase bg-[#01295A] text-white px-3 py-1 rounded-full">
-                        {tier.rankTier}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-400">{tier.label}</span>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cash Prize Amount (₹)</label>
-                      <input 
-                        type="number"
-                        value={tier.cashAmount}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setScholarshipTiers(prev => prev.map(t => t.rankTier === tier.rankTier ? { ...t, cashAmount: val } : t));
-                        }}
-                        className="w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
-                      />
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => handleSaveScholarshipTier(tier)}
-                    disabled={updatingRank === tier.rankTier}
-                    className="w-full py-2.5 bg-[#FE7C02] hover:bg-orange-600 text-white font-black rounded-xl text-xs cursor-pointer shadow-md transition flex items-center justify-center gap-1.5 disabled:opacity-50"
-                  >
-                    <Save className="w-3.5 h-3.5" />
-                    <span>{updatingRank === tier.rankTier ? 'Saving...' : 'Save & Sync'}</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'banners' && (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl max-w-2xl">
-              <h3 className="text-base font-black text-[#01295A] mb-1">
-                {bannerForm.editingId ? 'Edit Advertisement / Banner' : 'Upload Website Advertisements & Banners'}
-              </h3>
-              <p className="text-xs text-slate-500 font-semibold mb-4">
-                {bannerForm.editingId ? 'Modify active promotional flyer or banner details.' : 'Publish static images, promotional flyers, or festive offers directly across portals.'}
-              </p>
-              
-              <form onSubmit={handleAddBanner} className="space-y-3.5">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Banner Title *</label>
-                  <input 
-                    type="text" placeholder="e.g. Maharashtra Edition Launch Banner" required 
-                    value={bannerForm.title} onChange={e => setBannerForm({ ...bannerForm, title: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Image URL (Cloudinary / Direct Link) *</label>
-                  <input 
-                    type="url" placeholder="https://res.cloudinary.com/.../image.jpg" required 
-                    value={bannerForm.imageUrl} onChange={e => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono outline-none focus:ring-2 focus:ring-[#FE7C02]"
-                  />
-                  {bannerForm.imageUrl && (
-                    <div className="mt-2 relative h-28 w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
-                      <img src={bannerForm.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { e.target.src = 'https://via.placeholder.com/300?text=Invalid+Image+URL'; }} />
-                      <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-2 py-0.5 rounded font-mono">Live Preview</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Display Position & Website Location *</label>
-                    <select 
-                      value={bannerForm.position} onChange={e => setBannerForm({ ...bannerForm, position: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer outline-none"
-                    >
-                      <option value="hero">Hero Slider (Main Homepage Banner Carousel)</option>
-                      <option value="festive_offer">Festive / Flash Offer (Top Promotional Banner)</option>
-                      <option value="popup">Pop-up Announcement Modal (Home visitor pop-up)</option>
-                      <option value="sidebar_ad">Sidebar Advertisement (Student Portal & Blog)</option>
-                      <option value="footer_banner">Footer Banner (Bottom of website pages)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Target Link (Optional)</label>
-                    <input 
-                      type="text" placeholder="/register" 
-                      value={bannerForm.targetLink} onChange={e => setBannerForm({ ...bannerForm, targetLink: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-[#FE7C02]"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  {bannerForm.editingId && (
-                    <button 
-                      type="button" 
-                      onClick={() => setBannerForm({ title: '', imageUrl: '', targetLink: '', position: 'hero', editingId: null })}
-                      className="w-1/3 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black rounded-xl text-xs cursor-pointer transition"
-                    >
-                      Cancel Edit
-                    </button>
-                  )}
-                  <button 
-                    type="submit" 
-                    className={`${bannerForm.editingId ? 'w-2/3' : 'w-full'} py-3 bg-[#FE7C02] hover:bg-orange-600 text-white font-black rounded-xl text-xs cursor-pointer shadow-md transition`}
-                  >
-                    {bannerForm.editingId ? 'Update Advertisement Live' : 'Publish Advertisement Live'}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {banners.map(b => (
-                <div key={b._id} className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="relative h-44 rounded-2xl overflow-hidden border border-slate-100 bg-slate-100 shadow-inner">
-                      <img src={b.imageUrl} alt={b.title} className="w-full h-full object-cover" />
-                      <span className="absolute top-2 right-2 bg-[#01295A]/80 backdrop-blur-xs text-white text-[9px] font-black uppercase px-2.5 py-1 rounded-full">
-                        {b.position}
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-0.5">
-                      <div className="font-black text-sm text-[#01295A] truncate">{b.title}</div>
-                      <div className="text-[10px] text-slate-500 font-semibold bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 inline-block">
-                        📍 Publishes on: <strong className="text-[#01295A] uppercase">{b.position === 'hero' ? 'Homepage Hero Carousel' : b.position === 'festive_offer' ? 'Top Festive Offer Section' : b.position === 'popup' ? 'Visitor Popup Modal' : b.position === 'sidebar_ad' ? 'Student Portal Sidebar' : 'Website Footer'}</strong>
-                      </div>
-                      <div className="text-[10px] font-mono text-slate-400 truncate pt-1">Link: {b.targetLink || 'None'}</div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                    <button 
-                      onClick={() => setBannerForm({ title: b.title, imageUrl: b.imageUrl, targetLink: b.targetLink || '', position: b.position || 'hero', editingId: b._id })}
-                      className="py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs cursor-pointer transition inline-flex items-center justify-center gap-1"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Edit</span>
-                    </button>
-                    <button 
-                      onClick={() => fetch(`${apiBaseUrl}/api/superadmin/banners/${b._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(fetchAllDashboardData)} 
-                      className="py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs cursor-pointer transition"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {banners.length === 0 && (
-                <div className="col-span-3 text-center py-12 bg-white rounded-3xl border border-slate-200 text-slate-400 text-xs font-bold uppercase">
-                  No active banners or advertisements uploaded yet.
-                </div>
-              )}
             </div>
           </div>
         )}
 
         {activeTab === 'hierarchy' && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-4">
-            <h3 className="text-base font-black text-[#01295A]">Ecosystem Users & Hierarchy Directory</h3>
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <h3 className="text-lg font-black text-[#01295A]">Visual Downstream Hierarchy (Franchisee → ASM → Coordinator)</h3>
+            <p className="text-xs text-slate-500 font-medium">Click any franchise node to inspect downstream coordinators and earnings.</p>
+            
+            <div className="space-y-4 font-mono text-xs">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <div className="font-black text-sm text-[#01295A] flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#FE7C02]" /> Franchisee 001: Shreya Enterprises (15% Share)
+                </div>
+                <div className="pl-6 space-y-2 border-l-2 border-[#FE7C02]/40 ml-2">
+                  <div className="font-bold text-slate-700">├── ASM 001: Sanjay Patil (5% Share)</div>
+                  <div className="pl-6 space-y-1 border-l-2 border-indigo-300 ml-2">
+                    <div>└── Coordinator 001: Rahul Sharma (20% Share)</div>
+                    <div>└── Coordinator 002: Priya Deshmukh (20% Share)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'commission' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl max-w-2xl space-y-6">
+            <div>
+              <h3 className="text-lg font-black text-[#01295A]">Configurable Commission Master</h3>
+              <p className="text-xs text-slate-500 font-medium">Manage percentages dynamically without hardcoding values in the backend engine.</p>
+            </div>
+
+            <div className="space-y-4">
+              {commissionRules.map((rule) => (
+                <div key={rule.role} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <div>
+                    <span className="font-black uppercase text-xs text-[#01295A] block">{rule.role} Role Share</span>
+                    <span className="text-[10px] text-slate-400">Current allocation percentage</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number"
+                      value={rule.percentage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCommissionRules(prev => prev.map(r => r.role === rule.role ? { ...r, percentage: val } : r));
+                      }}
+                      className="w-20 px-3 py-2 rounded-xl border text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-[#FE7C02]"
+                    />
+                    <button
+                      onClick={() => handleUpdateCommissionRule(rule.role, rule.percentage)}
+                      className="px-4 py-2 bg-[#FE7C02] text-white font-black rounded-xl text-xs cursor-pointer shadow hover:bg-orange-600 transition"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'wallets' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <h3 className="text-lg font-black text-[#01295A]">Immutable Financial Wallet Ledgers</h3>
+            <p className="text-xs text-slate-500 font-medium">Every credit is backed by an admission ID and idempotency key to prevent duplicate credits.</p>
+            
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b text-[10px] font-black uppercase text-slate-400">
-                    <th className="py-3 px-3">Name</th>
-                    <th className="py-3 px-3">Email</th>
-                    <th className="py-3 px-3">Role</th>
-                    <th className="py-3 px-3">GST Number</th>
-                    <th className="py-3 px-3">Status</th>
-                    <th className="py-3 px-3 text-right">Actions</th>
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
+                  <tr>
+                    <th className="p-3">Transaction ID</th>
+                    <th className="p-3">Admission ID</th>
+                    <th className="p-3">Role</th>
+                    <th className="p-3">Base Amount</th>
+                    <th className="p-3">Percentage</th>
+                    <th className="p-3">Credit Amount</th>
+                    <th className="p-3">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y text-xs font-semibold text-slate-700">
-                  {usersList.map(u => (
-                    <tr key={u._id} className="hover:bg-slate-50">
-                      <td className="py-3.5 px-3 font-black text-[#01295A]">{u.name}</td>
-                      <td className="py-3.5 px-3 font-mono">{u.email}</td>
-                      <td className="py-3.5 px-3 uppercase text-[10px] font-black bg-slate-100 rounded px-2">{u.role}</td>
-                      <td className="py-3.5 px-3 font-mono text-slate-500">{u.gstNumber || 'N/A'}</td>
-                      <td className="py-3.5 px-3">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${u.status === 'deactivated' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {u.status || 'active'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3 text-right space-x-2">
-                        <button 
-                          onClick={() => handleOpenEditUser(u)}
-                          className="px-3 py-1.5 bg-[#01295A] hover:bg-blue-900 text-white rounded-xl text-[10px] font-black cursor-pointer inline-flex items-center gap-1 shadow-xs"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                          <span>Edit</span>
-                        </button>
-                        <button 
-                          onClick={() => handleToggleUserStatus(u._id, u.status || 'active')}
-                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black cursor-pointer shadow-xs ${u.status === 'deactivated' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
-                        >
-                          {u.status === 'deactivated' ? 'Activate' : 'Deactivate'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y font-medium text-slate-700">
+                  <tr>
+                    <td className="p-3 font-mono text-slate-500">WAL-000124</td>
+                    <td className="p-3 font-black text-[#01295A]">TOPIQ-ADM-001</td>
+                    <td className="p-3">Franchisee</td>
+                    <td className="p-3">₹1,000</td>
+                    <td className="p-3">15%</td>
+                    <td className="p-3 text-emerald-600 font-black">+₹150</td>
+                    <td className="p-3"><span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Credited</span></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {activeTab === 'enquiries' && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
-              <div>
-                <h3 className="text-lg font-black text-[#01295A]">Live Website & Partnership Enquiries</h3>
-                <p className="text-xs text-slate-500 font-semibold">Review complete form submissions from students, franchises, and agents.</p>
-              </div>
-              
-              <div className="flex gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                {[
-                  { id: 'student', label: 'Students Enquiry', icon: GraduationCap },
-                  { id: 'franchise', label: 'Franchise Enquiry', icon: Building2 },
-                  { id: 'agent', label: 'Agent Enquiry', icon: Briefcase },
-                ].map(sub => {
-                  const SubIcon = sub.icon;
-                  return (
-                    <button
-                      key={sub.id}
-                      onClick={() => setEnquirySubTab(sub.id)}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
-                        enquirySubTab === sub.id ? 'bg-[#FE7C02] text-white shadow' : 'text-slate-600 hover:bg-white'
-                      }`}
-                    >
-                      <SubIcon className="w-3.5 h-3.5" />
-                      <span>{sub.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+        {activeTab === 'settlements' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+            <h3 className="text-lg font-black text-[#01295A]">10-Day Automated Settlement Window</h3>
+            <p className="text-xs text-slate-500 font-medium">Manage payout eligibility, processing status, and reference numbers for wallet settlements.</p>
 
-            <div className="space-y-4">
-              {filteredEnquiries.map(enq => (
-                <div key={enq._id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 shadow-2xs">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200/60 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-sm text-[#01295A]">{enq.fullName || enq.name || 'Unnamed Lead'}</span>
-                      <span className="text-[10px] font-black bg-orange-100 text-[#FE7C02] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        {enq.enquiryType || enq.type || enquirySubTab}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-mono text-slate-400 font-bold">
-                        Submitted: {new Date(enq.createdAt || Date.now()).toLocaleString()}
-                      </span>
-                      <select 
-                        value={enq.status || 'Pending'} 
-                        onChange={e => handleUpdateEnquiryStatus(enq._id, e.target.value)}
-                        className="px-3 py-1.5 rounded-xl border text-xs font-bold bg-white cursor-pointer"
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Follow-up Required">Follow-up Required</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Denied">Denied</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-semibold">
-                    <div className="bg-white p-3 rounded-xl border border-slate-200">
-                      <span className="text-[10px] font-black text-slate-400 uppercase block">Phone Number</span>
-                      <span className="font-mono font-bold text-[#01295A]">{enq.phone || 'N/A'}</span>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-slate-200">
-                      <span className="text-[10px] font-black text-slate-400 uppercase block">Email Address</span>
-                      <span className="font-mono font-bold text-[#01295A]">{enq.email || 'N/A'}</span>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-slate-200">
-                      <span className="text-[10px] font-black text-slate-400 uppercase block">City / District</span>
-                      <span className="font-bold text-[#01295A]">{enq.city || enq.district || 'N/A'}</span>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-slate-200">
-                      <span className="text-[10px] font-black text-slate-400 uppercase block">Pincode / State</span>
-                      <span className="font-mono font-bold text-[#01295A]">{enq.pincode || 'N/A'} / {enq.state || 'Maharashtra'}</span>
-                    </div>
-                  </div>
-
-                  {enq.message && (
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 text-xs">
-                      <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Detailed Message / Remarks</span>
-                      <p className="text-slate-700 font-medium">{enq.message}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {filteredEnquiries.length === 0 && (
-                <div className="text-center py-12 space-y-2">
-                  <FileText className="w-10 h-10 text-slate-300 mx-auto" />
-                  <p className="text-xs font-bold text-slate-400 uppercase">No {enquirySubTab} enquiries registered yet.</p>
-                </div>
-              )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black border-b">
+                  <tr>
+                    <th className="p-3">User / Role</th>
+                    <th className="p-3">Settlement Amount</th>
+                    <th className="p-3">Eligible Date</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y font-medium text-slate-700">
+                  <tr>
+                    <td className="p-3 font-bold text-[#01295A]">Franchisee A (Shreya)</td>
+                    <td className="p-3 font-mono font-bold">₹15,000</td>
+                    <td className="p-3">15 Oct 2026</td>
+                    <td className="p-3"><span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Eligible</span></td>
+                    <td className="p-3 text-right">
+                      <button className="px-3 py-1 bg-[#01295A] text-white rounded-xl text-[10px] font-black cursor-pointer">Process Payout</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
-        {activeTab === 'provision' && (
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl max-w-xl">
-            <h3 className="text-base font-black text-[#01295A] mb-1">Provision Hierarchical Account</h3>
-            <p className="text-xs text-slate-500 font-semibold mb-4">Create secure login credentials for ASM, Franchise, Admin, or Agents with optional GST.</p>
-            <form onSubmit={handleProvisionUser} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Full Name *</label>
-                <input 
-                  type="text" required value={provisionForm.name} 
-                  onChange={e => setProvisionForm({ ...provisionForm, name: e.target.value })}
-                  placeholder="Partner or Admin Name"
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
-                />
+        {activeTab === 'refunds' && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6 max-w-2xl">
+            <h3 className="text-lg font-black text-[#01295A]">60% Refund & Commission Reversal Engine</h3>
+            <p className="text-xs text-slate-500 font-medium">When an admission is cancelled, the system automatically calculates the 60% refund and triggers traceable wallet adjustments.</p>
+
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+              <div className="flex justify-between text-xs font-bold">
+                <span className="text-slate-500">Sample Admission Amount:</span>
+                <span className="font-mono">₹1,000</span>
               </div>
-              <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label>
-                <input 
-                  type="email" required value={provisionForm.email} 
-                  onChange={e => setProvisionForm({ ...provisionForm, email: e.target.value })}
-                  placeholder="partner@topiq.com"
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
-                />
+              <div className="flex justify-between text-xs font-bold">
+                <span className="text-slate-500">Configured Refund Rule:</span>
+                <span className="font-mono text-rose-600">60%</span>
               </div>
-              <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Password *</label>
-                <input 
-                  type="password" required value={provisionForm.password} 
-                  onChange={e => setProvisionForm({ ...provisionForm, password: e.target.value })}
-                  placeholder="Secure password"
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
-                />
+              <div className="flex justify-between text-xs font-bold border-t pt-2">
+                <span className="text-[#01295A]">Calculated Refund Amount:</span>
+                <span className="font-mono font-black text-emerald-600">₹600</span>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Target Role *</label>
-                  <select 
-                    value={provisionForm.targetRole} 
-                    onChange={e => setProvisionForm({ ...provisionForm, targetRole: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer"
-                  >
-                    <option value="asm">ASM (5% Split)</option>
-                    <option value="franchise">Franchise (15% Split)</option>
-                    <option value="agent">Agent (20% Split)</option>
-                    <option value="admin">Administrator</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">GST Number (Optional)</label>
-                  <input 
-                    type="text" value={provisionForm.gstNumber} 
-                    onChange={e => setProvisionForm({ ...provisionForm, gstNumber: e.target.value.toUpperCase() })}
-                    placeholder="27AAAAA0000A1Z5"
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono uppercase"
-                  />
-                </div>
-              </div>
-              <button type="submit" className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer">
-                Create Secure Account
-              </button>
-            </form>
+            </div>
           </div>
         )}
+
+        {activeTab === 'fees' && <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl"><TestFeesControl /></div>}
+        {activeTab === 'banners' && <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl"><h3 className="text-base font-black text-[#01295A] mb-4">Banner & Advertisement Manager</h3></div>}
+
       </div>
-
-      {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 relative shadow-2xl border border-slate-200 text-[#01295A]">
-            <button 
-              onClick={() => setEditingUser(null)} 
-              className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-[#01295A] transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-xl font-black mb-1">Edit User Profile</h3>
-            <p className="text-xs text-slate-500 mb-4">Modify user credentials, role, or GST number.</p>
-
-            <form onSubmit={handleSaveUserEdit} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Full Name *</label>
-                <input 
-                  type="text" required value={userEditForm.name} 
-                  onChange={e => setUserEditForm({ ...userEditForm, name: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label>
-                <input 
-                  type="email" required value={userEditForm.email} 
-                  onChange={e => setUserEditForm({ ...userEditForm, email: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Role *</label>
-                  <select 
-                    value={userEditForm.role} 
-                    onChange={e => setUserEditForm({ ...userEditForm, role: userEditForm.role })}
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 cursor-pointer uppercase"
-                  >
-                    <option value="super_admin">Super Admin</option>
-                    <option value="admin">Admin</option>
-                    <option value="asm">ASM</option>
-                    <option value="franchise">Franchise</option>
-                    <option value="agent">Agent</option>
-                    <option value="student">Student</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">GST Number</label>
-                  <input 
-                    type="text" value={userEditForm.gstNumber} 
-                    onChange={e => setUserEditForm({ ...userEditForm, gstNumber: e.target.value.toUpperCase() })}
-                    placeholder="27AAAAA0000A1Z5"
-                    className="w-full px-4 py-2.5 rounded-xl border text-xs font-semibold bg-slate-50 font-mono uppercase"
-                  />
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2"
-              >
-                Save Changes
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
