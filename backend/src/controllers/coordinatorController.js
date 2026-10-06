@@ -7,7 +7,6 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'mocksecret'
 });
 
-// 1. Get Coordinator Dashboard Metrics
 const getCoordinatorDashboard = async (req, res) => {
   try {
     const coordinatorId = req.user?.id || req.user?._id;
@@ -60,7 +59,6 @@ const getCoordinatorDashboard = async (req, res) => {
   }
 };
 
-// 2. Get Upstream Hierarchy
 const getHierarchy = async (req, res) => {
   try {
     const franchises = await User.find({ role: { $in: ['franchise', 'franchise_owner'] } }).select('name _id').lean();
@@ -72,7 +70,6 @@ const getHierarchy = async (req, res) => {
   }
 };
 
-// 3. Create Razorpay Order
 const createRazorpayOrder = async (req, res) => {
   try {
     const { admissionAmount } = req.body;
@@ -95,7 +92,6 @@ const createRazorpayOrder = async (req, res) => {
   }
 };
 
-// 4. Verify Payment & Finalize Admission
 const verifyAndCreateAdmission = async (req, res) => {
   try {
     const coordinatorId = req.user?.id || req.user?._id;
@@ -167,14 +163,7 @@ const verifyAndCreateAdmission = async (req, res) => {
   }
 };
 
-// Explicit Module Exports
-module.exports = {
-  getCoordinatorDashboard,
-  getHierarchy,
-  createRazorpayOrder,
-  verifyAndCreateAdmission
-};
-exports.updateAdmission = async (req, res) => {
+const updateAdmission = async (req, res) => {
   try {
     const { admissionId } = req.params;
     const { studentName, mobile, email, studentClass, admissionStatus, paymentStatus } = req.body;
@@ -189,4 +178,12 @@ exports.updateAdmission = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Error updating admission record.' });
   }
+};
+
+module.exports = {
+  getCoordinatorDashboard,
+  getHierarchy,
+  createRazorpayOrder,
+  verifyAndCreateAdmission,
+  updateAdmission
 };
