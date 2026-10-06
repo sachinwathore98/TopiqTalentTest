@@ -46,7 +46,7 @@ router.get('/metrics', verifySuperAdmin, getMetrics);
 // 2. ADMISSIONS MANAGEMENT ROUTE
 router.get('/admissions', verifySuperAdmin, getAllAdmissions);
 
-// 3. EXAM FEES
+// 3. EXAM FEES & LIVE FEE MATRIX
 router.get('/fees', async (req, res) => {
   try {
     const existingFees = await ExamConfig.find({});
@@ -75,6 +75,27 @@ router.get('/fees', async (req, res) => {
   } catch (err) {
     console.error('Error fetching fees:', err);
     return res.status(500).json({ success: false, message: 'Error fetching fees.' });
+  }
+});
+
+// Live Fee Matrix Endpoint for Coordinator & Public Forms
+router.get('/fee-matrix', async (req, res) => {
+  try {
+    const existingFees = await ExamConfig.find({});
+    const feeMap = {};
+    existingFees.forEach(f => {
+      feeMap[f.className] = f.testFee;
+    });
+
+    const matrix = classesList.map(className => ({
+      class: className,
+      fee: feeMap[className] !== undefined ? feeMap[className] : 1999
+    }));
+
+    return res.status(200).json({ success: true, matrix });
+  } catch (err) {
+    console.error('Error fetching fee matrix:', err);
+    return res.status(500).json({ success: false, message: 'Error fetching fee matrix.' });
   }
 });
 

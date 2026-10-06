@@ -1,15 +1,7 @@
 const User = require('../models/User');
 const Admission = require('../models/Admission');
 
-// Safely try to require Exam model if present
-let Exam = null;
-try {
-  Exam = require('../models/Exam');
-} catch (e) {
-  // Exam model optional
-}
-
-// 1. Get Coordinator Dashboard Metrics & Isolated Admissions
+// Get Coordinator Dashboard Metrics
 exports.getCoordinatorDashboard = async (req, res) => {
   try {
     const coordinatorId = req.user?.id || req.user?._id;
@@ -62,7 +54,19 @@ exports.getCoordinatorDashboard = async (req, res) => {
   }
 };
 
-// 2. Create Admission with Live Rate Sync & Multi-Tier Upstream Commission Distribution
+// Get Upstream Hierarchy (Franchises & ASMs) for Coordinator Assignment
+exports.getHierarchy = async (req, res) => {
+  try {
+    const franchises = await User.find({ role: { $in: ['franchise', 'franchise_owner'] } }).select('name _id').lean();
+    const asms = await User.find({ role: 'asm' }).select('name _id franchiseId').lean();
+    return res.status(200).json({ success: true, franchises, asms });
+  } catch (err) {
+    console.error('Error fetching hierarchy:', err);
+    return res.status(500).json({ success: false, message: 'Server error fetching hierarchy.' });
+  }
+};
+
+// Create Admission with Upstream Commission Distribution
 exports.createAdmission = async (req, res) => {
   try {
     const coordinatorId = req.user?.id || req.user?._id;
@@ -74,36 +78,28 @@ exports.createAdmission = async (req, res) => {
 
     const {
       studentName, mobile, email, studentClass, school, parentDetails, address,
-      examName, examCategory, examYear, examDate, admissionAmount, paymentMethod
+      examName, admissionAmount, paymentMethod, franchiseId, asmId
     } = req.body;
 
-    // Resolve Upstream Hierarchy: Coordinator -> ASM -> Franchisee
-    const asmId = coordinatorUser.asmId;
-    let franchiseId = coordinatorUser.franchiseId;
+    // Resolve Upstream Hierarchy
+    const resolvedAsmId = asmId || coordinatorUser.asmId;
+    let resolvedFranchiseId = franchiseId || coordinatorUser.franchiseId;
 
-    if (!franchiseId && asmId) {
-      const asmUser = await User.findById(asmId);
-      if (asmUser) franchiseId = asmUser.franchiseId;
+    if (!resolvedFranchiseId && resolvedAsmId) {
+      const asmUser = await User.findById(resolvedAsmId);
+      if (asmUser) resolvedFranchiseId = asmUser.franchiseId;
     }
 
-    let amount = admissionAmount ? parseFloat(admissionAmount) : 1000;
-    if (Exam && examName) {
-      const liveExam = await Exam.findOne({ title: new RegExp(`^${examName}$`, 'i') });
-      if (liveExam && liveExam.fee) {
-        amount = liveExam.fee;
-      }
-    }
+    const amount = admissionAmount ? parseFloat(admissionAmount) : 1999;
 
-    // Generate unique Admission ID (e.g., TOPIQ-ADM-000001)
-    const count = await Admission.countDocuments();
-    const admissionId = `TOPIQ-ADM-${String(count + 1).padStart(6, '0')}`;
-
-    // Multi-tier commission distribution set by admin/system rules
-    // Franchise: 15%, ASM: 5%, Coordinator: 20%, TOPIQ Platform Share: 60%
+    // Multi-tier commission distribution
     const franchiseCommission = amount * 0.15;
     const asmCommission = amount * 0.05;
     const coordinatorCommission = amount * 0.20;
     const topiqShare = amount * 0.60;
+
+    const count = await Admission.countDocuments();
+    const admissionId = `TOPIQ-ADM-${String(count + 1).padStart(6, '0')}`;
 
     const newAdmission = new Admission({
       admissionId,
@@ -115,11 +111,8 @@ exports.createAdmission = async (req, res) => {
       parentDetails,
       address,
       examName: examName || 'TOPIQ Talent Test',
-      examCategory: examCategory || 'General',
-      examYear: examYear || '2026',
-      examDate: examDate ? new Date(examDate) : new Date(),
-      franchiseId,
-      asmId,
+      franchiseId: resolvedFranchiseId,
+      asmId: resolvedAsmId,
       coordinatorId,
       admissionAmount: amount,
       paymentStatus: 'Paid',
@@ -137,7 +130,7 @@ exports.createAdmission = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `Admission created successfully and commissions distributed upstream! ID: ${admissionId}`,
+      message: `Admission created successfully! ID: ${admissionId}`,
       admission: newAdmission
     });
   } catch (err) {
