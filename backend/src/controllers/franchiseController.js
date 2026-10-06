@@ -139,7 +139,15 @@ exports.getFranchiseDashboard = async (req, res) => {
 
 exports.provisionMember = async (req, res) => {
   try {
+    // Robustly extract franchiseId from request scope, token, or user object
     let franchiseId = req.franchiseScope || req.user?.id || req.user?._id || req.user?.userId;
+    
+    // Fallback: if token has email, find the user document
+    if (!franchiseId && req.user?.email) {
+      const foundUser = await User.findOne({ email: req.user.email.toLowerCase().trim() });
+      if (foundUser) franchiseId = foundUser._id;
+    }
+
     const { name, email, password, targetRole, phone, asmId } = req.body;
 
     if (!['asm', 'coordinator'].includes(targetRole)) {
@@ -158,13 +166,14 @@ exports.provisionMember = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password || 'topiq123', 10);
 
+    // Explicitly set franchiseId and asmId so hierarchy binding is permanent
     const newUser = new User({
       name,
       email: normalizedEmail,
       password: hashedPassword,
       role: targetRole,
       phone: phone || '',
-      franchiseId: franchiseId,
+      franchiseId: franchiseId || null,
       asmId: targetRole === 'coordinator' ? asmId : undefined,
       status: 'active'
     });
@@ -173,8 +182,8 @@ exports.provisionMember = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `${targetRole.toUpperCase()} created successfully!`,
-      user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role }
+      message: `Successfully created ${targetRole.toUpperCase()}: ${name}`,
+      user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role, franchiseId: newUser.franchiseId }
     });
   } catch (err) {
     console.error('Error provisioning member:', err);
