@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Wallet, FileText, RefreshCw, LogOut, CheckCircle2, Plus, X, ArrowDownRight, Search } from 'lucide-react';
+import { Users, Wallet, FileText, RefreshCw, LogOut, CheckCircle2, Plus, X, ArrowDownRight, Search, Edit3 } from 'lucide-react';
 
 export default function CoordinatorDashboard() {
   const router = useRouter();
@@ -30,6 +30,9 @@ export default function CoordinatorDashboard() {
   });
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingAdmission, setEditingAdmission] = useState(null);
+  const [editForm, setEditForm] = useState({ studentName: '', mobile: '', email: '', studentClass: '', admissionStatus: 'Confirmed', paymentStatus: 'Paid' });
+
   const [liveClassRates, setLiveClassRates] = useState([
     { class: 'Class 3', fee: 1799 },
     { class: 'Class 4', fee: 1799 },
@@ -69,7 +72,6 @@ export default function CoordinatorDashboard() {
     fetchLiveFeeMatrix();
     fetchUpstreamHierarchy();
 
-    // Load Razorpay Script Dynamically
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
@@ -134,13 +136,33 @@ export default function CoordinatorDashboard() {
     });
   };
 
+  const handleSaveEditAdmission = async (e) => {
+    e.preventDefault();
+    setSuccessMsg(''); setErrorMsg('');
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/coordinator/admissions/${editingAdmission._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update admission.');
+
+      setSuccessMsg('Admission record updated successfully!');
+      setEditingAdmission(null);
+      fetchCoordinatorDashboard();
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
   const handleRazorpayPayment = async (e) => {
     e.preventDefault();
     setSuccessMsg(''); setErrorMsg('');
     const token = localStorage.getItem('token');
 
     try {
-      // 1. Create Razorpay Order on Backend
       const orderRes = await fetch(`${apiBaseUrl}/api/coordinator/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -157,7 +179,6 @@ export default function CoordinatorDashboard() {
         description: `Exam Registration for ${admForm.studentClass} (${admForm.examName})`,
         order_id: orderData.order.id,
         handler: async function (response) {
-          // 2. On Successful Payment, Verify & Register Admission + Upstream Commissions
           try {
             const verifyRes = await fetch(`${apiBaseUrl}/api/coordinator/verify-admission`, {
               method: 'POST',
@@ -289,13 +310,51 @@ export default function CoordinatorDashboard() {
           </button>
         </div>
 
-        {/* Tab 2: Admission History & Tracking */}
+        {/* Tab 1: Exam & Admission Overview */}
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
+              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Exam-wise Admission Distribution</h2>
+              <div className="space-y-3">
+                {Object.entries(coordData.metrics.examWise || {}).map(([exam, count], idx) => (
+                  <div key={idx} className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-700">{exam}</span>
+                    <span className="text-xs font-black text-indigo-600 font-mono">{count} Admissions</span>
+                  </div>
+                ))}
+                {Object.keys(coordData.metrics.examWise || {}).length === 0 && (
+                  <p className="text-xs text-slate-400 italic">No exam admission records registered yet.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
+              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Commission Engine Summary</h2>
+              <div className="space-y-3">
+                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-600">Commission Rate</span>
+                  <span className="text-xs font-black text-purple-600 font-mono">20% Automated Share</span>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-600">Total Wallet Credits</span>
+                  <span className="text-xs font-black text-emerald-600 font-mono">₹{coordData.metrics.totalCommission}</span>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-600">Hierarchy Scope</span>
+                  <span className="text-xs font-black text-[#01295A] font-mono">Isolated to Coordinator Node</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: Admission History & Tracking with Edit Option */}
         {activeTab === 'admissions' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">CRM Admission Records & Ledger</h2>
-                <p className="text-xs text-slate-500 font-medium mt-1">Review student admissions, class levels, payment statuses, and 20% commission credits.</p>
+                <p className="text-xs text-slate-500 font-medium mt-1">Review student admissions, class levels, payment statuses, and edit records if necessary.</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -320,9 +379,10 @@ export default function CoordinatorDashboard() {
                     <th className="py-3 px-4">Class</th>
                     <th className="py-3 px-4">Exam</th>
                     <th className="py-3 px-4">Fee Amount</th>
-                    <th className="py-3 px-4">My Commission (20%)</th>
+                    <th className="py-3 px-4">Commission (20%)</th>
                     <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -336,6 +396,11 @@ export default function CoordinatorDashboard() {
                       <td className="py-3.5 px-4 font-mono font-black text-emerald-600">+₹{adm.coordinatorCommission || adm.admissionAmount * 0.20}</td>
                       <td className="py-3.5 px-4"><span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">{adm.paymentStatus}</span></td>
                       <td className="py-3.5 px-4"><span className="bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded text-[10px] font-bold">{adm.admissionStatus}</span></td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button onClick={() => { setEditingAdmission(adm); setEditForm({ studentName: adm.studentName, mobile: adm.mobile, email: adm.email, studentClass: adm.studentClass, admissionStatus: adm.admissionStatus || 'Confirmed', paymentStatus: adm.paymentStatus || 'Paid' }); }} className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer inline-flex items-center gap-1">
+                          <Edit3 className="w-3 h-3" /> Edit
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -351,6 +416,24 @@ export default function CoordinatorDashboard() {
         )}
 
       </div>
+
+      {/* Edit Admission Modal */}
+      {editingAdmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 relative shadow-2xl space-y-4">
+            <button onClick={() => setEditingAdmission(null)} className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400"><X className="w-5 h-5" /></button>
+            <h3 className="text-xl font-black text-[#01295A]">Edit Admission Record</h3>
+            <form onSubmit={handleSaveEditAdmission} className="space-y-3">
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Name *</label><input type="text" required value={editForm.studentName} onChange={e => setEditForm({ ...editForm, studentName: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Mobile *</label><input type="text" required value={editForm.mobile} onChange={e => setEditForm({ ...editForm, mobile: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-mono" /></div>
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class *</label><input type="text" required value={editForm.studentClass} onChange={e => setEditForm({ ...editForm, studentClass: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Admission Status *</label><select value={editForm.admissionStatus} onChange={e => setEditForm({ ...editForm, admissionStatus: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-slate-50"><option value="Confirmed">Confirmed</option><option value="Pending">Pending</option><option value="Cancelled">Cancelled</option></select></div>
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Payment Status *</label><select value={editForm.paymentStatus} onChange={e => setEditForm({ ...editForm, paymentStatus: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-slate-50"><option value="Paid">Paid</option><option value="Unpaid">Unpaid</option><option value="Refunded">Refunded</option></select></div>
+              <button type="submit" className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2">Save Changes</button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Razorpay Checkout Modal */}
       {showCreateModal && (

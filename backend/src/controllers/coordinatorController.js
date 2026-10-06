@@ -174,3 +174,19 @@ module.exports = {
   createRazorpayOrder,
   verifyAndCreateAdmission
 };
+exports.updateAdmission = async (req, res) => {
+  try {
+    const { admissionId } = req.params;
+    const { studentName, mobile, email, studentClass, admissionStatus, paymentStatus } = req.body;
+    
+    const updated = await Admission.findByIdAndUpdate(
+      admissionId,
+      { studentName, mobile, email, studentClass, admissionStatus, paymentStatus },
+      { new: true }
+    );
+
+    return res.status(200).json({ success: true, message: 'Admission updated successfully.', updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Error updating admission record.' });
+  }
+};
