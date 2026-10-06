@@ -1,10 +1,7 @@
 const User = require('../models/User');
 const Admission = require('../models/Admission');
-const WalletLedger = require('../models/WalletLedger');
-const CommissionTransaction = require('../models/CommissionTransaction');
 const bcrypt = require('bcryptjs');
 
-// 1. Get Franchisee Dashboard Metrics, Hierarchical Commissions & Team
 exports.getFranchiseDashboard = async (req, res) => {
   try {
     let franchiseId = req.franchiseScope || req.user?.id || req.user?._id || req.user?.userId;
@@ -14,31 +11,28 @@ exports.getFranchiseDashboard = async (req, res) => {
       if (franchiseUser) franchiseId = franchiseUser._id;
     }
 
-    // Fetch all ASMs in the system
-    const asms = await User.find({ role: 'asm' }).select('-password').lean();
+    // Strict Hierarchy: Fetch ONLY ASMs belonging to this Franchise
+    const asms = await User.find({ 
+      role: 'asm', 
+      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }] 
+    }).select('-password').lean();
     
-    // Fetch ALL coordinators in the system as a reliable fallback pool
+    // Fetch ALL coordinators in the system to filter strictly by ASM
     const allCoordinators = await User.find({ role: 'coordinator' }).select('-password').lean();
 
-    // Build hierarchical tree
+    // Build strict hierarchical tree
     const asmHierarchy = await Promise.all(asms.map(async (asm) => {
-      // Find coordinators matching asmId or fallback to any unassigned/matching coordinator
-      let coordinators = allCoordinators.filter(c => {
+      // Strict matching: Coordinator must belong to this specific ASM
+      const coordinators = allCoordinators.filter(c => {
         if (!c.asmId) return false;
         return c.asmId.toString() === asm._id.toString() || c.asmId === asm._id;
       });
-
-      // If no strict match found by ID but coordinators exist, attach them or match by name/franchise
-      if (coordinators.length === 0 && allCoordinators.length > 0) {
-        // If there's only one ASM and coordinators exist without matching asmId, attach them for visibility
-        coordinators = allCoordinators;
-      }
 
       const coordinatorsWithAdmissions = await Promise.all(coordinators.map(async (coord) => {
         const admissions = await Admission.find({ 
           $or: [{ coordinatorId: coord._id }, { coordinatorId: coord._id?.toString() }] 
         }).lean();
-        const totalCommission = admissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1000) * 0.15), 0);
+        const totalCommission = admissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1999) * 0.15), 0);
         return {
           ...coord,
           admissionsCount: admissions.length,
@@ -51,7 +45,7 @@ exports.getFranchiseDashboard = async (req, res) => {
         $or: [{ asmId: asm._id }, { asmId: asm._id?.toString() }] 
       }).lean();
 
-      const totalAsmCommission = allAsmAdmissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1000) * 0.15), 0);
+      const totalAsmCommission = allAsmAdmissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1999) * 0.15), 0);
 
       return {
         ...asm,
@@ -61,7 +55,13 @@ exports.getFranchiseDashboard = async (req, res) => {
       };
     }));
 
-    const allAdmissions = await Admission.find().lean();
+    const allAdmissions = await Admission.find({
+      $or: [
+        { franchiseId: franchiseId },
+        { franchiseId: franchiseId?.toString() }
+      ]
+    }).lean();
+
     const totalAdmissionsCount = allAdmissions.length;
     
     const todayStart = new Date();
@@ -74,7 +74,7 @@ exports.getFranchiseDashboard = async (req, res) => {
     const monthlyAdmissions = allAdmissions.filter(a => new Date(a.createdAt) >= monthStart).length;
 
     const calculatedCommissions = allAdmissions.map(adm => {
-      const amount = adm.admissionAmount || 1000;
+      const amount = adm.admissionAmount || 1999;
       const commission = amount * 0.15;
       return {
         admissionId: adm.admissionId || adm._id.toString().slice(-6),
@@ -100,8 +100,8 @@ exports.getFranchiseDashboard = async (req, res) => {
         monthlyAdmissions,
         myCommission: availableWallet,
         availableWallet,
-        pendingSettlement: 15000,
-        settledAmount: 26250
+        pendingSettlement: availableWallet * 0.20,
+        settledAmount: availableWallet * 0.80
       },
       asmHierarchy,
       commissions: calculatedCommissions,
@@ -114,7 +114,6 @@ exports.getFranchiseDashboard = async (req, res) => {
   }
 };
 
-// 2. Provision Downstream User (ASM or Coordinator)
 exports.provisionMember = async (req, res) => {
   try {
     let franchiseId = req.franchiseScope || req.user?.id || req.user?._id || req.user?.userId;
@@ -160,24 +159,21 @@ exports.provisionMember = async (req, res) => {
   }
 };
 
-// 3. Request Bank Withdrawal Payout
 exports.requestWithdrawal = async (req, res) => {
   try {
-    const { amount, bankDetails } = req.body;
+    const { amount } = req.body;
     if (!amount || amount <= 0) {
       return res.status(400).json({ success: false, message: 'Invalid withdrawal amount.' });
     }
     return res.status(200).json({
       success: true,
-      message: `Withdrawal request of ₹${amount} submitted successfully to bank account.`
+      message: `Withdrawal request of ₹${amount} submitted successfully.`
     });
   } catch (err) {
-    console.error('Error processing withdrawal:', err);
     return res.status(500).json({ success: false, message: 'Server error processing withdrawal.' });
   }
 };
 
-// 4. Remove Member
 exports.removeMember = async (req, res) => {
   try {
     const { userId } = req.params;
