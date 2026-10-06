@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Wallet, FileText, RefreshCw, LogOut, CheckCircle2, Plus, X, ArrowDownRight, Search, Edit3 } from 'lucide-react';
+import { Users, Wallet, FileText, RefreshCw, LogOut, CheckCircle2, Plus, X, ArrowDownRight, Search, Edit3, ChevronRight, BookOpen, Layers } from 'lucide-react';
 
 export default function CoordinatorDashboard() {
   const router = useRouter();
@@ -32,6 +32,17 @@ export default function CoordinatorDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAdmission, setEditingAdmission] = useState(null);
   const [editForm, setEditForm] = useState({ studentName: '', mobile: '', email: '', studentClass: '', admissionStatus: 'Confirmed', paymentStatus: 'Paid' });
+
+  // Selected class for drill-down modal inspection
+  const [selectedClassModal, setSelectedClassModal] = useState(null);
+  const [classModalSearch, setClassModalSearch] = useState('');
+  const [classModalStatusFilter, setClassModalStatusFilter] = useState('all');
+
+  const allStandardClasses = [
+    'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
+    'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
+    'Competitive / Above 12'
+  ];
 
   const [liveClassRates, setLiveClassRates] = useState([
     { class: 'Class 3', fee: 1799 },
@@ -225,11 +236,18 @@ export default function CoordinatorDashboard() {
   const filteredAdmissions = (coordData.admissions || []).filter(adm => {
     const matchesSearch = !searchQuery || 
       (adm.studentName && adm.studentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (adm.admissionId && adm.admissionId.toLowerCase().includes(searchQuery.toLowerCase()));
+      (adm.admissionId && adm.admissionId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (adm.studentClass && adm.studentClass.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatus = filterStatus === 'all' || adm.admissionStatus === filterStatus;
     return matchesSearch && matchesStatus;
   });
+
+  // Calculate counts per class for the overview buttons
+  const classCounts = allStandardClasses.reduce((acc, className) => {
+    acc[className] = (coordData.admissions || []).filter(a => a.studentClass === className).length;
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#01295A] py-8 px-4 sm:px-6 lg:px-8">
@@ -245,7 +263,7 @@ export default function CoordinatorDashboard() {
               </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight">{coordData.name} — Coordinator Dashboard</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Razorpay checkout integration with automatic upstream commission distribution upon payment confirmation.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Professional CRM admission management with interactive class distribution buttons & live fee syncing.</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => fetchCoordinatorDashboard()} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold">
@@ -310,45 +328,69 @@ export default function CoordinatorDashboard() {
           </button>
         </div>
 
-        {/* Tab 1: Exam & Admission Overview */}
+        {/* Tab 1: Interactive Class-Wise Overview Grid */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
-              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Exam-wise Admission Distribution</h2>
-              <div className="space-y-3">
-                {Object.entries(coordData.metrics.examWise || {}).map(([exam, count], idx) => (
-                  <div key={idx} className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-700">{exam}</span>
-                    <span className="text-xs font-black text-indigo-600 font-mono">{count} Admissions</span>
-                  </div>
-                ))}
-                {Object.keys(coordData.metrics.examWise || {}).length === 0 && (
-                  <p className="text-xs text-slate-400 italic">No exam admission records registered yet.</p>
-                )}
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-[#FE7C02]" /> Exam-Wise & Class Admission Distribution (Class 3 to Competitive)
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium mt-1">Click any class card below to inspect student admissions, payment status, and detailed records for that specific category.</p>
+                </div>
+              </div>
+
+              {/* Class Grid Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allStandardClasses.map((className, idx) => {
+                  const count = classCounts[className] || 0;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedClassModal(className)}
+                      className="p-5 bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-300 rounded-2xl transition duration-200 text-left flex justify-between items-center group cursor-pointer shadow-xs"
+                    >
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black uppercase text-slate-400 group-hover:text-indigo-600 tracking-wider">Category Tier</span>
+                        <h3 className="text-sm font-black text-[#01295A]">{className}</h3>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <span className="text-base font-black text-emerald-600 font-mono">{count}</span>
+                          <span className="text-[10px] font-bold text-slate-400 block uppercase">Admissions</span>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-[#FE7C02] group-hover:text-white group-hover:border-[#FE7C02] transition">
+                          <ChevronRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
               <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Commission Engine Summary</h2>
-              <div className="space-y-3">
-                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border">
                   <span className="text-xs font-bold text-slate-600">Commission Rate</span>
                   <span className="text-xs font-black text-purple-600 font-mono">20% Automated Share</span>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border">
                   <span className="text-xs font-bold text-slate-600">Total Wallet Credits</span>
                   <span className="text-xs font-black text-emerald-600 font-mono">₹{coordData.metrics.totalCommission}</span>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border">
                   <span className="text-xs font-bold text-slate-600">Hierarchy Scope</span>
-                  <span className="text-xs font-black text-[#01295A] font-mono">Isolated to Coordinator Node</span>
+                  <span className="text-xs font-black text-[#01295A] font-mono">Isolated Coordinator Node</span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 2: Admission History & Tracking with Edit Option */}
+        {/* Tab 2: Admission History & Tracking with Search, Filters & Edit */}
         {activeTab === 'admissions' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -356,10 +398,10 @@ export default function CoordinatorDashboard() {
                 <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">CRM Admission Records & Ledger</h2>
                 <p className="text-xs text-slate-500 font-medium mt-1">Review student admissions, class levels, payment statuses, and edit records if necessary.</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
-                  <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search student or ID..." className="w-full pl-9 pr-3 py-2 rounded-xl border text-xs bg-white" />
+                  <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search student, ID, or class..." className="w-full pl-9 pr-3 py-2 rounded-xl border text-xs bg-white" />
                 </div>
                 <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-xl border text-xs font-bold bg-white">
                   <option value="all">All Statuses</option>
@@ -390,7 +432,7 @@ export default function CoordinatorDashboard() {
                     <tr key={idx} className="hover:bg-slate-50 transition">
                       <td className="py-3.5 px-4 font-mono font-black text-[#01295A]">{adm.admissionId}</td>
                       <td className="py-3.5 px-4 font-bold">{adm.studentName}</td>
-                      <td className="py-3.5 px-4">{adm.studentClass}</td>
+                      <td className="py-3.5 px-4 font-semibold text-indigo-600">{adm.studentClass}</td>
                       <td className="py-3.5 px-4">{adm.examName}</td>
                       <td className="py-3.5 px-4 font-mono">₹{adm.admissionAmount}</td>
                       <td className="py-3.5 px-4 font-mono font-black text-emerald-600">+₹{adm.coordinatorCommission || adm.admissionAmount * 0.20}</td>
@@ -408,7 +450,7 @@ export default function CoordinatorDashboard() {
 
               {filteredAdmissions.length === 0 && (
                 <div className="text-center py-12 text-slate-400 font-bold uppercase text-xs">
-                  No admission records found.
+                  No admission records found matching filters.
                 </div>
               )}
             </div>
@@ -416,6 +458,96 @@ export default function CoordinatorDashboard() {
         )}
 
       </div>
+
+      {/* Class Drill-Down Inspection Modal */}
+      {selectedClassModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 relative shadow-2xl space-y-6 my-8">
+            <button onClick={() => setSelectedClassModal(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 text-slate-400"><X className="w-5 h-5" /></button>
+            
+            <div>
+              <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Class Inspection View</span>
+              <h3 className="text-xl font-black text-[#01295A] mt-2">Admissions for {selectedClassModal}</h3>
+              <p className="text-xs text-slate-500 font-medium">Detailed roster of students registered under this specific class category.</p>
+            </div>
+
+            {/* Modal Search & Filter Bar */}
+            <div className="flex flex-col sm:flex-row gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input 
+                  type="text" 
+                  value={classModalSearch} 
+                  onChange={e => setClassModalSearch(e.target.value)} 
+                  placeholder="Search student name or admission ID..." 
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-xs bg-white focus:outline-none" 
+                />
+              </div>
+              <select 
+                value={classModalStatusFilter} 
+                onChange={e => setClassModalStatusFilter(e.target.value)} 
+                className="px-4 py-2.5 rounded-xl border text-xs font-bold bg-white"
+              >
+                <option value="all">All Statuses</option>
+                <option value="Confirmed">Confirmed</option>
+                <option value="Pending">Pending</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Modal Admissions Table */}
+            <div className="overflow-x-auto max-h-96">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black text-[10px] border-b border-slate-200 sticky top-0">
+                  <tr>
+                    <th className="py-3 px-4">Admission ID</th>
+                    <th className="py-3 px-4">Student Name</th>
+                    <th className="py-3 px-4">Mobile</th>
+                    <th className="py-3 px-4">Fee Amount</th>
+                    <th className="py-3 px-4">Commission (20%)</th>
+                    <th className="py-3 px-4">Payment</th>
+                    <th className="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {(coordData.admissions || [])
+                    .filter(a => a.studentClass === selectedClassModal)
+                    .filter(a => {
+                      const matchesSearch = !classModalSearch || 
+                        a.studentName?.toLowerCase().includes(classModalSearch.toLowerCase()) || 
+                        a.admissionId?.toLowerCase().includes(classModalSearch.toLowerCase());
+                      const matchesStatus = classModalStatusFilter === 'all' || a.admissionStatus === classModalStatusFilter;
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map((adm, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 transition">
+                        <td className="py-3 px-4 font-mono font-bold text-[#01295A]">{adm.admissionId}</td>
+                        <td className="py-3 px-4 font-bold">{adm.studentName}</td>
+                        <td className="py-3 px-4 font-mono">{adm.mobile}</td>
+                        <td className="py-3 px-4 font-mono">₹{adm.admissionAmount}</td>
+                        <td className="py-3 px-4 font-mono font-black text-emerald-600">+₹{adm.coordinatorCommission || adm.admissionAmount * 0.20}</td>
+                        <td className="py-3 px-4"><span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">{adm.paymentStatus}</span></td>
+                        <td className="py-3 px-4"><span className="bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded text-[10px] font-bold">{adm.admissionStatus}</span></td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+
+              {(coordData.admissions || []).filter(a => a.studentClass === selectedClassModal).length === 0 && (
+                <div className="text-center py-12 text-slate-400 font-bold uppercase text-xs">
+                  No admissions found for {selectedClassModal}.
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button onClick={() => setSelectedClassModal(null)} className="px-5 py-2.5 bg-[#01295A] text-white rounded-xl text-xs font-black uppercase cursor-pointer">
+                Close Inspection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Admission Modal */}
       {editingAdmission && (
