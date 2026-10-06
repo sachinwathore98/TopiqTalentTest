@@ -6,6 +6,8 @@ require('dotenv').config();
 // Import Route Handlers
 const studentRoutes = require('./routes/studentRoutes');
 const franchiseRoutes = require('./routes/franchiseRoutes');
+const asmRoutes = require('./routes/asmRoutes');
+const coordinatorRoutes = require('./routes/coordinatorRoutes');
 const userRoutes = require('./routes/userRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const examRoutes = require('./routes/examRoutes');
@@ -36,7 +38,9 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/student', studentRoutes);
-app.use('/api/franchise', franchiseRoutes); // 👈 Correctly mapped to franchise routes & dashboard API
+app.use('/api/franchise', franchiseRoutes);
+app.use('/api/asm', asmRoutes); // 👈 Registered ASM Dashboard & Management routes
+app.use('/api/coordinator', coordinatorRoutes); // 👈 Registered Coordinator Dashboard & Tracking routes
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/exams', examRoutes);
@@ -46,7 +50,6 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/enquiries', enquiryRoutes);
-app.use('/api/agents', enquiryRoutes);
 
 // Health Check Root Route
 app.get('/', (req, res) => {
