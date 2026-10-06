@@ -1,6 +1,13 @@
 const User = require('../models/User');
 const Admission = require('../models/Admission');
-const Exam = require('../models/Exam'); // Assuming you have an Exam model for live rates
+
+// Safely try to require Exam model if present
+let Exam = null;
+try {
+  Exam = require('../models/Exam');
+} catch (e) {
+  // Exam model optional
+}
 
 // 1. Get Coordinator Dashboard Metrics & Isolated Admissions
 exports.getCoordinatorDashboard = async (req, res) => {
@@ -79,9 +86,8 @@ exports.createAdmission = async (req, res) => {
       if (asmUser) franchiseId = asmUser.franchiseId;
     }
 
-    // Fetch live rate if examName matches configured exams, else default to provided amount
     let amount = admissionAmount ? parseFloat(admissionAmount) : 1000;
-    if (examName) {
+    if (Exam && examName) {
       const liveExam = await Exam.findOne({ title: new RegExp(`^${examName}$`, 'i') });
       if (liveExam && liveExam.fee) {
         amount = liveExam.fee;
