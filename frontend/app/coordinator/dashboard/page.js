@@ -29,7 +29,6 @@ export default function CoordinatorDashboard() {
     admissions: []
   });
 
-  // Live Class Fee Matrix & Admission Form State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [liveClassRates, setLiveClassRates] = useState([
     { class: 'Class 3', fee: 1799 },
@@ -69,6 +68,12 @@ export default function CoordinatorDashboard() {
     fetchCoordinatorDashboard();
     fetchLiveFeeMatrix();
     fetchUpstreamHierarchy();
+
+    // Load Razorpay Script Dynamically
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
 
     const interval = setInterval(() => fetchCoordinatorDashboard(true), 15000);
     return () => clearInterval(interval);
@@ -129,29 +134,70 @@ export default function CoordinatorDashboard() {
     });
   };
 
-  const handleCreateAdmission = async (e) => {
+  const handleRazorpayPayment = async (e) => {
     e.preventDefault();
     setSuccessMsg(''); setErrorMsg('');
     const token = localStorage.getItem('token');
+
     try {
-      const res = await fetch(`${apiBaseUrl}/api/coordinator/admissions`, {
+      // 1. Create Razorpay Order on Backend
+      const orderRes = await fetch(`${apiBaseUrl}/api/coordinator/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(admForm)
+        body: JSON.stringify({ admissionAmount: admForm.admissionAmount })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to create admission.');
-      
-      setSuccessMsg(`Admission successfully created! ID: ${data.admission.admissionId} — Upstream wallets credited.`);
-      setShowCreateModal(false);
-      setAdmForm({
-        studentName: '', mobile: '', email: '', studentClass: 'Class 8', school: '',
-        parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online',
-        franchiseId: '', asmId: ''
-      });
-      fetchCoordinatorDashboard();
+      const orderData = await orderRes.json();
+      if (!orderData.success) throw new Error('Failed to initiate payment gateway order.');
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mockkeyid',
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'TOPIQ Talent Test (TTT)',
+        description: `Exam Registration for ${admForm.studentClass} (${admForm.examName})`,
+        order_id: orderData.order.id,
+        handler: async function (response) {
+          // 2. On Successful Payment, Verify & Register Admission + Upstream Commissions
+          try {
+            const verifyRes = await fetch(`${apiBaseUrl}/api/coordinator/verify-admission`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                ...admForm,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyData.success) throw new Error(verifyData.message || 'Payment verified but admission creation failed.');
+
+            setSuccessMsg(`Payment Confirmed! Admission ID: ${verifyData.admission.admissionId} created & upstream wallets credited.`);
+            setShowCreateModal(false);
+            setAdmForm({
+              studentName: '', mobile: '', email: '', studentClass: 'Class 8', school: '',
+              parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online',
+              franchiseId: '', asmId: ''
+            });
+            fetchCoordinatorDashboard();
+          } catch (verifyErr) {
+            setErrorMsg(verifyErr.message);
+          }
+        },
+        prefill: {
+          name: admForm.studentName,
+          email: admForm.email,
+          contact: admForm.mobile
+        },
+        theme: {
+          color: '#FE7C02'
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || 'Error processing payment checkout.');
     }
   };
 
@@ -174,11 +220,11 @@ export default function CoordinatorDashboard() {
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-purple-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">Coordinator Panel (20% Commission Tier)</span>
               <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Rate & Upstream Sync Active
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Razorpay Live Payment Gateway Active
               </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight">{coordData.name} — Coordinator Dashboard</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Live Super Admin fee matrix syncing (Classes 3 to Above 12) with automated upstream commission splits.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Razorpay checkout integration with automatic upstream commission distribution upon payment confirmation.</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => fetchCoordinatorDashboard()} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold">
@@ -239,7 +285,7 @@ export default function CoordinatorDashboard() {
             </button>
           </div>
           <button onClick={() => setShowCreateModal(true)} className="px-5 py-2.5 bg-[#FE7C02] hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer shadow-md flex items-center gap-1.5">
-            <Plus className="w-4 h-4" /> Create Student Admission
+            <Plus className="w-4 h-4" /> Register Student & Pay via Razorpay
           </button>
         </div>
 
@@ -306,17 +352,17 @@ export default function CoordinatorDashboard() {
 
       </div>
 
-      {/* Admission Modal with Live Class Rates (Class 3 to Competitive) & Upstream Attachment */}
+      {/* Razorpay Checkout Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 relative shadow-2xl space-y-4 my-8">
             <button onClick={() => setShowCreateModal(false)} className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400"><X className="w-5 h-5" /></button>
             <div className="flex justify-between items-center bg-orange-50 px-4 py-2.5 rounded-2xl border border-orange-200">
-              <span className="text-[10px] font-black text-[#FE7C02] uppercase tracking-wider">Live Super Admin Fee Matrix & Upstream Sync</span>
+              <span className="text-[10px] font-black text-[#FE7C02] uppercase tracking-wider">Razorpay Live Gateway & Upstream Sync</span>
               <span className="text-xs font-black text-emerald-600 font-mono">Fee: ₹{admForm.admissionAmount}</span>
             </div>
             
-            <form onSubmit={handleCreateAdmission} className="space-y-3">
+            <form onSubmit={handleRazorpayPayment} className="space-y-3">
               <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Full Name *</label><input type="text" required value={admForm.studentName} onChange={e => setAdmForm({ ...admForm, studentName: e.target.value })} placeholder="Full Name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
               
               <div className="grid grid-cols-2 gap-3">
@@ -368,15 +414,14 @@ export default function CoordinatorDashboard() {
                 <div>
                   <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Payment Method *</label>
                   <select value={admForm.paymentMethod} onChange={e => setAdmForm({ ...admForm, paymentMethod: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border text-xs font-bold bg-white">
-                    <option value="Online">Online / UPI</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Online">Razorpay Online Gateway</option>
+                    <option value="Cash">Cash (Offline Entry)</option>
                   </select>
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-3.5 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2 hover:bg-orange-600 transition">
-                Register Student & Distribute Upstream Commissions
+              <button type="submit" className="w-full py-3.5 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2 hover:bg-orange-600 transition flex items-center justify-center gap-2">
+                Proceed to Razorpay Payment & Upstream Commission Sync
               </button>
             </form>
           </div>
