@@ -7,8 +7,10 @@ const bcrypt = require('bcryptjs');
 // 1. Get Franchisee Dashboard Metrics & Team
 exports.getFranchiseDashboard = async (req, res) => {
   try {
+    // Fallback across all possible token ID fields and user email matching
     let franchiseId = req.franchiseScope || req.user?.id || req.user?._id || req.user?.userId;
     
+    // If we have an email, we can also double-check the exact Franchise user document
     let franchiseUser = null;
     if (franchiseId) {
       franchiseUser = await User.findById(franchiseId);
@@ -18,8 +20,8 @@ exports.getFranchiseDashboard = async (req, res) => {
       if (franchiseUser) franchiseId = franchiseUser._id;
     }
 
-    // 🔍 Primary query: Find ASMs by franchiseId, Fallback: find all ASMs if none found yet so UI isn't blank
-    let asms = await User.find({ 
+    // Fetch ASMs linked by franchiseId or fallback to all ASMs if none specifically tagged yet
+    const asms = await User.find({ 
       role: 'asm', 
       $or: [
         { franchiseId: franchiseId },
@@ -28,14 +30,9 @@ exports.getFranchiseDashboard = async (req, res) => {
       ]
     }).select('-password');
 
-    if (asms.length === 0) {
-      // Fallback to show any active ASMs in the system for testing
-      asms = await User.find({ role: 'asm' }).select('-password');
-    }
-
     const asmIds = asms.map(a => a._id);
     
-    let coordinators = await User.find({ 
+    const coordinators = await User.find({ 
       role: 'coordinator', 
       $or: [
         { asmId: { $in: asmIds } },
@@ -44,12 +41,28 @@ exports.getFranchiseDashboard = async (req, res) => {
       ]
     }).select('-password');
 
-    if (coordinators.length === 0) {
-      coordinators = await User.find({ role: 'coordinator' }).select('-password');
-    }
+    const totalAdmissions = await Admission.countDocuments({ 
+      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }] 
+    });
 
-    const totalAdmissions = await Admission.countDocuments();
-    const commissions = await CommissionTransaction.find().sort({ createdAt: -1 });
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todaysAdmissions = await Admission.countDocuments({ 
+      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }], 
+      createdAt: { $gte: todayStart } 
+    });
+    
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthlyAdmissions = await Admission.countDocuments({ 
+      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }], 
+      createdAt: { $gte: monthStart } 
+    });
+
+    const commissions = await CommissionTransaction.find({ 
+      $or: [{ franchiseeId: franchiseId }, { franchiseId: franchiseId }] 
+    }).sort({ createdAt: -1 });
 
     const availableWallet = commissions
       .filter(c => c.status === 'Credited')
@@ -60,8 +73,8 @@ exports.getFranchiseDashboard = async (req, res) => {
       name: franchiseUser?.name || req.user?.name || 'Franchise Partner',
       metrics: {
         myAdmissions: totalAdmissions,
-        todaysAdmissions: 0,
-        monthlyAdmissions: totalAdmissions,
+        todaysAdmissions,
+        monthlyAdmissions,
         myCommission: availableWallet,
         availableWallet,
         pendingSettlement: 15000,
