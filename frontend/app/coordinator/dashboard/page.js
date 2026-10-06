@@ -29,11 +29,28 @@ export default function CoordinatorDashboard() {
     admissions: []
   });
 
-  // Admission Modal State matching public form with class-based fee sync
+  // Live Class Fee Matrix & Admission Form State
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [liveClassRates, setLiveClassRates] = useState([
+    { class: 'Class 3', fee: 1799 },
+    { class: 'Class 4', fee: 1799 },
+    { class: 'Class 5', fee: 1799 },
+    { class: 'Class 6', fee: 1999 },
+    { class: 'Class 7', fee: 1999 },
+    { class: 'Class 8', fee: 1999 },
+    { class: 'Class 9', fee: 2499 },
+    { class: 'Class 10', fee: 2499 },
+    { class: 'Class 11', fee: 2999 },
+    { class: 'Class 12', fee: 2999 },
+    { class: 'Competitive / Above 12', fee: 3499 }
+  ]);
+
+  const [upstreamList, setUpstreamList] = useState({ franchises: [], asms: [] });
+
   const [admForm, setAdmForm] = useState({
     studentName: '', mobile: '', email: '', studentClass: 'Class 8', school: '',
-    parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online'
+    parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online',
+    franchiseId: '', asmId: ''
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,6 +67,8 @@ export default function CoordinatorDashboard() {
       return;
     }
     fetchCoordinatorDashboard();
+    fetchLiveFeeMatrix();
+    fetchUpstreamHierarchy();
 
     const interval = setInterval(() => fetchCoordinatorDashboard(true), 15000);
     return () => clearInterval(interval);
@@ -73,17 +92,36 @@ export default function CoordinatorDashboard() {
     }
   };
 
-  // Dynamic fee calculation based on class selection
-  const handleClassChange = (selectedClass) => {
-    let fee = 1999;
-    if (selectedClass.includes('1') || selectedClass.includes('2') || selectedClass.includes('3') || selectedClass.includes('4') || selectedClass.includes('5')) {
-      fee = 999;
-    } else if (selectedClass.includes('6') || selectedClass.includes('7') || selectedClass.includes('8')) {
-      fee = 1999;
-    } else {
-      fee = 2499;
+  const fetchLiveFeeMatrix = async () => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/superadmin/fee-matrix`);
+      const data = await res.json();
+      if (data.success && data.matrix) {
+        setLiveClassRates(data.matrix);
+      }
+    } catch (err) {
+      console.error('Error fetching live fee matrix:', err);
     }
+  };
 
+  const fetchUpstreamHierarchy = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${apiBaseUrl}/api/coordinator/hierarchy`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUpstreamList({ franchises: data.franchises || [], asms: data.asms || [] });
+      }
+    } catch (err) {
+      console.error('Error fetching upstream hierarchy:', err);
+    }
+  };
+
+  const handleClassChange = (selectedClass) => {
+    const found = liveClassRates.find(r => r.class === selectedClass);
+    const fee = found ? found.fee : 1999;
     setAdmForm({
       ...admForm,
       studentClass: selectedClass,
@@ -108,7 +146,8 @@ export default function CoordinatorDashboard() {
       setShowCreateModal(false);
       setAdmForm({
         studentName: '', mobile: '', email: '', studentClass: 'Class 8', school: '',
-        parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online'
+        parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online',
+        franchiseId: '', asmId: ''
       });
       fetchCoordinatorDashboard();
     } catch (err) {
@@ -135,11 +174,11 @@ export default function CoordinatorDashboard() {
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-purple-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">Coordinator Panel (20% Commission Tier)</span>
               <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Sync Active
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Rate & Upstream Sync Active
               </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight">{coordData.name} — Coordinator Dashboard</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">CRM Admission Module, automatic upstream wallet splits, and class-based fee syncing.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Live Super Admin fee matrix syncing (Classes 3 to Above 12) with automated upstream commission splits.</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => fetchCoordinatorDashboard()} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold">
@@ -267,13 +306,13 @@ export default function CoordinatorDashboard() {
 
       </div>
 
-      {/* Public Form Style Admission Modal with Class Fee Auto-Update */}
+      {/* Admission Modal with Live Class Rates (Class 3 to Competitive) & Upstream Attachment */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 relative shadow-2xl space-y-4 my-8">
             <button onClick={() => setShowCreateModal(false)} className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400"><X className="w-5 h-5" /></button>
             <div className="flex justify-between items-center bg-orange-50 px-4 py-2.5 rounded-2xl border border-orange-200">
-              <span className="text-[10px] font-black text-[#FE7C02] uppercase tracking-wider">Limited Seats — Class Fee Auto-Synced</span>
+              <span className="text-[10px] font-black text-[#FE7C02] uppercase tracking-wider">Live Super Admin Fee Matrix & Upstream Sync</span>
               <span className="text-xs font-black text-emerald-600 font-mono">Fee: ₹{admForm.admissionAmount}</span>
             </div>
             
@@ -287,17 +326,31 @@ export default function CoordinatorDashboard() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class / Grade *</label>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class / Grade (Live Rates) *</label>
                   <select value={admForm.studentClass} onChange={e => handleClassChange(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-slate-50">
-                    <option value="Class 5">Class 5 (₹999)</option>
-                    <option value="Class 6">Class 6 (₹1,999)</option>
-                    <option value="Class 7">Class 7 (₹1,999)</option>
-                    <option value="Class 8">Class 8 (₹1,999)</option>
-                    <option value="Class 9">Class 9 (₹2,499)</option>
-                    <option value="Class 10">Class 10 (₹2,499)</option>
+                    {liveClassRates.map((r, i) => (
+                      <option key={i} value={r.class}>{r.class} (₹{r.fee})</option>
+                    ))}
                   </select>
                 </div>
                 <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Exam / Test Name *</label><input type="text" required value={admForm.examName} onChange={e => setAdmForm({ ...admForm, examName: e.target.value })} placeholder="TOPIQ Talent Test" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Attach Upstream Franchisee</label>
+                  <select value={admForm.franchiseId} onChange={e => setAdmForm({ ...admForm, franchiseId: e.target.value })} className="w-full px-3 py-2 rounded-xl border text-xs bg-slate-50">
+                    <option value="">Auto-resolve from hierarchy</option>
+                    {upstreamList.franchises.map(f => (<option key={f._id} value={f._id}>{f.name}</option>))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Attach Upstream ASM</label>
+                  <select value={admForm.asmId} onChange={e => setAdmForm({ ...admForm, asmId: e.target.value })} className="w-full px-3 py-2 rounded-xl border text-xs bg-slate-50">
+                    <option value="">Auto-resolve from hierarchy</option>
+                    {upstreamList.asms.map(a => (<option key={a._id} value={a._id}>{a.name}</option>))}
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -309,7 +362,7 @@ export default function CoordinatorDashboard() {
 
               <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border">
                 <div>
-                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-0.5">Auto-Calculated Fee</label>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-0.5">Synced Admission Fee</label>
                   <span className="text-base font-black text-emerald-600 font-mono">₹{admForm.admissionAmount}</span>
                 </div>
                 <div>
@@ -323,7 +376,7 @@ export default function CoordinatorDashboard() {
               </div>
 
               <button type="submit" className="w-full py-3.5 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2 hover:bg-orange-600 transition">
-                Lock in Price & Register Student (Auto-Distribute Commission)
+                Register Student & Distribute Upstream Commissions
               </button>
             </form>
           </div>
