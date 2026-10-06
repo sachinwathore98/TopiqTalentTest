@@ -29,15 +29,13 @@ export default function CoordinatorDashboard() {
     admissions: []
   });
 
-  // Public Form Modal State
+  // Admission Modal State matching public form with class-based fee sync
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [availableExams, setAvailableExams] = useState([]);
   const [admForm, setAdmForm] = useState({
-    studentName: '', mobile: '', email: '', studentClass: '', school: '',
-    parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1000, paymentMethod: 'Online'
+    studentName: '', mobile: '', email: '', studentClass: 'Class 8', school: '',
+    parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online'
   });
 
-  // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -52,7 +50,6 @@ export default function CoordinatorDashboard() {
       return;
     }
     fetchCoordinatorDashboard();
-    fetchLiveExams();
 
     const interval = setInterval(() => fetchCoordinatorDashboard(true), 15000);
     return () => clearInterval(interval);
@@ -76,24 +73,21 @@ export default function CoordinatorDashboard() {
     }
   };
 
-  const fetchLiveExams = async () => {
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/exams`);
-      const data = await res.json();
-      if (data.success && data.exams) {
-        setAvailableExams(data.exams);
-      }
-    } catch (err) {
-      console.error('Error fetching live exams:', err);
+  // Dynamic fee calculation based on class selection
+  const handleClassChange = (selectedClass) => {
+    let fee = 1999;
+    if (selectedClass.includes('1') || selectedClass.includes('2') || selectedClass.includes('3') || selectedClass.includes('4') || selectedClass.includes('5')) {
+      fee = 999;
+    } else if (selectedClass.includes('6') || selectedClass.includes('7') || selectedClass.includes('8')) {
+      fee = 1999;
+    } else {
+      fee = 2499;
     }
-  };
 
-  const handleExamChange = (examTitle) => {
-    const selected = availableExams.find(e => e.title === examTitle);
     setAdmForm({
       ...admForm,
-      examName: examTitle,
-      admissionAmount: selected?.fee || 1000
+      studentClass: selectedClass,
+      admissionAmount: fee
     });
   };
 
@@ -110,11 +104,11 @@ export default function CoordinatorDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to create admission.');
       
-      setSuccessMsg(`Admission successfully created! Upstream wallets credited. ID: ${data.admission.admissionId}`);
+      setSuccessMsg(`Admission successfully created! ID: ${data.admission.admissionId} — Upstream wallets credited.`);
       setShowCreateModal(false);
       setAdmForm({
-        studentName: '', mobile: '', email: '', studentClass: '', school: '',
-        parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1000, paymentMethod: 'Online'
+        studentName: '', mobile: '', email: '', studentClass: 'Class 8', school: '',
+        parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online'
       });
       fetchCoordinatorDashboard();
     } catch (err) {
@@ -145,7 +139,7 @@ export default function CoordinatorDashboard() {
               </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight">{coordData.name} — Coordinator Dashboard</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Public form synced admissions, automated upstream wallet commissions, and exam tracking.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">CRM Admission Module, automatic upstream wallet splits, and class-based fee syncing.</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => fetchCoordinatorDashboard()} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold">
@@ -202,11 +196,11 @@ export default function CoordinatorDashboard() {
               Exam & Admission Overview
             </button>
             <button onClick={() => setActiveTab('admissions')} className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm ${activeTab === 'admissions' ? 'bg-[#01295A] text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
-              Admission History & Tracking
+              CRM Admission History & Tracking
             </button>
           </div>
           <button onClick={() => setShowCreateModal(true)} className="px-5 py-2.5 bg-[#FE7C02] hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer shadow-md flex items-center gap-1.5">
-            <Plus className="w-4 h-4" /> Create Admission (Public Form Sync)
+            <Plus className="w-4 h-4" /> Create Student Admission
           </button>
         </div>
 
@@ -215,8 +209,8 @@ export default function CoordinatorDashboard() {
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Admission Records & History</h2>
-                <p className="text-xs text-slate-500 font-medium mt-1">Review student admissions, payment status, exam titles, and upstream commission distribution.</p>
+                <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">CRM Admission Records & Ledger</h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Review student admissions, class levels, payment statuses, and 20% commission credits.</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -238,12 +232,12 @@ export default function CoordinatorDashboard() {
                   <tr>
                     <th className="py-3 px-4">Admission ID</th>
                     <th className="py-3 px-4">Student Name</th>
+                    <th className="py-3 px-4">Class</th>
                     <th className="py-3 px-4">Exam</th>
                     <th className="py-3 px-4">Fee Amount</th>
                     <th className="py-3 px-4">My Commission (20%)</th>
                     <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -251,12 +245,12 @@ export default function CoordinatorDashboard() {
                     <tr key={idx} className="hover:bg-slate-50 transition">
                       <td className="py-3.5 px-4 font-mono font-black text-[#01295A]">{adm.admissionId}</td>
                       <td className="py-3.5 px-4 font-bold">{adm.studentName}</td>
+                      <td className="py-3.5 px-4">{adm.studentClass}</td>
                       <td className="py-3.5 px-4">{adm.examName}</td>
                       <td className="py-3.5 px-4 font-mono">₹{adm.admissionAmount}</td>
                       <td className="py-3.5 px-4 font-mono font-black text-emerald-600">+₹{adm.coordinatorCommission || adm.admissionAmount * 0.20}</td>
                       <td className="py-3.5 px-4"><span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">{adm.paymentStatus}</span></td>
                       <td className="py-3.5 px-4"><span className="bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded text-[10px] font-bold">{adm.admissionStatus}</span></td>
-                      <td className="py-3.5 px-4 text-slate-400">{new Date(adm.createdAt).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -273,47 +267,49 @@ export default function CoordinatorDashboard() {
 
       </div>
 
-      {/* Public Form Style Admission Modal */}
+      {/* Public Form Style Admission Modal with Class Fee Auto-Update */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 relative shadow-2xl space-y-4 my-8">
             <button onClick={() => setShowCreateModal(false)} className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400"><X className="w-5 h-5" /></button>
-            <div>
-              <span className="bg-[#FE7C02] text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase">Live Rate Synced Admission Form</span>
-              <h3 className="text-xl font-black text-[#01295A] mt-1">Create Student Exam Admission</h3>
+            <div className="flex justify-between items-center bg-orange-50 px-4 py-2.5 rounded-2xl border border-orange-200">
+              <span className="text-[10px] font-black text-[#FE7C02] uppercase tracking-wider">Limited Seats — Class Fee Auto-Synced</span>
+              <span className="text-xs font-black text-emerald-600 font-mono">Fee: ₹{admForm.admissionAmount}</span>
             </div>
             
             <form onSubmit={handleCreateAdmission} className="space-y-3">
-              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Full Name *</label><input type="text" required value={admForm.studentName} onChange={e => setAdmForm({ ...admForm, studentName: e.target.value })} placeholder="Student full name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Full Name *</label><input type="text" required value={admForm.studentName} onChange={e => setAdmForm({ ...admForm, studentName: e.target.value })} placeholder="Full Name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
               
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Mobile Number *</label><input type="text" required value={admForm.mobile} onChange={e => setAdmForm({ ...admForm, mobile: e.target.value })} placeholder="Mobile number" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-mono" /></div>
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label><input type="email" required value={admForm.email} onChange={e => setAdmForm({ ...admForm, email: e.target.value })} placeholder="Email address" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Mobile Number *</label><input type="text" required value={admForm.mobile} onChange={e => setAdmForm({ ...admForm, mobile: e.target.value })} placeholder="Mobile Number" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-mono" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label><input type="email" required value={admForm.email} onChange={e => setAdmForm({ ...admForm, email: e.target.value })} placeholder="Email Address" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class / Grade *</label><input type="text" required value={admForm.studentClass} onChange={e => setAdmForm({ ...admForm, studentClass: e.target.value })} placeholder="e.g. 10th Standard" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Exam / Live Rate *</label>
-                  <select value={admForm.examName} onChange={e => handleExamChange(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-slate-50">
-                    <option value="TOPIQ Talent Test">TOPIQ Talent Test (₹1,000)</option>
-                    {availableExams.map(ex => (
-                      <option key={ex._id} value={ex.title}>{ex.title} (₹{ex.fee})</option>
-                    ))}
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class / Grade *</label>
+                  <select value={admForm.studentClass} onChange={e => handleClassChange(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-slate-50">
+                    <option value="Class 5">Class 5 (₹999)</option>
+                    <option value="Class 6">Class 6 (₹1,999)</option>
+                    <option value="Class 7">Class 7 (₹1,999)</option>
+                    <option value="Class 8">Class 8 (₹1,999)</option>
+                    <option value="Class 9">Class 9 (₹2,499)</option>
+                    <option value="Class 10">Class 10 (₹2,499)</option>
                   </select>
                 </div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Exam / Test Name *</label><input type="text" required value={admForm.examName} onChange={e => setAdmForm({ ...admForm, examName: e.target.value })} placeholder="TOPIQ Talent Test" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">School Name</label><input type="text" value={admForm.school} onChange={e => setAdmForm({ ...admForm, school: e.target.value })} placeholder="School name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Parent / Guardian Details</label><input type="text" value={admForm.parentDetails} onChange={e => setAdmForm({ ...admForm, parentDetails: e.target.value })} placeholder="Parent name & phone" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">School Name</label><input type="text" value={admForm.school} onChange={e => setAdmForm({ ...admForm, school: e.target.value })} placeholder="School Name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Parent / Guardian Details</label><input type="text" value={admForm.parentDetails} onChange={e => setAdmForm({ ...admForm, parentDetails: e.target.value })} placeholder="Parent Name & Phone" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
               </div>
 
-              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Address</label><input type="text" value={admForm.address} onChange={e => setAdmForm({ ...admForm, address: e.target.value })} placeholder="Complete residential address" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Address</label><input type="text" value={admForm.address} onChange={e => setAdmForm({ ...admForm, address: e.target.value })} placeholder="Complete Address" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
 
               <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border">
                 <div>
-                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-0.5">Synced Admission Fee</label>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-0.5">Auto-Calculated Fee</label>
                   <span className="text-base font-black text-emerald-600 font-mono">₹{admForm.admissionAmount}</span>
                 </div>
                 <div>
@@ -327,7 +323,7 @@ export default function CoordinatorDashboard() {
               </div>
 
               <button type="submit" className="w-full py-3.5 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2 hover:bg-orange-600 transition">
-                Confirm Admission & Credit Upstream Wallets
+                Lock in Price & Register Student (Auto-Distribute Commission)
               </button>
             </form>
           </div>
