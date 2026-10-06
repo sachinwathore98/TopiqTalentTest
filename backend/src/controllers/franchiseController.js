@@ -14,15 +14,23 @@ exports.getFranchiseDashboard = async (req, res) => {
       if (franchiseUser) franchiseId = franchiseUser._id;
     }
 
-    // 🔄 Live Sync: Fetch ALL ASMs in the database so none are missed due to ID scope mismatches
+    // Fetch ALL ASMs in the system
     const asms = await User.find({ role: 'asm' }).select('-password').lean();
 
-    // Build hierarchical tree with admissions per ASM and Coordinator
+    // Build hierarchical tree with robust coordinator matching (ObjectId & String fallback)
     const asmHierarchy = await Promise.all(asms.map(async (asm) => {
-      const coordinators = await User.find({ role: 'coordinator', asmId: asm._id }).select('-password').lean();
+      const coordinators = await User.find({ 
+        role: 'coordinator', 
+        $or: [
+          { asmId: asm._id },
+          { asmId: asm._id.toString() }
+        ]
+      }).select('-password').lean();
 
       const coordinatorsWithAdmissions = await Promise.all(coordinators.map(async (coord) => {
-        const admissions = await Admission.find({ coordinatorId: coord._id }).lean();
+        const admissions = await Admission.find({ 
+          $or: [{ coordinatorId: coord._id }, { coordinatorId: coord._id?.toString() }] 
+        }).lean();
         const totalCommission = admissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1000) * 0.15), 0);
         return {
           ...coord,
@@ -32,8 +40,15 @@ exports.getFranchiseDashboard = async (req, res) => {
         };
       }));
 
-      const asmDirectAdmissions = await Admission.find({ asmId: asm._id, $or: [{ coordinatorId: {$exists: false } }, { coordinatorId: null }] }).lean();
-      const allAsmAdmissions = await Admission.find({ asmId: asm._id }).lean();
+      const asmDirectAdmissions = await Admission.find({ 
+        $or: [{ asmId: asm._id }, { asmId: asm._id?.toString() }], 
+        $or: [{ coordinatorId: {$exists: false } }, { coordinatorId: null }] 
+      }).lean();
+      
+      const allAsmAdmissions = await Admission.find({ 
+        $or: [{ asmId: asm._id }, { asmId: asm._id?.toString() }] 
+      }).lean();
+
       const totalAsmCommission = allAsmAdmissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1000) * 0.15), 0);
 
       return {
@@ -45,7 +60,6 @@ exports.getFranchiseDashboard = async (req, res) => {
       };
     }));
 
-    // Total Admissions across all hierarchy
     const allAdmissions = await Admission.find().lean();
     const totalAdmissionsCount = allAdmissions.length;
     
