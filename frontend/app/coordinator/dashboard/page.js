@@ -29,8 +29,9 @@ export default function CoordinatorDashboard() {
     admissions: []
   });
 
-  // Admission Creation Modal State
+  // Public Form Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [availableExams, setAvailableExams] = useState([]);
   const [admForm, setAdmForm] = useState({
     studentName: '', mobile: '', email: '', studentClass: '', school: '',
     parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1000, paymentMethod: 'Online'
@@ -51,6 +52,8 @@ export default function CoordinatorDashboard() {
       return;
     }
     fetchCoordinatorDashboard();
+    fetchLiveExams();
+
     const interval = setInterval(() => fetchCoordinatorDashboard(true), 15000);
     return () => clearInterval(interval);
   }, [router]);
@@ -73,6 +76,27 @@ export default function CoordinatorDashboard() {
     }
   };
 
+  const fetchLiveExams = async () => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/exams`);
+      const data = await res.json();
+      if (data.success && data.exams) {
+        setAvailableExams(data.exams);
+      }
+    } catch (err) {
+      console.error('Error fetching live exams:', err);
+    }
+  };
+
+  const handleExamChange = (examTitle) => {
+    const selected = availableExams.find(e => e.title === examTitle);
+    setAdmForm({
+      ...admForm,
+      examName: examTitle,
+      admissionAmount: selected?.fee || 1000
+    });
+  };
+
   const handleCreateAdmission = async (e) => {
     e.preventDefault();
     setSuccessMsg(''); setErrorMsg('');
@@ -86,7 +110,7 @@ export default function CoordinatorDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to create admission.');
       
-      setSuccessMsg(`Admission successfully created! ID: ${data.admission.admissionId}`);
+      setSuccessMsg(`Admission successfully created! Upstream wallets credited. ID: ${data.admission.admissionId}`);
       setShowCreateModal(false);
       setAdmForm({
         studentName: '', mobile: '', email: '', studentClass: '', school: '',
@@ -121,7 +145,7 @@ export default function CoordinatorDashboard() {
               </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight">{coordData.name} — Coordinator Dashboard</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Manage exam admissions, automated 20% commission wallets, and live student tracking.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Public form synced admissions, automated upstream wallet commissions, and exam tracking.</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => fetchCoordinatorDashboard()} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold">
@@ -182,47 +206,9 @@ export default function CoordinatorDashboard() {
             </button>
           </div>
           <button onClick={() => setShowCreateModal(true)} className="px-5 py-2.5 bg-[#FE7C02] hover:bg-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer shadow-md flex items-center gap-1.5">
-            <Plus className="w-4 h-4" /> Create New Admission
+            <Plus className="w-4 h-4" /> Create Admission (Public Form Sync)
           </button>
         </div>
-
-        {/* Tab 1: Overview & Exam-wise Admissions */}
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
-              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Exam-wise Admission Distribution</h2>
-              <div className="space-y-3">
-                {Object.entries(coordData.metrics.examWise || {}).map(([exam, count], idx) => (
-                  <div key={idx} className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-700">{exam}</span>
-                    <span className="text-xs font-black text-indigo-600 font-mono">{count} Admissions</span>
-                  </div>
-                ))}
-                {Object.keys(coordData.metrics.examWise || {}).length === 0 && (
-                  <p className="text-xs text-slate-400 italic">No exam admission records yet.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
-              <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Commission Engine Summary</h2>
-              <div className="space-y-3">
-                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-600">Commission Rate</span>
-                  <span className="text-xs font-black text-purple-600 font-mono">20% Automated Share</span>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-600">Total Wallet Credits</span>
-                  <span className="text-xs font-black text-emerald-600 font-mono">₹{coordData.metrics.totalCommission}</span>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-600">Hierarchy Scope</span>
-                  <span className="text-xs font-black text-[#01295A] font-mono">Isolated to Coordinator Node</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Tab 2: Admission History & Tracking */}
         {activeTab === 'admissions' && (
@@ -230,7 +216,7 @@ export default function CoordinatorDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Admission Records & History</h2>
-                <p className="text-xs text-slate-500 font-medium mt-1">Review student admissions, payment status, exam titles, and 20% commission ledger.</p>
+                <p className="text-xs text-slate-500 font-medium mt-1">Review student admissions, payment status, exam titles, and upstream commission distribution.</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -253,8 +239,8 @@ export default function CoordinatorDashboard() {
                     <th className="py-3 px-4">Admission ID</th>
                     <th className="py-3 px-4">Student Name</th>
                     <th className="py-3 px-4">Exam</th>
-                    <th className="py-3 px-4">Amount</th>
-                    <th className="py-3 px-4">Commission (20%)</th>
+                    <th className="py-3 px-4">Fee Amount</th>
+                    <th className="py-3 px-4">My Commission (20%)</th>
                     <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Date</th>
@@ -287,29 +273,62 @@ export default function CoordinatorDashboard() {
 
       </div>
 
-      {/* Create Admission Modal */}
+      {/* Public Form Style Admission Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#01295A]/80 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 relative shadow-2xl space-y-4 my-8">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 relative shadow-2xl space-y-4 my-8">
             <button onClick={() => setShowCreateModal(false)} className="absolute top-5 right-5 p-2 rounded-full hover:bg-slate-100 text-slate-400"><X className="w-5 h-5" /></button>
-            <h3 className="text-xl font-black text-[#01295A]">Create Exam Admission</h3>
+            <div>
+              <span className="bg-[#FE7C02] text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase">Live Rate Synced Admission Form</span>
+              <h3 className="text-xl font-black text-[#01295A] mt-1">Create Student Exam Admission</h3>
+            </div>
+            
             <form onSubmit={handleCreateAdmission} className="space-y-3">
-              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Full Name *</label><input type="text" required value={admForm.studentName} onChange={e => setAdmForm({ ...admForm, studentName: e.target.value })} placeholder="Student name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Full Name *</label><input type="text" required value={admForm.studentName} onChange={e => setAdmForm({ ...admForm, studentName: e.target.value })} placeholder="Student full name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+              
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Mobile Number *</label><input type="text" required value={admForm.mobile} onChange={e => setAdmForm({ ...admForm, mobile: e.target.value })} placeholder="Mobile" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-mono" /></div>
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label><input type="email" required value={admForm.email} onChange={e => setAdmForm({ ...admForm, email: e.target.value })} placeholder="Email" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Mobile Number *</label><input type="text" required value={admForm.mobile} onChange={e => setAdmForm({ ...admForm, mobile: e.target.value })} placeholder="Mobile number" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-mono" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label><input type="email" required value={admForm.email} onChange={e => setAdmForm({ ...admForm, email: e.target.value })} placeholder="Email address" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
               </div>
+
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class / Grade *</label><input type="text" required value={admForm.studentClass} onChange={e => setAdmForm({ ...admForm, studentClass: e.target.value })} placeholder="Class" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Exam / Test Name *</label><input type="text" required value={admForm.examName} onChange={e => setAdmForm({ ...admForm, examName: e.target.value })} placeholder="Exam Name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Class / Grade *</label><input type="text" required value={admForm.studentClass} onChange={e => setAdmForm({ ...admForm, studentClass: e.target.value })} placeholder="e.g. 10th Standard" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Exam / Live Rate *</label>
+                  <select value={admForm.examName} onChange={e => handleExamChange(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-slate-50">
+                    <option value="TOPIQ Talent Test">TOPIQ Talent Test (₹1,000)</option>
+                    {availableExams.map(ex => (
+                      <option key={ex._id} value={ex.title}>{ex.title} (₹{ex.fee})</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">School Name</label><input type="text" value={admForm.school} onChange={e => setAdmForm({ ...admForm, school: e.target.value })} placeholder="School" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
-              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Parent / Guardian Details</label><input type="text" value={admForm.parentDetails} onChange={e => setAdmForm({ ...admForm, parentDetails: e.target.value })} placeholder="Parent name & phone" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Admission Amount (₹) *</label><input type="number" required value={admForm.admissionAmount} onChange={e => setAdmForm({ ...admForm, admissionAmount: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-mono" /></div>
-                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Payment Method *</label><select value={admForm.paymentMethod} onChange={e => setAdmForm({ ...admForm, paymentMethod: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-bold"><option value="Online">Online / UPI</option><option value="Cash">Cash</option><option value="Bank Transfer">Bank Transfer</option></select></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">School Name</label><input type="text" value={admForm.school} onChange={e => setAdmForm({ ...admForm, school: e.target.value })} placeholder="School name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+                <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Parent / Guardian Details</label><input type="text" value={admForm.parentDetails} onChange={e => setAdmForm({ ...admForm, parentDetails: e.target.value })} placeholder="Parent name & phone" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
               </div>
-              <button type="submit" className="w-full py-3 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2">Confirm & Generate Admission ID</button>
+
+              <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Student Address</label><input type="text" value={admForm.address} onChange={e => setAdmForm({ ...admForm, address: e.target.value })} placeholder="Complete residential address" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+
+              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border">
+                <div>
+                  <label className="block text-[9px] font-black uppercase text-slate-400 mb-0.5">Synced Admission Fee</label>
+                  <span className="text-base font-black text-emerald-600 font-mono">₹{admForm.admissionAmount}</span>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Payment Method *</label>
+                  <select value={admForm.paymentMethod} onChange={e => setAdmForm({ ...admForm, paymentMethod: e.target.value })} className="w-full px-3 py-1.5 rounded-xl border text-xs font-bold bg-white">
+                    <option value="Online">Online / UPI</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" className="w-full py-3.5 bg-[#FE7C02] text-white font-black rounded-xl text-xs shadow-md cursor-pointer mt-2 hover:bg-orange-600 transition">
+                Confirm Admission & Credit Upstream Wallets
+              </button>
             </form>
           </div>
         </div>

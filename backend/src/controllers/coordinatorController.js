@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Admission = require('../models/Admission');
-const bcrypt = require('bcryptjs');
+const Exam = require('../models/Exam'); // Assuming you have an Exam model for live rates
 
 // 1. Get Coordinator Dashboard Metrics & Isolated Admissions
 exports.getCoordinatorDashboard = async (req, res) => {
@@ -8,7 +8,6 @@ exports.getCoordinatorDashboard = async (req, res) => {
     const coordinatorId = req.user?.id || req.user?._id;
     const coordinatorUser = await User.findById(coordinatorId);
 
-    // Fetch only admissions belonging strictly to this coordinator (isolated)
     const admissions = await Admission.find({ coordinatorId }).sort({ createdAt: -1 }).lean();
 
     const totalAdmissions = admissions.length;
@@ -21,16 +20,14 @@ exports.getCoordinatorDashboard = async (req, res) => {
     const completedAdmissions = admissions.filter(a => a.admissionStatus === 'Confirmed').length;
     const cancelledAdmissions = admissions.filter(a => a.admissionStatus === 'Cancelled').length;
 
-    // Exam-wise aggregation
     const examWise = admissions.reduce((acc, curr) => {
       acc[curr.examName] = (acc[curr.examName] || 0) + 1;
       return acc;
     }, {});
 
-    // Automated 20% commission calculation
     const totalCommission = admissions
       .filter(a => a.admissionStatus === 'Confirmed')
-      .reduce((sum, adm) => sum + ((adm.admissionAmount || 1000) * 0.20), 0);
+      .reduce((sum, adm) => sum + (adm.coordinatorCommission || ((adm.admissionAmount || 1000) * 0.20)), 0);
 
     const availableWallet = totalCommission * 0.85;
 
@@ -58,7 +55,7 @@ exports.getCoordinatorDashboard = async (req, res) => {
   }
 };
 
-// 2. Create Admission with Automatic Upstream & Downstream Hierarchy Linking
+// 2. Create Admission with Live Rate Sync & Multi-Tier Upstream Commission Distribution
 exports.createAdmission = async (req, res) => {
   try {
     const coordinatorId = req.user?.id || req.user?._id;
@@ -73,7 +70,7 @@ exports.createAdmission = async (req, res) => {
       examName, examCategory, examYear, examDate, admissionAmount, paymentMethod
     } = req.body;
 
-    // Automatically retrieve ASM and Franchisee IDs from the coordinator's upstream hierarchy
+    // Resolve Upstream Hierarchy: Coordinator -> ASM -> Franchisee
     const asmId = coordinatorUser.asmId;
     let franchiseId = coordinatorUser.franchiseId;
 
@@ -82,11 +79,21 @@ exports.createAdmission = async (req, res) => {
       if (asmUser) franchiseId = asmUser.franchiseId;
     }
 
+    // Fetch live rate if examName matches configured exams, else default to provided amount
+    let amount = admissionAmount ? parseFloat(admissionAmount) : 1000;
+    if (examName) {
+      const liveExam = await Exam.findOne({ title: new RegExp(`^${examName}$`, 'i') });
+      if (liveExam && liveExam.fee) {
+        amount = liveExam.fee;
+      }
+    }
+
     // Generate unique Admission ID (e.g., TOPIQ-ADM-000001)
     const count = await Admission.countDocuments();
     const admissionId = `TOPIQ-ADM-${String(count + 1).padStart(6, '0')}`;
 
-    const amount = admissionAmount || 1000;
+    // Multi-tier commission distribution set by admin/system rules
+    // Franchise: 15%, ASM: 5%, Coordinator: 20%, TOPIQ Platform Share: 60%
     const franchiseCommission = amount * 0.15;
     const asmCommission = amount * 0.05;
     const coordinatorCommission = amount * 0.20;
@@ -124,7 +131,7 @@ exports.createAdmission = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `Admission created successfully! ID: ${admissionId}`,
+      message: `Admission created successfully and commissions distributed upstream! ID: ${admissionId}`,
       admission: newAdmission
     });
   } catch (err) {
