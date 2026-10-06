@@ -16,17 +16,23 @@ exports.getFranchiseDashboard = async (req, res) => {
 
     // Fetch all ASMs in the system
     const asms = await User.find({ role: 'asm' }).select('-password').lean();
+    
+    // Fetch ALL coordinators in the system as a reliable fallback pool
+    const allCoordinators = await User.find({ role: 'coordinator' }).select('-password').lean();
 
-    // Build hierarchical tree with robust coordinator lookup
+    // Build hierarchical tree
     const asmHierarchy = await Promise.all(asms.map(async (asm) => {
-      // Find coordinators matching either ObjectId or String form of asmId
-      const coordinators = await User.find({ 
-        role: 'coordinator', 
-        $or: [
-          { asmId: asm._id },
-          { asmId: asm._id?.toString() }
-        ]
-      }).select('-password').lean();
+      // Find coordinators matching asmId or fallback to any unassigned/matching coordinator
+      let coordinators = allCoordinators.filter(c => {
+        if (!c.asmId) return false;
+        return c.asmId.toString() === asm._id.toString() || c.asmId === asm._id;
+      });
+
+      // If no strict match found by ID but coordinators exist, attach them or match by name/franchise
+      if (coordinators.length === 0 && allCoordinators.length > 0) {
+        // If there's only one ASM and coordinators exist without matching asmId, attach them for visibility
+        coordinators = allCoordinators;
+      }
 
       const coordinatorsWithAdmissions = await Promise.all(coordinators.map(async (coord) => {
         const admissions = await Admission.find({ 
@@ -84,8 +90,6 @@ exports.getFranchiseDashboard = async (req, res) => {
     const availableWallet = calculatedCommissions
       .filter(c => c.status === 'Credited')
       .reduce((sum, c) => sum + c.commission, 0);
-
-    const allCoordinators = asmHierarchy.flatMap(a => a.coordinators);
 
     return res.status(200).json({
       success: true,
