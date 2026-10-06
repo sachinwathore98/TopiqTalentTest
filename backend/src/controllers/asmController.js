@@ -7,7 +7,7 @@ exports.getASMDashboard = async (req, res) => {
     const asmId = req.user?.id || req.user?._id;
     const asmUser = await User.findById(asmId);
 
-    // Fetch ONLY coordinators assigned strictly to this ASM ID
+    // Fetch coordinators assigned to this ASM (checking both ObjectId and String formats)
     const coordinators = await User.find({ 
       role: 'coordinator', 
       $or: [
@@ -18,6 +18,7 @@ exports.getASMDashboard = async (req, res) => {
 
     const coordIds = coordinators.map(c => c._id);
 
+    // Fetch admissions linked via coordinatorId OR directly via asmId
     const admissions = await Admission.find({ 
       $or: [
         { coordinatorId: { $in: coordIds } },
@@ -113,7 +114,7 @@ exports.provisionCoordinator = async (req, res) => {
     });
 
     await newCoord.save();
-    return res.status(201).json({ success: true, message: 'Coordinator created and strictly linked to ASM successfully!' });
+    return res.status(201).json({ success: true, message: 'Coordinator created and linked to ASM successfully!' });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message || 'Error creating coordinator.' });
   }

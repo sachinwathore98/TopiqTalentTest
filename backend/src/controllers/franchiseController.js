@@ -11,18 +11,31 @@ exports.getFranchiseDashboard = async (req, res) => {
       if (franchiseUser) franchiseId = franchiseUser._id;
     }
 
-    // Strict Hierarchy: Fetch ONLY ASMs belonging to this Franchise
+    // Fetch ASMs assigned to this Franchise (supporting both ObjectId and string matching)
     const asms = await User.find({ 
       role: 'asm', 
-      $or: [{ franchiseId }, { franchiseId: franchiseId?.toString() }] 
+      $or: [
+        { franchiseId }, 
+        { franchiseId: franchiseId?.toString() }
+      ] 
     }).select('-password').lean();
-    
-    // Fetch ALL coordinators in the system to filter strictly by ASM
-    const allCoordinators = await User.find({ role: 'coordinator' }).select('-password').lean();
 
-    // Build strict hierarchical tree
+    const asmIds = asms.map(a => a._id);
+
+    // Fetch Coordinators assigned either directly to the franchise or to its ASMs
+    const allCoordinators = await User.find({ 
+      role: 'coordinator', 
+      $or: [
+        { franchiseId }, 
+        { franchiseId: franchiseId?.toString() },
+        { asmId: { $in: asmIds } }
+      ] 
+    }).select('-password').lean();
+
+    const coordIds = allCoordinators.map(c => c._id);
+
+    // Build hierarchical tree for ASMs and their respective coordinators
     const asmHierarchy = await Promise.all(asms.map(async (asm) => {
-      // Strict matching: Coordinator must belong to this specific ASM
       const coordinators = allCoordinators.filter(c => {
         if (!c.asmId) return false;
         return c.asmId.toString() === asm._id.toString() || c.asmId === asm._id;
@@ -30,7 +43,10 @@ exports.getFranchiseDashboard = async (req, res) => {
 
       const coordinatorsWithAdmissions = await Promise.all(coordinators.map(async (coord) => {
         const admissions = await Admission.find({ 
-          $or: [{ coordinatorId: coord._id }, { coordinatorId: coord._id?.toString() }] 
+          $or: [
+            { coordinatorId: coord._id }, 
+            { coordinatorId: coord._id?.toString() }
+          ] 
         }).lean();
         const totalCommission = admissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1999) * 0.15), 0);
         return {
@@ -42,7 +58,11 @@ exports.getFranchiseDashboard = async (req, res) => {
       }));
 
       const allAsmAdmissions = await Admission.find({ 
-        $or: [{ asmId: asm._id }, { asmId: asm._id?.toString() }] 
+        $or: [
+          { asmId: asm._id }, 
+          { asmId: asm._id?.toString() },
+          { coordinatorId: { $in: coordinators.map(c => c._id) } }
+        ] 
       }).lean();
 
       const totalAsmCommission = allAsmAdmissions.reduce((sum, adm) => sum + ((adm.admissionAmount || 1999) * 0.15), 0);
@@ -55,10 +75,13 @@ exports.getFranchiseDashboard = async (req, res) => {
       };
     }));
 
+    // Fetch all admissions linked to this franchise, its ASMs, or its coordinators
     const allAdmissions = await Admission.find({
       $or: [
         { franchiseId: franchiseId },
-        { franchiseId: franchiseId?.toString() }
+        { franchiseId: franchiseId?.toString() },
+        { asmId: { $in: asmIds } },
+        { coordinatorId: { $in: coordIds } }
       ]
     }).lean();
 
@@ -75,7 +98,7 @@ exports.getFranchiseDashboard = async (req, res) => {
 
     const calculatedCommissions = allAdmissions.map(adm => {
       const amount = adm.admissionAmount || 1999;
-      const commission = amount * 0.15;
+      const commission = adm.franchiseCommission || (amount * 0.15);
       return {
         admissionId: adm.admissionId || adm._id.toString().slice(-6),
         studentName: adm.studentName || 'Student',
@@ -170,6 +193,7 @@ exports.requestWithdrawal = async (req, res) => {
       message: `Withdrawal request of ₹${amount} submitted successfully.`
     });
   } catch (err) {
+    console.error('Error processing withdrawal:', err);
     return res.status(500).json({ success: false, message: 'Server error processing withdrawal.' });
   }
 };
