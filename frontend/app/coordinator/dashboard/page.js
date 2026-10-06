@@ -183,7 +183,7 @@ export default function CoordinatorDashboard() {
       if (!orderData.success) throw new Error('Failed to initiate payment gateway order.');
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mockkeyid',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Strictly use the environment variable
         amount: orderData.order.amount,
         currency: orderData.order.currency,
         name: 'TOPIQ Talent Test (TTT)',
@@ -243,7 +243,6 @@ export default function CoordinatorDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate counts per class for the overview buttons
   const classCounts = allStandardClasses.reduce((acc, className) => {
     acc[className] = (coordData.admissions || []).filter(a => a.studentClass === className).length;
     return acc;
