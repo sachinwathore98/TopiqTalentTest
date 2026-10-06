@@ -1,4 +1,4 @@
-'use-client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -27,7 +27,6 @@ export default function ASMDashboard() {
     admissions: []
   });
 
-  // Admission Filters
   const [filterCoord, setFilterCoord] = useState('all');
   const [filterDate, setFilterDate] = useState('');
   const [filterAdmStatus, setFilterAdmStatus] = useState('all');
@@ -80,7 +79,6 @@ export default function ASMDashboard() {
     <div className="min-h-screen bg-slate-50 text-[#01295A] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-200 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -102,7 +100,6 @@ export default function ASMDashboard() {
           </div>
         </div>
 
-        {/* ASM Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-1">
             <div className="text-[10px] font-black uppercase text-slate-400">Total Admissions</div>
@@ -129,7 +126,6 @@ export default function ASMDashboard() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="flex flex-wrap gap-3">
           <button onClick={() => setActiveTab('overview')} className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm ${activeTab === 'overview' ? 'bg-[#01295A] text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}>
             Coordinators Management
@@ -139,7 +135,6 @@ export default function ASMDashboard() {
           </button>
         </div>
 
-        {/* Tab 1: Coordinators Management Tree */}
         {activeTab === 'overview' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div>
@@ -180,7 +175,6 @@ export default function ASMDashboard() {
           </div>
         )}
 
-        {/* Tab 2: Admission Management & Filters */}
         {activeTab === 'admissions' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -191,7 +185,6 @@ export default function ASMDashboard() {
               <span className="px-3 py-1.5 bg-slate-100 text-[#01295A] text-xs font-bold rounded-xl">Filtered Admissions: {filteredAdmissions.length}</span>
             </div>
 
-            {/* Filter Toolbar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Coordinator</label>
@@ -233,7 +226,6 @@ export default function ASMDashboard() {
               </div>
             </div>
 
-            {/* Admissions Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-700">
                 <thead className="bg-slate-50 uppercase text-slate-400 font-black text-[10px] border-b border-slate-200">

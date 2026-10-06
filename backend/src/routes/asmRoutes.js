@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { getASMDashboard } = require('../controllers/asmController');
-const { verifyToken, verifyASM } = require('../middleware/auth'); // adjust based on your auth middleware
+const { verifyToken } = require('../middleware/auth'); // ensure middleware path matches your setup
 
-router.get('/dashboard', verifyToken, verifyASM, getASMDashboard);
+router.get('/dashboard', verifyToken, getASMDashboard);
 
-module.exports = router; // or module.exports = router
+module.exports = router;

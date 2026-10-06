@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { getCoordinatorDashboard } = require('../controllers/coordinatorController');
-const { verifyToken, verifyCoordinator } = require('../middleware/auth'); // adjust based on your auth middleware
+const { verifyToken } = require('../middleware/auth');
 
-router.get('/dashboard', verifyToken, verifyCoordinator, getCoordinatorDashboard);
+router.get('/dashboard', verifyToken, getCoordinatorDashboard);
 
 module.exports = router;
