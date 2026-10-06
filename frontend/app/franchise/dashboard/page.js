@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, Trash2, Edit3, X, CheckCircle2, ArrowDownRight } from 'lucide-react';
+import { Building2, Users, Wallet, RefreshCw, LogOut, FileText, Trash2, Edit3, X, CheckCircle2, ArrowDownRight, Search, Filter } from 'lucide-react';
 
 export default function FranchiseDashboard() {
   const router = useRouter();
@@ -30,12 +30,17 @@ export default function FranchiseDashboard() {
 
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', targetRole: 'asm', phone: '', asmId: '' });
   
-  // Edit & Withdrawal State
+  // Edit, Withdrawal & Admission Filter State
   const [editingUser, setEditingUser] = useState(null);
   const [userEditForm, setUserEditForm] = useState({ name: '', email: '', phone: '', status: 'active' });
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [bankDetails, setBankDetails] = useState({ accountNumber: '', ifsc: '', accountHolder: '' });
+
+  // Admission Filter States
+  const [searchStudent, setSearchStudent] = useState('');
+  const [filterASM, setFilterASM] = useState('all');
+  const [filterCoordinator, setFilterCoordinator] = useState('all');
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
@@ -161,6 +166,26 @@ export default function FranchiseDashboard() {
     }
   };
 
+  // Flatten all admissions across the hierarchy for advanced tracking & filtering
+  const allFlattenedAdmissions = (franchiseData.asmHierarchy || []).flatMap(asm => {
+    const asmAdmissions = (asm.coordinators || []).flatMap(coord => 
+      (coord.admissions || []).map(adm => ({ ...adm, asmName: asm.name, asmId: asm._id, coordinatorName: coord.name, coordinatorId: coord._id }))
+    );
+    const directAsmAdmissions = (asm.directAdmissions || []).map(adm => ({ ...adm, asmName: asm.name, asmId: asm._id, coordinatorName: 'Direct ASM', coordinatorId: 'none' }));
+    return [...asmAdmissions, ...directAsmAdmissions];
+  });
+
+  const filteredAdmissions = allFlattenedAdmissions.filter(adm => {
+    const matchesSearch = searchStudent === '' || 
+      (adm.studentName && adm.studentName.toLowerCase().includes(searchStudent.toLowerCase())) ||
+      (adm.admissionId && adm.admissionId.toLowerCase().includes(searchStudent.toLowerCase()));
+    
+    const matchesASM = filterASM === 'all' || adm.asmId === filterASM;
+    const matchesCoord = filterCoordinator === 'all' || adm.coordinatorId === filterCoordinator;
+
+    return matchesSearch && matchesASM && matchesCoord;
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 text-[#01295A] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -175,7 +200,7 @@ export default function FranchiseDashboard() {
               </span>
             </div>
             <h1 className="text-xl md:text-2xl font-black tracking-tight">{franchiseData.name} — Franchise Dashboard</h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Manage downstream ASMs, Coordinators, automatic 15% franchise commissions, and wallet payouts.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Manage downstream ASMs, Coordinators, live admission tracking, and wallet payouts.</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => fetchFranchiseDashboardData()} className="p-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold" title="Refresh Live Data">
@@ -193,7 +218,7 @@ export default function FranchiseDashboard() {
         {successMsg && <div className="p-4 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-2xl border border-emerald-200 flex items-center gap-2"><CheckCircle2 className="w-4 h-4"/>{successMsg}</div>}
         {errorMsg && <div className="p-4 bg-red-50 text-red-800 text-xs font-bold rounded-2xl border border-red-200">{errorMsg}</div>}
 
-        {/* Live Metrics Grid with Withdrawal Button */}
+        {/* Live Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-1">
             <div className="text-[10px] font-black uppercase text-slate-400">My Admissions</div>
@@ -237,6 +262,14 @@ export default function FranchiseDashboard() {
             }`}
           >
             My ASM & Coordinators Tree
+          </button>
+          <button
+            onClick={() => setActiveTab('admissions')}
+            className={`px-5 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm ${
+              activeTab === 'admissions' ? 'bg-[#01295A] text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Admission Management & Tracking
           </button>
           <button
             onClick={() => setActiveTab('team-management')}
@@ -332,7 +365,112 @@ export default function FranchiseDashboard() {
           </div>
         )}
 
-        {/* Tab 2: Create / Manage Team */}
+        {/* Tab 2: Admission Management & Tracking with Filters */}
+        {activeTab === 'admissions' && (
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider">Live Admission Management & Tracking</h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Filter live admissions dynamically by ASM, Coordinator, and Student Name/ID.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 bg-slate-100 text-[#01295A] text-xs font-bold rounded-xl">
+                  Total Results: {filteredAdmissions.length}
+                </span>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Search Student / Admission ID</label>
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input 
+                    type="text" 
+                    value={searchStudent} 
+                    onChange={e => setSearchStudent(e.target.value)} 
+                    placeholder="Search by student name or ID..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border text-xs font-semibold bg-white focus:outline-none focus:border-[#FE7C02]" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Filter by ASM</label>
+                <select 
+                  value={filterASM} 
+                  onChange={e => { setFilterASM(e.target.value); setFilterCoordinator('all'); }} 
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-white focus:outline-none focus:border-[#FE7C02]"
+                >
+                  <option value="all">All ASMs</option>
+                  {(franchiseData.asmHierarchy || []).map(asm => (
+                    <option key={asm._id} value={asm._id}>{asm.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Filter by Coordinator</label>
+                <select 
+                  value={filterCoordinator} 
+                  onChange={e => setFilterCoordinator(e.target.value)} 
+                  className="w-full px-4 py-2.5 rounded-xl border text-xs font-bold bg-white focus:outline-none focus:border-[#FE7C02]"
+                >
+                  <option value="all">All Coordinators</option>
+                  {(franchiseData.asmHierarchy || [])
+                    .filter(asm => filterASM === 'all' || asm._id === filterASM)
+                    .flatMap(asm => asm.coordinators || [])
+                    .map(coord => (
+                      <option key={coord._id} value={coord._id}>{coord.name}</option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Admissions Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 uppercase text-slate-400 font-black text-[10px] border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-4">Admission ID</th>
+                    <th className="py-3 px-4">Student Name</th>
+                    <th className="py-3 px-4">ASM Node</th>
+                    <th className="py-3 px-4">Coordinator Node</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">15% Commission</th>
+                    <th className="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredAdmissions.map((adm, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 transition">
+                      <td className="py-3.5 px-4 font-mono font-black text-[#01295A]">{adm.admissionId || adm._id?.slice(-6)}</td>
+                      <td className="py-3.5 px-4 font-bold">{adm.studentName || 'Student'}</td>
+                      <td className="py-3.5 px-4 font-semibold text-indigo-600">{adm.asmName}</td>
+                      <td className="py-3.5 px-4 font-semibold text-purple-600">{adm.coordinatorName}</td>
+                      <td className="py-3.5 px-4 font-mono">₹{adm.admissionAmount || 1000}</td>
+                      <td className="py-3.5 px-4 font-mono font-black text-emerald-600">+₹{(adm.admissionAmount || 1000) * 0.15}</td>
+                      <td className="py-3.5 px-4">
+                        <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded text-[10px] font-bold">
+                          {adm.admissionStatus || 'Credited'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {filteredAdmissions.length === 0 && (
+                <div className="text-center py-12 text-slate-400 font-bold uppercase text-xs">
+                  No admissions found matching the selected filters.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Create / Manage Team */}
         {activeTab === 'team-management' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-xl">
             <h2 className="text-base font-black text-[#01295A] uppercase tracking-wider mb-2">Provision Downstream User</h2>
@@ -379,7 +517,7 @@ export default function FranchiseDashboard() {
           </div>
         )}
 
-        {/* Tab 3: Hierarchical Commission History Tree */}
+        {/* Tab 4: Hierarchical Commission History Tree */}
         {activeTab === 'commissions' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
             <div>
