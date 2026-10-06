@@ -14,16 +14,17 @@ exports.getFranchiseDashboard = async (req, res) => {
       if (franchiseUser) franchiseId = franchiseUser._id;
     }
 
-    // Fetch ALL ASMs in the system
+    // Fetch all ASMs in the system
     const asms = await User.find({ role: 'asm' }).select('-password').lean();
 
-    // Build hierarchical tree with robust coordinator matching (ObjectId & String fallback)
+    // Build hierarchical tree with robust coordinator lookup
     const asmHierarchy = await Promise.all(asms.map(async (asm) => {
+      // Find coordinators matching either ObjectId or String form of asmId
       const coordinators = await User.find({ 
         role: 'coordinator', 
         $or: [
           { asmId: asm._id },
-          { asmId: asm._id.toString() }
+          { asmId: asm._id?.toString() }
         ]
       }).select('-password').lean();
 
@@ -40,11 +41,6 @@ exports.getFranchiseDashboard = async (req, res) => {
         };
       }));
 
-      const asmDirectAdmissions = await Admission.find({ 
-        $or: [{ asmId: asm._id }, { asmId: asm._id?.toString() }], 
-        $or: [{ coordinatorId: {$exists: false } }, { coordinatorId: null }] 
-      }).lean();
-      
       const allAsmAdmissions = await Admission.find({ 
         $or: [{ asmId: asm._id }, { asmId: asm._id?.toString() }] 
       }).lean();
@@ -53,7 +49,6 @@ exports.getFranchiseDashboard = async (req, res) => {
 
       return {
         ...asm,
-        directAdmissions: asmDirectAdmissions,
         totalAdmissions: allAsmAdmissions.length,
         totalCommission: totalAsmCommission,
         coordinators: coordinatorsWithAdmissions
