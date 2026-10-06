@@ -50,9 +50,14 @@ export default function LoginPage() {
           break;
         case 'franchise':
         case 'franchise_owner':
-          router.push('/franchise/dashboard'); // 👈 Correct route for Franchisee dashboard
+          router.push('/franchise/dashboard');
           break;
         case 'asm':
+          router.push('/asm/dashboard'); // 👈 Correct route for ASM dashboard
+          break;
+        case 'coordinator':
+          router.push('/coordinator/dashboard'); // 👈 Correct route for Coordinator dashboard
+          break;
         case 'agent':
           router.push('/partners/dashboard');
           break;
