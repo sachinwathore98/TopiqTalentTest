@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { getCoordinatorDashboard } = require('../controllers/coordinatorController');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, verifyRole } = require('../middleware/multiRoleAuthMiddleware');
 
-router.get('/dashboard', verifyToken, getCoordinatorDashboard);
+// Route for Coordinator Dashboard (Protected by JWT token and restricted to 'coordinator', 'asm', and admin roles)
+router.get('/dashboard', verifyToken, verifyRole(['coordinator', 'asm', 'super_admin', 'admin']), getCoordinatorDashboard);
 
 module.exports = router;

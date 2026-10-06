@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { getASMDashboard } = require('../controllers/asmController');
-const { verifyToken } = require('../middleware/auth'); // ensure middleware path matches your setup
+const { verifyToken, verifyRole } = require('../middleware/multiRoleAuthMiddleware');
 
-router.get('/dashboard', verifyToken, getASMDashboard);
+// Route for ASM Dashboard (Protected by JWT token and restricted to 'asm' and admin roles)
+router.get('/dashboard', verifyToken, verifyRole(['asm', 'super_admin', 'admin']), getASMDashboard);
 
 module.exports = router;
