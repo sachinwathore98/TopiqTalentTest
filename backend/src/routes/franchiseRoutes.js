@@ -3,9 +3,8 @@ const router = express.Router();
 const Enquiry = require('../models/Enquiry');
 const { getFranchiseDashboard, provisionMember, removeMember } = require('../controllers/franchiseController');
 
-// Correctly reference your existing multi-role authentication middleware
 const { verifyToken } = require('../middleware/multiRoleAuthMiddleware');
-const authorizeFranchiseHierarchy = require('../middleware/hierarchyAuth');
+const enforceStrictHierarchyScope = require('../middleware/roleMatrixAuth');
 
 // 1. Public Franchise Enquiry Submission Route
 router.post('/enquire', async (req, res) => {
@@ -37,8 +36,8 @@ router.post('/enquire', async (req, res) => {
 });
 
 // 2. Secured Franchise Dashboard & Hierarchy Management Routes
-router.get('/dashboard', verifyToken, authorizeFranchiseHierarchy, getFranchiseDashboard);
-router.post('/provision-member', verifyToken, authorizeFranchiseHierarchy, provisionMember);
-router.delete('/members/:userId', verifyToken, authorizeFranchiseHierarchy, removeMember);
+router.get('/dashboard', verifyToken, enforceStrictHierarchyScope, getFranchiseDashboard);
+router.post('/provision-member', verifyToken, enforceStrictHierarchyScope, provisionMember);
+router.delete('/members/:userId', verifyToken, enforceStrictHierarchyScope, removeMember);
 
 module.exports = router;
