@@ -12,7 +12,7 @@ export default function PublicRegistrationPage() {
     studentName: '', mobile: '', email: '', school: '', parentDetails: '', address: ''
   });
 
-  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const cleanBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
   useEffect(() => {

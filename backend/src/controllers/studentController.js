@@ -12,7 +12,6 @@ exports.verifyPublicAdmission = async (req, res) => {
 
     const amount = admissionAmount ? parseFloat(admissionAmount) : 1999;
 
-    // Generate unique sequential admission ID
     const count = await Admission.countDocuments();
     const admissionId = `TOPIQ-ADM-${String(count + 1).padStart(6, '0')}`;
 
@@ -28,7 +27,7 @@ exports.verifyPublicAdmission = async (req, res) => {
       examName: examName || 'TOPIQ Talent Test',
       franchiseId: franchiseId || null,
       asmId: asmId || null,
-      coordinatorId: coordinatorId || null, // Null indicates direct public website admission
+      coordinatorId: coordinatorId || null,
       admissionAmount: amount,
       paymentStatus: 'Paid',
       paymentId: razorpay_payment_id || `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
@@ -38,8 +37,6 @@ exports.verifyPublicAdmission = async (req, res) => {
     });
 
     await newAdmission.save();
-
-    // Trigger Commission Engine for platform-wide tracking
     await processAutomaticCommissions(newAdmission._id);
 
     return res.status(201).json({
