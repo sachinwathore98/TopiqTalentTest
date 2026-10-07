@@ -183,7 +183,7 @@ export default function CoordinatorDashboard() {
       if (!orderData.success) throw new Error('Failed to initiate payment gateway order.');
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mockkeyid',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: orderData.order.amount,
         currency: orderData.order.currency,
         name: 'TOPIQ Talent Test (TTT)',
@@ -191,6 +191,7 @@ export default function CoordinatorDashboard() {
         order_id: orderData.order.id,
         handler: async function (response) {
           try {
+            setLoading(true);
             const verifyRes = await fetch(`${apiBaseUrl}/api/coordinator/verify-admission`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -204,16 +205,18 @@ export default function CoordinatorDashboard() {
             const verifyData = await verifyRes.json();
             if (!verifyData.success) throw new Error(verifyData.message || 'Payment verified but admission creation failed.');
 
-            setSuccessMsg(`Payment Confirmed! Admission ID: ${verifyData.admission.admissionId} created & upstream wallets credited.`);
+            setSuccessMsg(`Payment Confirmed! Admission ID: ${verifyData.admission.admissionId} successfully created.`);
             setShowCreateModal(false);
-            setAdmForm({
-              studentName: '', mobile: '', email: '', studentClass: 'Class 8', school: '',
-              parentDetails: '', address: '', examName: 'TOPIQ Talent Test', admissionAmount: 1999, paymentMethod: 'Online',
-              franchiseId: '', asmId: ''
-            });
-            fetchCoordinatorDashboard();
+            
+            // Automatic redirect upon successful payment confirmation & ledger sync
+            setTimeout(() => {
+              router.push(`/student/success?admissionId=${verifyData.admission.admissionId}`);
+            }, 1200);
+
           } catch (verifyErr) {
             setErrorMsg(verifyErr.message);
+          } finally {
+            setLoading(false);
           }
         },
         prefill: {
@@ -243,7 +246,6 @@ export default function CoordinatorDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate counts per class for the overview buttons
   const classCounts = allStandardClasses.reduce((acc, className) => {
     acc[className] = (coordData.admissions || []).filter(a => a.studentClass === className).length;
     return acc;
