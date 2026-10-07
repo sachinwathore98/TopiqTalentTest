@@ -1,67 +1,54 @@
-const db = require('../config/db');
-const { determineGroup, generateRollNumber } = require('../utils/helpers');
+const Admission = require('../models/Admission');
+const User = require('../models/User');
+const { processAutomaticCommissions } = require('./commissionEngine');
 
-exports.registerStudent = async (req, res) => {
-  const client = await db.connect();
-  
+exports.verifyPublicAdmission = async (req, res) => {
   try {
-    const { 
-      full_name, guardian_phone, email, school_or_college, 
-      grade_category, district, franchise_code, registration_fee, payment_mode, transaction_ref 
+    const {
+      studentName, mobile, email, studentClass, school, parentDetails, address,
+      examName, admissionAmount, franchiseId, asmId, coordinatorId,
+      razorpay_order_id, razorpay_payment_id
     } = req.body;
 
-    await client.query('BEGIN');
+    const amount = admissionAmount ? parseFloat(admissionAmount) : 1999;
 
-    let franchiseId = null;
-    if (franchise_code) {
-      const fRes = await client.query('SELECT id FROM franchises WHERE branch_code = $1', [franchise_code]);
-      if (fRes.rows.length > 0) franchiseId = fRes.rows[0].id;
-    }
+    // Generate unique sequential admission ID
+    const count = await Admission.countDocuments();
+    const admissionId = `TOPIQ-ADM-${String(count + 1).padStart(6, '0')}`;
 
-    const learningGroup = determineGroup(grade_category);
-    const rollNumber = generateRollNumber();
-
-    const studentQuery = `
-      INSERT INTO students (topiq_roll_number, full_name, guardian_phone, email, school_or_college, grade_category, learning_group, district, assigned_franchise_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id, topiq_roll_number;
-    `;
-    const studentRes = await client.query(studentQuery, [
-      rollNumber, full_name, guardian_phone, email, school_or_college, grade_category, learningGroup, district, franchiseId
-    ]);
-
-    const newStudent = studentRes.rows[0];
-    const fee = parseFloat(registration_fee || 0);
-
-    const paymentQuery = `
-      INSERT INTO admission_payments (student_id, franchise_id, amount_paid, franchise_share_amount, company_share_amount, payment_mode, transaction_ref)
-      VALUES ($1, $2, $3, $4, $5, $6, $7);
-    `;
-    await client.query(paymentQuery, [
-      newStudent.id, franchiseId, fee, fee * 0.40, fee * 0.60, payment_mode || 'ONLINE', transaction_ref || `TXN-${Date.now()}`
-    ]);
-
-    if (franchiseId) {
-      await client.query('UPDATE franchises SET active_students_count = active_students_count + 1 WHERE id = $1', [franchiseId]);
-    }
-
-    await client.query('COMMIT');
-
-    res.status(201).json({
-      success: true,
-      message: 'Student registered successfully for TTT 100-Day Challenge.',
-      data: {
-        roll_number: newStudent.topiq_roll_number,
-        group: learningGroup,
-        daily_exam_time: '8:00 PM - 8:40 PM'
-      }
+    const newAdmission = new Admission({
+      admissionId,
+      studentName,
+      mobile,
+      email,
+      studentClass,
+      school: school || '',
+      parentDetails: parentDetails || '',
+      address: address || '',
+      examName: examName || 'TOPIQ Talent Test',
+      franchiseId: franchiseId || null,
+      asmId: asmId || null,
+      coordinatorId: coordinatorId || null, // Null indicates direct public website admission
+      admissionAmount: amount,
+      paymentStatus: 'Paid',
+      paymentId: razorpay_payment_id || `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+      paymentDate: new Date(),
+      admissionStatus: 'Confirmed',
+      settlementStatus: 'Pending'
     });
 
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Registration Error:', error);
-    res.status(500).json({ success: false, message: 'Registration failed.' });
-  } finally {
-    client.release();
+    await newAdmission.save();
+
+    // Trigger Commission Engine for platform-wide tracking
+    await processAutomaticCommissions(newAdmission._id);
+
+    return res.status(201).json({
+      success: true,
+      message: `Direct public admission registered successfully! ID: ${admissionId}`,
+      admission: newAdmission
+    });
+  } catch (err) {
+    console.error('Error verifying public admission:', err);
+    return res.status(500).json({ success: false, message: err.message || 'Error processing public admission.' });
   }
 };
