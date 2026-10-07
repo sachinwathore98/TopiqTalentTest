@@ -8,12 +8,13 @@ exports.getASMDashboard = async (req, res) => {
     const asmId = req.user?.id || req.user?._id;
     const asmUser = await User.findById(asmId);
 
-    // Fetch coordinators assigned to this ASM (checking both ObjectId and String formats)
+    // Fetch coordinators assigned to this ASM (checking both ObjectId, String, and Franchise fallback)
     const coordinators = await User.find({ 
       role: 'coordinator', 
       $or: [
         { asmId }, 
-        { asmId: asmId?.toString() }
+        { asmId: asmId?.toString() },
+        { franchiseId: asmUser?.franchiseId, asmId: { $exists: false } }
       ] 
     }).select('-password').lean();
 
@@ -23,6 +24,7 @@ exports.getASMDashboard = async (req, res) => {
     const admissions = await Admission.find({ 
       $or: [
         { coordinatorId: { $in: coordIds } },
+        { coordinatorId: { $in: coordinators.map(c => c._id?.toString()) } },
         { asmId: asmId },
         { asmId: asmId?.toString() }
       ]
@@ -113,7 +115,7 @@ exports.provisionCoordinator = async (req, res) => {
       role: 'coordinator',
       phone: phone || '',
       asmId,
-      franchiseId: asmUser?.franchiseId,
+      franchiseId: asmUser?.franchiseId || null,
       status: 'active'
     });
 
