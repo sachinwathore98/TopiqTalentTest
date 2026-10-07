@@ -1,10 +1,11 @@
 const User = require('../models/User');
 const Admission = require('../models/Admission');
 const Razorpay = require('razorpay');
+const { processAutomaticCommissions } = require('./commissionEngine');
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_mockkeyid',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'mocksecret'
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_TkaNg0VnBqbjik',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'fYdwSpCoGHZOOVDfTaS5MHui'
 });
 
 const getCoordinatorDashboard = async (req, res) => {
@@ -61,9 +62,23 @@ const getCoordinatorDashboard = async (req, res) => {
 
 const getHierarchy = async (req, res) => {
   try {
-    const franchises = await User.find({ role: { $in: ['franchise', 'franchise_owner'] } }).select('name _id').lean();
-    const asms = await User.find({ role: 'asm' }).select('name _id franchiseId').lean();
-    return res.status(200).json({ success: true, franchises, asms });
+    const coordinatorId = req.user?.id || req.user?._id;
+    const coordinatorUser = await User.findById(coordinatorId);
+
+    let assignedAsm = null;
+    let assignedFranchise = null;
+
+    if (coordinatorUser?.asmId) {
+      assignedAsm = await User.findById(coordinatorUser.asmId).select('name _id franchiseId').lean();
+      if (assignedAsm?.franchiseId) {
+        assignedFranchise = await User.findById(assignedAsm.franchiseId).select('name _id').lean();
+      }
+    }
+
+    const franchises = assignedFranchise ? [assignedFranchise] : await User.find({ role: { $in: ['franchise', 'franchise_owner'] } }).select('name _id').lean();
+    const asms = assignedAsm ? [assignedAsm] : await User.find({ role: 'asm' }).select('name _id franchiseId').lean();
+
+    return res.status(200).json({ success: true, franchises, asms, assignedAsm, assignedFranchise });
   } catch (err) {
     console.error('Error fetching hierarchy:', err);
     return res.status(500).json({ success: false, message: 'Server error fetching hierarchy.' });
@@ -107,7 +122,7 @@ const verifyAndCreateAdmission = async (req, res) => {
       razorpay_order_id, razorpay_payment_id
     } = req.body;
 
-    const resolvedAsmId = asmId || coordinatorUser.asmId;
+    let resolvedAsmId = asmId || coordinatorUser.asmId;
     let resolvedFranchiseId = franchiseId || coordinatorUser.franchiseId;
 
     if (!resolvedFranchiseId && resolvedAsmId) {
@@ -116,11 +131,6 @@ const verifyAndCreateAdmission = async (req, res) => {
     }
 
     const amount = admissionAmount ? parseFloat(admissionAmount) : 1999;
-
-    const franchiseCommission = amount * 0.15;
-    const asmCommission = amount * 0.05;
-    const coordinatorCommission = amount * 0.20;
-    const topiqShare = amount * 0.60;
 
     const count = await Admission.countDocuments();
     const admissionId = `TOPIQ-ADM-${String(count + 1).padStart(6, '0')}`;
@@ -142,15 +152,14 @@ const verifyAndCreateAdmission = async (req, res) => {
       paymentStatus: 'Paid',
       paymentId: razorpay_payment_id || `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
       paymentDate: new Date(),
-      franchiseCommission,
-      asmCommission,
-      coordinatorCommission,
-      topiqShare,
       admissionStatus: 'Confirmed',
       settlementStatus: 'Pending'
     });
 
     await newAdmission.save();
+
+    // Trigger Centralized Commission Engine (Wallet Ledger & Immutable Splits)
+    await processAutomaticCommissions(newAdmission._id);
 
     return res.status(201).json({
       success: true,
