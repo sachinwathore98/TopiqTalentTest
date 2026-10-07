@@ -100,9 +100,9 @@ const createRazorpayOrder = async (req, res) => {
     return res.status(200).json({ success: true, order });
   } catch (err) {
     console.error('Error creating Razorpay order:', err);
-    return res.status(200).json({
-      success: true,
-      order: { id: `order_mock_${Date.now()}`, amount: (req.body.admissionAmount || 1999) * 100, currency: 'INR' }
+    return res.status(500).json({ 
+      success: false, 
+      message: err.error?.description || err.message || 'Failed to create Razorpay order. Please verify live keys.' 
     });
   }
 };
