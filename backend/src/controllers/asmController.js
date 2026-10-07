@@ -2,19 +2,24 @@ const User = require('../models/User');
 const Admission = require('../models/Admission');
 const bcrypt = require('bcryptjs');
 
-// 1. Get ASM Dashboard Metrics & Coordinators
+// 1. Get ASM Dashboard Metrics, Downstream Coordinators & Financials with Robust Sync
 exports.getASMDashboard = async (req, res) => {
   try {
     const asmId = req.user?.id || req.user?._id;
     const asmUser = await User.findById(asmId);
 
+    // Fetch coordinators assigned to this ASM (checking both ObjectId and String formats)
     const coordinators = await User.find({ 
       role: 'coordinator', 
-      $or: [{ asmId }, { asmId: asmId?.toString() }] 
+      $or: [
+        { asmId }, 
+        { asmId: asmId?.toString() }
+      ] 
     }).select('-password').lean();
 
     const coordIds = coordinators.map(c => c._id);
 
+    // Fetch admissions linked via coordinatorId OR directly via asmId
     const admissions = await Admission.find({ 
       $or: [
         { coordinatorId: { $in: coordIds } },
@@ -23,13 +28,17 @@ exports.getASMDashboard = async (req, res) => {
       ]
     }).lean();
 
+    // Attach admission counts & earnings per coordinator
     const coordinatorsWithMetrics = await Promise.all(coordinators.map(async (coord) => {
       const coordAdmissions = await Admission.find({ 
-        $or: [{ coordinatorId: coord._id }, { coordinatorId: coord._id?.toString() }] 
+        $or: [
+          { coordinatorId: coord._id }, 
+          { coordinatorId: coord._id?.toString() }
+        ] 
       }).lean();
       
       const totalCoordRevenue = coordAdmissions.reduce((sum, adm) => sum + (adm.admissionAmount || 1999), 0);
-      const coordinatorCommission = totalCoordRevenue * 0.20;
+      const coordinatorCommission = totalCoordRevenue * 0.20; // 20% coordinator share
 
       return {
         ...coord,
@@ -40,6 +49,7 @@ exports.getASMDashboard = async (req, res) => {
       };
     }));
 
+    // Financial Metrics for ASM (5% Commission Share)
     const totalRevenue = admissions.reduce((sum, adm) => sum + (adm.admissionAmount || 1999), 0);
     const totalCommission = admissions.reduce((sum, adm) => {
       return sum + (adm.asmCommission || ((adm.admissionAmount || 1999) * 0.05));
@@ -82,7 +92,7 @@ exports.getASMDashboard = async (req, res) => {
   }
 };
 
-// 2. Create / Provision Coordinator
+// 2. Provision Coordinator Under ASM
 exports.provisionCoordinator = async (req, res) => {
   try {
     const asmId = req.user?.id || req.user?._id;
@@ -108,7 +118,7 @@ exports.provisionCoordinator = async (req, res) => {
     });
 
     await newCoord.save();
-    return res.status(201).json({ success: true, message: 'Coordinator created successfully!' });
+    return res.status(201).json({ success: true, message: 'Coordinator created and linked to ASM successfully!' });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message || 'Error creating coordinator.' });
   }
@@ -137,7 +147,7 @@ exports.deleteCoordinator = async (req, res) => {
   }
 };
 
-// 5. Withdrawal Request
+// 5. ASM Withdrawal
 exports.requestWithdrawal = async (req, res) => {
   try {
     const { amount } = req.body;
