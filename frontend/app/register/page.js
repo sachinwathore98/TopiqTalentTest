@@ -47,41 +47,64 @@ export default function PublicRegistrationPage() {
   const handlePublicRazorpayPayment = async (e) => {
     e.preventDefault();
     try {
-      const orderRes = await fetch(`${cleanBaseUrl}/api/student/create-order`, {
+      const orderAmountInPaise = Math.round(Number(feeDetails.testFee || 0) * 100);
+      const orderRes = await fetch(`${cleanBaseUrl}/api/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ admissionAmount: feeDetails.testFee, studentClass: selectedClass })
+        body: JSON.stringify({
+          amount: orderAmountInPaise,
+          currency: 'INR'
+        })
       });
       const orderData = await orderRes.json();
-      if (!orderData.success) throw new Error('Failed to initiate payment gateway order.');
+      if (!orderData.success) throw new Error(orderData.message || 'Failed to initiate payment gateway order.');
 
+      const orderAmount = orderData.amount || orderAmountInPaise;
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
+        amount: orderAmount,
+        currency: orderData.currency || 'INR',
         name: 'TOPIQ Talent Test (TTT)',
         description: `Exam Registration for ${selectedClass}`,
-        order_id: orderData.order.id,
+        order_id: orderData.order_id || orderData.id,
         handler: async function (response) {
           try {
-            const verifyRes = await fetch(`${cleanBaseUrl}/api/student/verify-admission`, {
+            const verifyRes = await fetch(`${cleanBaseUrl}/api/payment/verify-and-register`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                ...studentForm,
-                studentClass: selectedClass,
-                admissionAmount: feeDetails.testFee,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
+                razorpay_signature: response.razorpay_signature,
+                userData: {
+                  name: studentForm.studentName,
+                  phone: studentForm.mobile,
+                  email: studentForm.email,
+                  studentClass: selectedClass,
+                  school: studentForm.school || '',
+                  parentDetails: studentForm.parentDetails || '',
+                  address: studentForm.address || '',
+                  password: 'Topiq@123',
+                  city: '',
+                  district: '',
+                  state: 'Maharashtra',
+                  pincode: '',
+                  registrationFee: feeDetails.testFee
+                }
               })
             });
             const verifyData = await verifyRes.json();
             if (!verifyData.success) throw new Error(verifyData.message || 'Payment verification failed.');
 
-            window.location.href = `/student/success?admissionId=${verifyData.admission.admissionId}`;
+            if (verifyData.token) {
+              localStorage.setItem('token', verifyData.token);
+              localStorage.setItem('role', verifyData.role || 'student');
+            }
+
+            const admissionId = verifyData.admission?.admissionId || 'TOPIQ-ADM-000001';
+            window.location.href = `/student/success?admissionId=${admissionId}`;
           } catch (verifyErr) {
-            alert(verifyErr.message);
+            alert(verifyErr.message || 'Something went wrong during verification.');
           }
         },
         prefill: {
@@ -140,6 +163,17 @@ export default function PublicRegistrationPage() {
         <div className="grid grid-cols-2 gap-3">
           <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label><input type="email" required value={studentForm.email} onChange={e => setStudentForm({ ...studentForm, email: e.target.value })} placeholder="Email" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
           <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">School Name</label><input type="text" value={studentForm.school} onChange={e => setStudentForm({ ...studentForm, school: e.target.value })} placeholder="School Name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Parent / Guardian Details</label>
+            <input type="text" value={studentForm.parentDetails} onChange={e => setStudentForm({ ...studentForm, parentDetails: e.target.value })} placeholder="Parent Name & Contact" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Address</label>
+            <textarea value={studentForm.address} onChange={e => setStudentForm({ ...studentForm, address: e.target.value })} placeholder="Residential Address" rows={3} className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 resize-none" />
+          </div>
         </div>
 
         <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 p-5 rounded-2xl border-2 border-orange-200 flex justify-between items-center shadow-inner">
