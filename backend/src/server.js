@@ -36,11 +36,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// API Routes
+// API Routes Mapping
 app.use('/api/student', studentRoutes);
 app.use('/api/franchise', franchiseRoutes);
-app.use('/api/asm', asmRoutes); // 👈 Registered ASM Dashboard & Management routes
-app.use('/api/coordinator', coordinatorRoutes); // 👈 Registered Coordinator Dashboard & Tracking routes
+app.use('/api/asm', asmRoutes);
+app.use('/api/coordinator', coordinatorRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/exams', examRoutes);
@@ -56,7 +56,7 @@ app.get('/', (req, res) => {
   res.status(200).json({ 
     success: true, 
     message: 'TOPIQ Talent Test (TTT) API Server is live and running (2026)',
-    activeEnvironment: 'Production / Brevo REST API Enabled'
+    activeEnvironment: 'Production / Ledger Architecture Enabled'
   });
 });
 
