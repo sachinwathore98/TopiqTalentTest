@@ -18,7 +18,6 @@ const verifyAndRegisterPublicStudent = async (req, res) => {
     const studentClass = userData.studentClass || 'Class 8';
     const amount = userData.registrationFee ? parseFloat(userData.registrationFee) : 1999;
 
-    // Check if user already exists
     let existingUser = await User.findOne({ email });
     if (!existingUser) {
       const hashedPassword = await bcrypt.hash(userData.password || 'Topiq@123', 10);
@@ -40,7 +39,6 @@ const verifyAndRegisterPublicStudent = async (req, res) => {
       await existingUser.save();
     }
 
-    // Check if admission already exists for this payment
     let existingAdmission = await Admission.findOne({ paymentId: razorpay_payment_id });
     if (!existingAdmission) {
       const count = await Admission.countDocuments();
@@ -61,7 +59,7 @@ const verifyAndRegisterPublicStudent = async (req, res) => {
         coordinatorId: null, // Public website direct registration
         admissionAmount: amount,
         paymentStatus: 'Paid',
-        paymentId: razorpay_payment_id || `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        paymentId: razorpay_payment_id,
         paymentDate: new Date(),
         admissionStatus: 'Confirmed',
         settlementStatus: 'Pending'
@@ -69,7 +67,6 @@ const verifyAndRegisterPublicStudent = async (req, res) => {
 
       await existingAdmission.save();
 
-      // Trigger Commission Engine for platform ledger tracking
       try {
         await processAutomaticCommissions(existingAdmission._id);
       } catch (commErr) {
