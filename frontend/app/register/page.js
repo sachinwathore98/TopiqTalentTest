@@ -1,17 +1,26 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Flame, ShieldCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Sparkles, Flame, CheckCircle2 } from 'lucide-react';
 
 export default function PublicRegistrationPage() {
+  const router = useRouter();
   const [selectedClass, setSelectedClass] = useState('Class 8');
-  const [feeDetails, setFeeDetails] = useState({ testFee: 1100, originalFee: 1500 });
+  const [feeDetails, setFeeDetails] = useState({ testFee: 1999, originalFee: 2499 });
   const [loadingFee, setLoadingFee] = useState(true);
+  const [studentForm, setStudentForm] = useState({
+    studentName: '', mobile: '', email: '', school: '', parentDetails: '', address: ''
+  });
 
   let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const cleanBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
   useEffect(() => {
     fetchLiveFeeForClass(selectedClass);
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
   }, [selectedClass]);
 
   const fetchLiveFeeForClass = async (className) => {
@@ -23,17 +32,70 @@ export default function PublicRegistrationPage() {
         const found = data.fees.find(f => f.className === className);
         if (found) {
           setFeeDetails({
-            testFee: found.testFee || 1100,
-            originalFee: found.originalFee || found.testFee || 1500
+            testFee: found.testFee || 1999,
+            originalFee: found.originalFee || found.testFee || 2499
           });
-        } else {
-          setFeeDetails({ testFee: 1100, originalFee: 1500 });
         }
       }
     } catch (err) {
       console.error('Failed to sync live fee:', err);
     } finally {
       setLoadingFee(false);
+    }
+  };
+
+  const handlePublicRazorpayPayment = async (e) => {
+    e.preventDefault();
+    try {
+      const orderRes = await fetch(`${cleanBaseUrl}/api/student/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admissionAmount: feeDetails.testFee, studentClass: selectedClass })
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.success) throw new Error('Failed to initiate payment gateway order.');
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: 'TOPIQ Talent Test (TTT)',
+        description: `Exam Registration for ${selectedClass}`,
+        order_id: orderData.order.id,
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch(`${cleanBaseUrl}/api/student/verify-admission`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...studentForm,
+                studentClass: selectedClass,
+                admissionAmount: feeDetails.testFee,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyData.success) throw new Error(verifyData.message || 'Payment verification failed.');
+
+            window.location.href = `/student/success?admissionId=${verifyData.admission.admissionId}`;
+          } catch (verifyErr) {
+            alert(verifyErr.message);
+          }
+        },
+        prefill: {
+          name: studentForm.studentName,
+          email: studentForm.email,
+          contact: studentForm.mobile
+        },
+        theme: { color: '#FE7C02' }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      alert(err.message || 'Error processing checkout.');
     }
   };
 
@@ -49,69 +111,60 @@ export default function PublicRegistrationPage() {
           <span>Limited Time Flash Offer – Secure Your Slot Now!</span>
         </div>
         <h2 className="text-2xl font-black">Student Examination Entry</h2>
-        <p className="text-xs text-slate-500 font-semibold">Select your class below to unlock special promotional scholarship pricing.</p>
+        <p className="text-xs text-slate-500 font-semibold">Fill your details and select your class to complete registration securely.</p>
       </div>
 
-      <div className="space-y-4">
+      <form onSubmit={handlePublicRazorpayPayment} className="space-y-4">
         <div>
           <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Class / Category *</label>
           <select 
             value={selectedClass} 
             onChange={(e) => setSelectedClass(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 cursor-pointer focus:ring-2 focus:ring-[#FE7C02] outline-none"
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 cursor-pointer outline-none"
           >
             {[
               'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 
               'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 
-              '12th & Above & Competitive Exams'
+              'Competitive / Above 12'
             ].map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Full Name *</label><input type="text" required value={studentForm.studentName} onChange={e => setStudentForm({ ...studentForm, studentName: e.target.value })} placeholder="Student Name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+          <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Mobile Number *</label><input type="text" required value={studentForm.mobile} onChange={e => setStudentForm({ ...studentForm, mobile: e.target.value })} placeholder="Mobile Number" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50 font-mono" /></div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label><input type="email" required value={studentForm.email} onChange={e => setStudentForm({ ...studentForm, email: e.target.value })} placeholder="Email" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+          <div><label className="block text-[10px] font-black uppercase text-slate-500 mb-1">School Name</label><input type="text" value={studentForm.school} onChange={e => setStudentForm({ ...studentForm, school: e.target.value })} placeholder="School Name" className="w-full px-4 py-2.5 rounded-xl border text-xs bg-slate-50" /></div>
+        </div>
+
         <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 p-5 rounded-2xl border-2 border-orange-200 flex justify-between items-center shadow-inner">
           <div className="space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-100 px-2 py-0.5 rounded-md inline-block">
-              Special Discount Active
-            </span>
-            <div className="text-xs font-black uppercase text-slate-700 block">Applicable Registration Fee:</div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-100 px-2 py-0.5 rounded-md inline-block">Special Discount Active</span>
+            <div className="text-xs font-black uppercase text-slate-700 block">Registration Fee:</div>
           </div>
-
           <div className="text-right">
-            {loadingFee ? (
-              <span className="text-xs font-bold text-slate-400">Syncing...</span>
-            ) : (
+            {loadingFee ? <span className="text-xs font-bold text-slate-400">Syncing...</span> : (
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-2">
                   <span className="text-3xl font-black font-mono text-emerald-600">₹{feeDetails.testFee}</span>
-                  {feeDetails.originalFee > feeDetails.testFee && (
-                    <span className="text-base font-bold font-mono text-slate-400 line-through">₹{feeDetails.originalFee}</span>
-                  )}
+                  {feeDetails.originalFee > feeDetails.testFee && <span className="text-base font-bold font-mono text-slate-400 line-through">₹{feeDetails.originalFee}</span>}
                 </div>
-                {discountPercent > 0 && (
-                  <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                    You Save {discountPercent}% Off Today!
-                  </span>
-                )}
+                {discountPercent > 0 && <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full uppercase tracking-wider">You Save {discountPercent}% Off Today!</span>}
               </div>
             )}
           </div>
         </div>
 
-        <button 
-          onClick={() => alert(`Proceeding to Razorpay payment of ₹{feeDetails.testFee} for ${selectedClass}`)}
-          className="w-full py-4 bg-gradient-to-r from-[#FE7C02] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-2xl text-xs shadow-xl cursor-pointer transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2 uppercase tracking-wide"
-        >
+        <button type="submit" className="w-full py-4 bg-gradient-to-r from-[#FE7C02] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-2xl text-xs shadow-xl cursor-pointer transition flex items-center justify-center gap-2 uppercase tracking-wide">
           <Sparkles className="w-4 h-4 text-amber-200 animate-spin" />
-          <span>Lock In Offer Price of</span>
-          <span className="font-mono text-base underline decoration-amber-200">₹{feeDetails.testFee}</span>
-          {feeDetails.originalFee > feeDetails.testFee && (
-            <span className="font-mono text-orange-200 line-through text-xs">₹{feeDetails.originalFee}</span>
-          )}
-          <span>& Register Now</span>
+          <span>Pay ₹{feeDetails.testFee} & Register Now</span>
         </button>
-      </div>
+      </form>
     </div>
   );
 }
