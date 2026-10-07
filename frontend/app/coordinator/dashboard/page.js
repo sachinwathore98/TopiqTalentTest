@@ -69,7 +69,7 @@ export default function CoordinatorDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://topiq-talent-test.onrender.com';
   const apiBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
 
   useEffect(() => {
@@ -83,10 +83,12 @@ export default function CoordinatorDashboard() {
     fetchLiveFeeMatrix();
     fetchUpstreamHierarchy();
 
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
+    if (!window.Razorpay) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
 
     const interval = setInterval(() => fetchCoordinatorDashboard(true), 15000);
     return () => clearInterval(interval);
@@ -208,7 +210,6 @@ export default function CoordinatorDashboard() {
             setSuccessMsg(`Payment Confirmed! Admission ID: ${verifyData.admission.admissionId} successfully created.`);
             setShowCreateModal(false);
             
-            // Automatic redirect upon successful payment confirmation & ledger sync
             setTimeout(() => {
               router.push(`/student/success?admissionId=${verifyData.admission.admissionId}`);
             }, 1200);
@@ -228,6 +229,10 @@ export default function CoordinatorDashboard() {
           color: '#FE7C02'
         }
       };
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK failed to load. Please check your network connection.');
+      }
 
       const rzp = new window.Razorpay(options);
       rzp.open();
